@@ -29,7 +29,7 @@ namespace Lotus.Roles.Subroles;
 public class Rogue : Subrole
 {
     /// <summary>
-    /// A list of roles that Rogue is not compatiable with. Add your role to this list to make it not be assigned with your role.
+    /// A list of roles that Rogue is not compatible with. Add your role to this list to make it not be assigned with your role.
     /// </summary>
     public static readonly List<Type> IncompatibleRoles = new()
     {
@@ -45,7 +45,8 @@ public class Rogue : Subrole
         typeof(Terrorist),
         typeof(Necromancer),
         typeof(Altruist),
-        typeof(Charmer)
+        typeof(Charmer),
+        typeof(Jailor)
     };
 
     private bool restrictedToCompatibleRoles;

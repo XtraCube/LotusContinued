@@ -132,7 +132,7 @@ public class Dictator : Crewmate
     }
 
     [Localized(nameof(Dictator))]
-    internal static class DictatorTranslations
+    public static class DictatorTranslations
     {
         [Localized(nameof(LynchEventMessage))]
         public static string LynchEventMessage = "{0}::0 lynched {1}::1.";

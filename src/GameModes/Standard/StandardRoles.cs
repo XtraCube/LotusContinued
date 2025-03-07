@@ -142,6 +142,7 @@ public class StandardRoles : RoleHolder
         public Genie Genie = new();
         public Herbalist Herbalist = new();
         public Investigator Investigator = new();
+        public Jailor Jailor = new();
         public Mayor Mayor = new();
         public Medic Medic = new();
         public Medium Medium = new();
