@@ -62,12 +62,12 @@
   
   <Target Name="Copy" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
     <CreateItem Include="$(TargetDir)\*.dll" Exclude="$(TargetPath)">
-		<Output TaskParameter="Include" ItemName="DEPSD" />
+		  <Output TaskParameter="Include" ItemName="DEPSD" />
     </CreateItem>
     
-		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(AmongUs)/BepInEx/plugins/" UseSymboliclinksIfPossible="true"></Copy>
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(AmongUs)/BepInEx/plugins/" UseSymboliclinksIfPossible="true"/>
     <Move SourceFiles="@(DEPSD)" DestinationFolder="$(TargetDir)\depends\" OverwriteReadOnlyFiles="true" />
-	</Target>
+  </Target>
 
   <ItemGroup>
     <EmbeddedResource Include=".\assets\**\*" />

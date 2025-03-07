@@ -24,24 +24,23 @@ public class ReportDeadBodyPatch
         if (__instance.Data.IsDead) return false;
         if (Game.State != GameState.Roaming) return false;
         if (AmongUsClient.Instance.IsGameOver) return false;
-        if (target == null && Enumerable.Any<PlayerTask>(PlayerControl.LocalPlayer.myTasks.ToArray(), new System.Func<PlayerTask, bool>(PlayerTask.TaskIsEmergency))) // stops meetings with sabotage
-        {
+        if (target == null && PlayerControl.LocalPlayer.myTasks.ToArray().Any(PlayerTask.TaskIsEmergency)) // stops meetings with sabotage
             return false;
-        }
+
         // MeetingRoomManager.Instance.AssignSelf(__instance, target);
         if (GameManager.Instance.CheckTaskCompletion())
-        {
             return false;
-        }
+
 
         ActionHandle handle = ActionHandle.NoInit();
 
         if (target != null)
         {
-            if (__instance.PlayerId == target.PlayerId) return false;
-            if (Game.MatchData.UnreportableBodies.Contains(target.PlayerId)) return false;
-            if (!Object.FindObjectsOfType<DeadBody>().Any(db => db.ParentId == target.PlayerId)) return false; // trying to report a local or non-existent body.
             if (Game.CurrentGameMode.BlockedActions().HasFlag(GameModes.BlockableGameAction.ReportBody)) return false;
+
+            if (__instance.PlayerId == target.PlayerId) return false; // trying to report themselves
+            if (Game.MatchData.UnreportableBodies.Contains(target.PlayerId)) return false; // trying to report an unreportable body
+            if (!Object.FindObjectsOfType<DeadBody>().Any(db => db.ParentId == target.PlayerId)) return false; // trying to report a local or non-existent body.
 
             log.Trace($"Triggering ReportBody with parameters: {__instance}, {handle}, {target}");
             RoleOperations.Current.Trigger(LotusActionType.ReportBody, __instance, handle, Optional<NetworkedPlayerInfo>.NonNull(target));
@@ -53,8 +52,9 @@ public class ReportDeadBodyPatch
         }
         else
         {
-            if (Game.MatchData.UnreportableBodies.Contains(255)) return false; // meeting ID
             if (Game.CurrentGameMode.BlockedActions().HasFlag(GameModes.BlockableGameAction.CallMeeting)) return false;
+
+            if (Game.MatchData.UnreportableBodies.Contains(255)) return false; // meeting ID
             log.Trace($"Triggering ReportBody (meeting) with parameters: {__instance}, {handle}");
             RoleOperations.Current.Trigger(LotusActionType.ReportBody, __instance, handle, Optional<NetworkedPlayerInfo>.Null());
             if (handle.IsCanceled)
