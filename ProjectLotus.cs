@@ -58,8 +58,8 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public const string MajorVersion = "1";
     public const string MinorVersion = "1"; // Update with each release
-    public const string PatchVersion = "2";
-    public const string BuildNumber = "0046";
+    public const string PatchVersion = "3";
+    public const string BuildNumber = "0126";
 
     public static string PluginVersion = typeof(ProjectLotus).Assembly.GetName().Version!.ToString();
 
@@ -67,7 +67,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public static readonly string ModName = "Project Lotus";
     public static readonly string ModColor = "#4FF918";
-    public static readonly string DevVersionStr = "Dev February 23 2025";
+    public static readonly string DevVersionStr = "Dev March 6 2025";
 
     public static bool DevVersion;
 
@@ -188,8 +188,6 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
         }
         if (version is not NoVersion)
         {
-            //ModRPC rpc = Vents.FindRPC((uint)ModCalls.SendOptionPreview)!;
-            //rpc.Send(new[] { player.GetClientId() }, new BatchList<Option>(OptionManager.GetManager().GetOptions()));
             ModVersion.AddVersionShowerToPlayer(player, version);
             Players.GetAllPlayers()
                 .Where(p => p.PlayerId != player.PlayerId && (p.IsModded() | p.IsHost()))
