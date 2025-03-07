@@ -14,7 +14,7 @@ using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using Object = UnityEngine.Object;
 
-namespace Lotus.Victory;
+namespace Lotus.Victory.Patches;
 
 [HarmonyPatch(typeof(EndGameManager), nameof(EndGameManager.SetEverythingUp))]
 public class EndGameResultPatch

@@ -7,7 +7,7 @@ using VentLib.Localization.Attributes;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 
-namespace Lotus.Patches.Client;
+namespace Lotus.Victory.Patches;
 
 [HarmonyPatch(typeof(EndGameManager), nameof(EndGameManager.ShowButtons))]
 public class EndGameManagerPatch

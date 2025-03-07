@@ -14,7 +14,7 @@ using UnityEngine;
 using VentLib.Utilities;
 using VentLib.Utilities.Debug.Profiling;
 
-namespace Lotus.Victory;
+namespace Lotus.Victory.Patches;
 
 [HarmonyPatch(typeof(LogicGameFlowNormal), nameof(LogicGameFlowNormal.CheckEndCriteria))]
 public class CheckEndGamePatch
