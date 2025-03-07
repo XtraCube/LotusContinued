@@ -20,6 +20,7 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Managers.Interfaces;
 using Lotus.Roles.Subroles;
 using Lotus.Victory;
+using Lotus.Victory.Patches;
 using UnityEngine;
 using VentLib.Commands;
 using VentLib.Commands.Attributes;
@@ -234,8 +235,8 @@ public class BasicCommands : CommandTranslations
             return;
         }
 
-        PlayerControl? player = Players.FindPlayerById(id);
-        if (player == null)
+        PlayerControl? target = Players.FindPlayerById(id);
+        if (target == null)
         {
             ChatHandler.Of(PlayerNotFoundText.Formatted(id), CommandError).LeftAlign().Send(source);
             return;
@@ -243,15 +244,15 @@ public class BasicCommands : CommandTranslations
 
         if (context.Args.Length < 2)
         {
-            if (!LegacyResolver.PerformForcedReset(player)) ChatHandler.Of("Unable to perform forced Blackscreen Fix. No players have died yet.", CommandError).LeftAlign().Send(source);
-            else ChatHandler.Of($"Successfully cleared blackscreen of \"{player.name}\"").LeftAlign().Send(source);
+            if (!LegacyResolver.PerformForcedReset(target)) ChatHandler.Of("Unable to perform forced Blackscreen Fix. No players have died yet.", CommandError).LeftAlign().Send(source);
+            else ChatHandler.Of($"Successfully cleared blackscreen of \"{target.name}\"").LeftAlign().Send(source);
         }
         else
         {
             string choice = context.Args[1];
             if (choice.StartsWith("s"))
             {
-                ChatHandler.Of($"Starting fix of blackscreen caused by game start for \"{player.name}\"").LeftAlign().Send(source);
+                ChatHandler.Of($"Starting fix of blackscreen caused by game start for \"{target.name}\"").LeftAlign().Send(source);
                 List<PlayerControl> players = Players.GetAllPlayers().ToList();
                 PlayerControl lastPlayer = players.Last();
 
@@ -261,16 +262,16 @@ public class BasicCommands : CommandTranslations
 
                 Async.Schedule(() =>
                 {
-                    Dictionary<byte, bool> Disconnected = new();
+                    Dictionary<byte, bool> disconnected = new();
                     CheckEndGamePatch.Deferred = true;
                     players.ForEach(pc =>
                     {
-                        Disconnected[pc.PlayerId] = pc.Data.Disconnected;
+                        disconnected[pc.PlayerId] = pc.Data.Disconnected;
                         pc.Data.Disconnected = true;
                     });
                     log.Debug("Sending Disconncted Data.");
-                    GeneralRPC.SendGameData(player.OwnerId);
-                    players.ForEach(pc => pc.Data.Disconnected = Disconnected[pc.PlayerId]);
+                    GeneralRPC.SendGameData(target.GetClientId());
+                    players.ForEach(pc => pc.Data.Disconnected = disconnected[pc.PlayerId]);
                     ChatHandler.Of("Step 1 finished.\n(Setup Stage)").Send(source);
                 }, NetUtils.DeriveDelay(0.5f));
                 Async.Schedule(() =>
@@ -283,32 +284,32 @@ public class BasicCommands : CommandTranslations
                 }, NetUtils.DeriveDelay(1f));
                 Async.Schedule(() =>
                 {
-                    GeneralRPC.SendGameData(player.OwnerId);
+                    GeneralRPC.SendGameData(target.GetClientId());
                     ChatHandler.Of("Step 3 finished.\n(Cleanup Stage)").Send(source);
                 }, NetUtils.DeriveDelay(1.5f));
             }
             else
             {
 
-                if (!LegacyResolver.PerformForcedReset(player)) ChatHandler.Of("Unable to perform forced Blackscreen Fix. No players have died yet.", CommandError).LeftAlign().Send(source);
-                else ChatHandler.Of($"Successfully cleared blackscreen of \"{player.name}\"").LeftAlign().Send(source);
+                if (!LegacyResolver.PerformForcedReset(target)) ChatHandler.Of("Unable to perform forced Blackscreen Fix. No players have died yet.", CommandError).LeftAlign().Send(source);
+                else ChatHandler.Of($"Successfully cleared blackscreen of \"{target.name}\"").LeftAlign().Send(source);
             }
         }
 
         void SingleAssign(CustomRole role)
         {
-            if (role.RealRole.IsCrewmate())
-                RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)role.RealRole).Write(ProjectLotus.AdvancedRoleAssignment).Send(player.OwnerId);
-            else if (player.GetVanillaRole().IsCrewmate())
-                RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)(role.Faction is ImpostorFaction ? role.RealRole : RoleTypes.Crewmate)).Write(ProjectLotus.AdvancedRoleAssignment).Send(player.OwnerId);
+            if (role.RealRole.IsCrewmate() || role.MyPlayer.PlayerId == target.PlayerId)
+                RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)role.RealRole).Write(true).Send(target.GetClientId());
+            else if (target.GetVanillaRole().IsCrewmate())
+                RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)(role.Faction is ImpostorFaction ? role.RealRole : RoleTypes.Crewmate)).Write(true).Send(target.GetClientId());
             else
             {
                 PlayerControl[] alliedPlayers = Players.GetPlayers().Where(p => role.Relationship(p) is Relation.FullAllies).ToArray();
                 HashSet<byte> alliedPlayerIds = alliedPlayers.Where(role.Faction.CanSeeRole).Select(p => p.PlayerId).ToHashSet();
 
-                if (alliedPlayerIds.Contains(player.PlayerId))
-                    RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)role.RealRole).Write(ProjectLotus.AdvancedRoleAssignment).Send(player.OwnerId);
-                else RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RoleTypes.Crewmate).Write(ProjectLotus.AdvancedRoleAssignment).Send(player.OwnerId);
+                if (alliedPlayerIds.Contains(target.PlayerId))
+                    RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)role.RealRole).Write(true).Send(target.GetClientId());
+                else RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RoleTypes.Crewmate).Write(true).Send(target.GetClientId());
             }
         }
     }
