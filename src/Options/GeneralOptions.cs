@@ -13,19 +13,19 @@ namespace Lotus.Options;
 [LoadStatic]
 public static class GeneralOptions
 {
-    public static OptionManager StandardOptionManager = OptionManager.GetManager(file: "standard.txt");
-    public static OptionManager CaptureOptionManager = OptionManager.GetManager(file: "ctf.txt");
-    public static OptionManager ColorwarsOptionManager = OptionManager.GetManager(file: "colorwars.txt");
+    public static readonly OptionManager StandardOptionManager = OptionManager.GetManager(file: "standard.txt", managerFlags: OptionManagerFlags.SyncOverRpc);
+    public static readonly OptionManager CaptureOptionManager = OptionManager.GetManager(file: "ctf.txt", managerFlags: OptionManagerFlags.SyncOverRpc);
+    public static readonly OptionManager ColorwarsOptionManager = OptionManager.GetManager(file: "colorwars.txt", managerFlags: OptionManagerFlags.SyncOverRpc);
 
-    public static AdminOptions AdminOptions;
-    public static DebugOptions DebugOptions;
-    public static GameplayOptions GameplayOptions;
-    public static MayhemOptions MayhemOptions;
-    public static MeetingOptions MeetingOptions;
-    public static MiscellaneousOptions MiscellaneousOptions;
-    public static SabotageOptions SabotageOptions;
+    public static readonly AdminOptions AdminOptions;
+    public static readonly DebugOptions DebugOptions;
+    public static readonly GameplayOptions GameplayOptions;
+    public static readonly MayhemOptions MayhemOptions;
+    public static readonly MeetingOptions MeetingOptions;
+    public static readonly MiscellaneousOptions MiscellaneousOptions;
+    public static readonly SabotageOptions SabotageOptions;
 
-    public static List<GameOption> StandardOptions = new();
+    public static readonly List<GameOption> StandardOptions = new();
 
     static GeneralOptions()
     {

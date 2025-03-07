@@ -26,7 +26,7 @@ public static class ReportManager
 
     static ReportManager()
     {
-        OptionManager reportingOptionManager = OptionManager.GetManager(file: "file_options.txt");
+        OptionManager reportingOptionManager = OptionManager.GetManager(file: "file_options.txt", managerFlags: OptionManagerFlags.IgnorePreset);
         var reportingDirectoryOption = new OptionBuilder().Name("Reporting Directory")
             .Description("The directory for storing various reports.\nDefault = reports")
             .Value("reports")
