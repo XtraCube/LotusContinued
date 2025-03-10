@@ -33,12 +33,12 @@ public static class CreditsControllerPatch
         creditsBG.transform.localPosition += new Vector3(0.1f, 0, 0);
 
         var renderer = creditsBG.AddComponent<SpriteRenderer>();
-        renderer.sprite = LotusAssets.LoadSprite("background", 180);
+        renderer.sprite = LotusAssets.LoadSprite("Credits/Images/background.png", 180);
     }
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.LoadCredits))]
     public static void LoadCreditsPrefix(CreditsController __instance) => __instance.CSVCredits = LotusAssets.LoadAsset<TextAsset>("Credits/" +
-        (TestCredits ? "testcredits" : "plcredits"));
+        (TestCredits ? "testcredits" : "plcredits") + ".txt");
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.Start))]
     public static bool StartPrefix(CreditsController __instance)
@@ -76,11 +76,11 @@ public static class CreditsControllerPatch
                 else if (format.creditType == CreditsController.CreditType.IMAGE)
                 {
                     string creditsPath = __instance.credits[i].columns[j];
-                    if (!creditsPath.Contains("Lotus.assets")) gameObject3.GetComponent<Image>().sprite = Resources.Load<Sprite>("Credits/" + __instance.credits[i].columns[j]);
+                    if (!creditsPath.Contains("Credits/Images/")) gameObject3.GetComponent<Image>().sprite = Resources.Load<Sprite>("Credits/" + __instance.credits[i].columns[j]);
                     else
                     {
                         string[] assetSplit = creditsPath.Split(";;");
-                        gameObject3.GetComponent<Image>().sprite = LotusAssets.LoadSprite(string.Join("/", assetSplit[1].Split(".").ToList().GetRange(2, 3)), float.Parse(assetSplit[0]));
+                        gameObject3.GetComponent<Image>().sprite = LotusAssets.LoadSprite(assetSplit[1], float.Parse(assetSplit[0]));
                         if (assetSplit.Length > 2)
                         {
                             float[] sizeValues = assetSplit[2].Split(";").Select(float.Parse).ToArray();
