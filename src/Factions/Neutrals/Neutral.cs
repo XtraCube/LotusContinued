@@ -1,8 +1,6 @@
 using Lotus.Factions.Interfaces;
 using Lotus.Options;
-using Lotus.Options;
 using UnityEngine;
-using VentLib.Localization.Attributes;
 
 namespace Lotus.Factions.Neutrals;
 public class Neutral : Faction<Neutral>
