@@ -70,7 +70,7 @@
   </Target>
 
   <ItemGroup>
-    <EmbeddedResource Include=".\assets\**\*" />
+    <EmbeddedResource Include=".\assets\projectlotus_bundle" />
   </ItemGroup>
   
   <ItemGroup>

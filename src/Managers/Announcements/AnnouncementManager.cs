@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Lotus.GUI;
 using Lotus.Managers.Announcements.Helpers;
 using Lotus.Managers.Announcements.Models;
+using UnityEngine;
 using VentLib.Utilities.Extensions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -31,12 +33,15 @@ public class CustomAnnouncementManager
     {
         try
         {
-            CustomAnnouncements = Assembly.GetExecutingAssembly().GetManifestResourceNames()
-                .Where(n => n.Contains("Lotus.assets.Announcements"))
+            string[] assetNames = LotusAssets.Bundle.GetAllAssetNames()
+                .Where(name => name.Contains("announcements/") && name.EndsWith(".yaml"))
+                .ToArray();
+
+            CustomAnnouncements = assetNames
                 .Select(s =>
                 {
-                    string fileName = s.Replace("Lotus.assets.Announcements.", "").Replace(".yaml", "");
-                    return (fileName, LoadAnnouncementFromManifest(s));
+                    string fileName = s.Replace("announcements/", "").Replace(".yaml", "");
+                    return (fileName, LoadFromTextAsset(LotusAssets.LoadAsset<TextAsset>(s)));
                 })
                 .Where(a => a.Item2 != null)
                 .ToDict(a => a.fileName, a => a.Item2)!;
@@ -118,6 +123,13 @@ public class CustomAnnouncementManager
     }
 
     public static Announcement LoadFromFileInfo(FileInfo file) => LoadFromStream(file.Open(FileMode.Open));
+
+    public static Announcement? LoadFromTextAsset(TextAsset textAsset)
+    {
+        if (textAsset == null) return null!;
+        string result = textAsset.text;
+        return deserializer.Deserialize<Announcement>(result);
+    }
 
     private static Announcement LoadFromStream(Stream stream)
     {

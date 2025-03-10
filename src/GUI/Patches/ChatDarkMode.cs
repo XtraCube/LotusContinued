@@ -17,9 +17,6 @@ public class ChatDarkMode
 
     static ChatDarkMode()
     {
-        PersistentAssetLoader.RegisterSprite("QuickChatIcon", "Lotus.assets.DarkTheme.DarkQuickChat.png", 100);
-        PersistentAssetLoader.RegisterSprite("DarkKeyboard", "Lotus.assets.DarkTheme.DarkKeyboard.png", 100);
-        PersistentAssetLoader.RegisterSprite("DarkReport", "Lotus.assets.DarkTheme.DarkReport.png", 100);
     }
     [QuickPostfix(typeof(ChatBubble), nameof(ChatBubble.SetName))]
     public static void BubbleSetNamePostfix(ChatBubble __instance, bool isDead, bool voted)
@@ -56,17 +53,17 @@ public class ChatDarkMode
             if (QuickChatIcon == null)
                 QuickChatIcon = __instance.GetComponentsInChildren<SpriteRenderer>(true).FirstOrDefault(c => c.name == "QuickChatIcon")!;
             else
-                QuickChatIcon.sprite = PersistentAssetLoader.GetSprite("QuickChatIcon");
+                QuickChatIcon.sprite = LotusAssets.LoadSprite("DarkTheme/DarkQuickChat.png");
 
             if (OpenBanMenuIcon == null)
                 OpenBanMenuIcon = __instance.GetComponentsInChildren<SpriteRenderer>(true).FirstOrDefault(c => c.name == "OpenBanMenuIcon")!;
             else
-                OpenBanMenuIcon.sprite = PersistentAssetLoader.GetSprite("DarkReport");
+                OpenBanMenuIcon.sprite = LotusAssets.LoadSprite("DarkTheme/DarkKeyboard.png");
 
             if (OpenKeyboardIcon == null)
                 OpenKeyboardIcon = __instance.GetComponentsInChildren<SpriteRenderer>(true).FirstOrDefault(c => c.name == "OpenKeyboardIcon")!;
             else
-                OpenKeyboardIcon.sprite = PersistentAssetLoader.GetSprite("DarkKeyboard");
+                OpenKeyboardIcon.sprite = LotusAssets.LoadSprite("DarkTheme/DarkReport.png");
         }
         else __instance.freeChatField.textArea.outputText.color = Color.black;
     }

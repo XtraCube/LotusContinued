@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Lotus.API.Reactive;
+using Lotus.GUI;
 using Lotus.GUI.Menus.OptionsMenu;
 using Lotus.Logging;
 using Lotus.RPC;
@@ -54,7 +55,7 @@ public static class ModVersion
         backgroundHolder.transform.localScale = Vector3.one;
 
         var renderer = backgroundHolder.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetLoader.LoadLotusSprite("VersionBackground.png", 300);
+        renderer.sprite = LotusAssets.LoadSprite("VersionBackground.png", 300);
 
         GameObject textHolder = new("Text");
         textHolder.transform.SetParent(backgroundHolder.transform);

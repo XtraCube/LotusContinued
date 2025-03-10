@@ -35,6 +35,8 @@ using Lotus.API.Player;
 using Lotus.Managers.Blackscreen.Interfaces;
 using Lotus.Managers.Blackscreen;
 using Lotus.API.Vanilla.Meetings;
+using Lotus.GUI;
+using Lotus.Logging;
 using VentLib.Lobbies;
 using Lotus.Network;
 using Lotus.RPC;
@@ -88,6 +90,8 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
         RpcMonitor.Enable();
 #endif
         Instance = this;
+
+        LotusAssets.Bundle.GetAllAssetNames().ForEach(DevLogger.Log);
 
         VersionControl versionControl = ModVersion.VersionControl = VersionControl.For(this);
         versionControl.AddVersionReceiver(ReceiveVersion);
@@ -150,8 +154,8 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
         SearchBarController.SetEnabled(true);
         SearchBarController.SetSearchInfo(new SearchBar(
-            () => AssetLoader.LoadLotusSprite("searchbar.png", 300, true),
-            () => AssetLoader.LoadLotusSprite("searchicon.png", 100, true),
+            () => LotusAssets.LoadSprite("searchbar.png", 300f),
+            () => LotusAssets.LoadSprite("searchicon.png", 100f),
             greenOnHover: false
         ));
         LobbyChecker.AddEndpoint(new LotusLobbyEndpoints(), false); // do not replace all, so default endpoint is still sent.

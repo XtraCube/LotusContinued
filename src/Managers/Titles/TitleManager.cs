@@ -6,6 +6,8 @@ using System.Reflection;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.API.Reactive;
+using Lotus.GUI;
+using UnityEngine;
 using VentLib.Utilities.Extensions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -73,12 +75,16 @@ public class TitleManager
         // Loading from manifest
         try
         {
-            titles = Assembly.GetExecutingAssembly().GetManifestResourceNames()
-                .Where(n => n.Contains("Lotus.assets.Titles"))
+
+            string[] assetNames = LotusAssets.Bundle.GetAllAssetNames()
+                .Where(name => name.Contains("titles/") && name.EndsWith(".yaml"))
+                .ToArray();
+
+            titles = assetNames
                 .Select(s =>
                 {
-                    string friendcode = s.Replace("Lotus.assets.Titles.", "").Replace(".yaml", "");
-                    return (friendcode, LoadTitleFromManifest(s));
+                    string friendcode = s.Replace("titles/", "").Replace(".yaml", "");
+                    return (friendcode, LoadFromTextAsset(s));
                 })
                 .Where(t => t.Item2 != null)
                 .ToDict(t => t.friendcode, t => new List<CustomTitle> { t.Item2! });
@@ -110,6 +116,14 @@ public class TitleManager
             {
                 if (!string.IsNullOrEmpty(pair.Item1)) titles.GetOrCompute(pair.Item1, () => new List<CustomTitle>()).Add(pair.Item2);
             });
+    }
+
+    private static CustomTitle? LoadFromTextAsset(string assetName)
+    {
+        TextAsset textAsset = LotusAssets.LoadAsset<TextAsset>(assetName);
+        if (textAsset == null) return null;
+        string result = textAsset.text;
+        return TitleDeserializer.Deserialize<CustomTitle>(result);
     }
 
     private static CustomTitle? LoadTitleFromManifest(string manifestResource)

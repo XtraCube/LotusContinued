@@ -54,7 +54,7 @@ public class CrewPostor : Engineer
                 .BindBool(b => refreshTasks = b)
                 .Build()));
 
-    protected override string ForceRoleImageDirectory() => "Lotus.assets.RoleImages.Imposter.crewpostor";
+    protected override string ForceRoleImageDirectory() => "RoleImages/Imposter/crewpostor.png";
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)

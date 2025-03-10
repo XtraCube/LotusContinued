@@ -15,11 +15,12 @@ public class Texture2DReplacerPatch
 {
     public static readonly string[] ReplacedGraphics =
     [
-        "GameSettingReworkAssets"
+        "GameSettingReworkAssets", "UiButtons"
     ];
 
-    public const string StartPath = "Lotus.assets.Replaced.";
+    public const string StartPath = "Replaced/";
 
+    [QuickPostfix(typeof(HudManager), nameof(HudManager.Start))]
     public static void CheckForTextures()
     {
         Resources.FindObjectsOfTypeAll(Il2CppType.Of<Texture2D>())
@@ -28,20 +29,13 @@ public class Texture2DReplacerPatch
                 if (!obj.TryCast(out Texture2D texture)) return;
                 if (texture == null) return;
                 if (!ReplacedGraphics.Contains(texture.name)) return;
+
+                Sprite spriteTexture = LotusAssets.LoadAsset<Sprite>(StartPath + texture.name + ".png");
+                if (spriteTexture == null || spriteTexture.texture == null) return;
                 DevLogger.Log($"Replacing {texture.name}.");
-
-                using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(StartPath + texture.name + ".png");
-                if (stream == null)
-                {
-                    DevLogger.Log($"Cannot replace texture! Null stream. Path: {StartPath + texture.name}.png");
-                    return;
-                }
-
-                MemoryStream ms = new();
                 try
                 {
-                    stream.CopyTo(ms);
-                    texture.LoadImage(ms.ToArray(), false);
+                    Graphics.CopyTexture(spriteTexture.texture, texture);
                     texture.filterMode = FilterMode.Trilinear;
 
                     texture.name += "_Replaced"; // Makes it so we don't override the same texture twice
@@ -50,10 +44,6 @@ public class Texture2DReplacerPatch
                 {
                     DevLogger.Log("Error replacing texture.");
                     throw;
-                }
-                finally
-                {
-                    ms.Close();
                 }
             });
     }
