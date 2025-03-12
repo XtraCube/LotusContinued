@@ -91,8 +91,6 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 #endif
         Instance = this;
 
-        LotusAssets.Bundle.GetAllAssetNames().ForEach(DevLogger.Log);
-
         VersionControl versionControl = ModVersion.VersionControl = VersionControl.For(this);
         versionControl.AddVersionReceiver(ReceiveVersion);
         PluginDataManager.TemplateManager.RegisterTag("lobby-join", "Tag for the template shown to players joining the lobby.");

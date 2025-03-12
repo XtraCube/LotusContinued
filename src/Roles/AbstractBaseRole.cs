@@ -52,7 +52,7 @@ public abstract class AbstractBaseRole
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(AbstractBaseRole));
     public PlayerControl MyPlayer { get; protected set; } = null!;
     // public string Description => Localizer.Translate($"Roles.{EnglishRoleName.RemoveHtmlTags()}.Description", assembly: DeclaringAssembly);
-    public string Blurb => Localizer.Translate($"Roles.{EnglishRoleName.RemoveHtmlTags()}.Blurb", assembly: DeclaringAssembly);
+    public string Blurb => RoleFlags.HasFlag(RoleFlag.DoNotTranslate) ? "" : Localizer.Translate($"Roles.{EnglishRoleName.RemoveHtmlTags()}.Blurb", assembly: DeclaringAssembly);
 
     public string RoleName
     {
