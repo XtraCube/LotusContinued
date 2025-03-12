@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Lotus.Extensions;
 using VentLib.Utilities.Harmony.Attributes;
 using Object = UnityEngine.Object;
 using Lotus.Managers.Announcements.Models;
@@ -10,7 +8,6 @@ using Lotus.Managers;
 using AmongUs.Data;
 using VentLib.Utilities.Extensions;
 using System.Globalization;
-using Lotus;
 
 namespace Lotus.GUI.Patches;
 

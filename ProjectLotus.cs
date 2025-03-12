@@ -124,13 +124,12 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public void SetBlackscreenResolver(Func<MeetingDelegate, IBlackscreenResolver> newResolver)
     {
-        log.Debug($"{Assembly.GetCallingAssembly().GetName().Name} overrided the current blackscreen resolver.");
+        log.Debug($"{Assembly.GetCallingAssembly().GetName().Name} overrode the current blackscreen resolver.");
         GetNewBlackscreenResolver = newResolver;
     }
 
     public override void Load()
     {
-
         _harmony = new Harmony(Id);
         //Profilers.Global.SetActive(false);
         log.Info($"AmongUs Version - {Application.version}");
