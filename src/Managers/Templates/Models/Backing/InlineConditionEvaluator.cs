@@ -44,8 +44,9 @@ internal class InlineConditionEvaluator
         right = TemplateUnit.FormatStatic(right, obj);
         right = right.RemoveHtmlTags();
 
-        DevLogger.Log($"Left: {left}");
-        DevLogger.Log($"right: {right}");
+        DevLogger.Log($"Left: ({left})");
+        DevLogger.Log($"Middle: ({middle})");
+        DevLogger.Log($"right: ({right})");
 
         switch (middle)
         {
