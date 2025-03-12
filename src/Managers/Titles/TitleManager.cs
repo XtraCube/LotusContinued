@@ -31,7 +31,12 @@ public class TitleManager
         if (!directory.Exists) directory.Create();
         this.directory = directory;
         LoadAll();
-        if (Game.State is GameState.InLobby) Players.GetPlayers().ForEach(p => p.RpcSetName(p.name));
+        if (Game.State is GameState.InLobby)
+        {
+            if (AmongUsClient.Instance == null) return;
+            if (!AmongUsClient.Instance.AmHost) return;
+            Players.GetPlayers().ForEach(p => p.RpcSetName(p.name));
+        }
     }
 
     public string ApplyTitle(string friendCode, string playerName, bool nameOnly = false)
