@@ -101,7 +101,7 @@ public class Amnesiac : CustomRole, IVariableRole
                 .BindBool(b => hasArrowsToBodies = b)
                 .Build());
 
-    protected override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _amalgamation }).ToList();
+    public override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _amalgamation }).ToList();
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         roleModifier.RoleColor(new Color(0.51f, 0.87f, 0.99f))

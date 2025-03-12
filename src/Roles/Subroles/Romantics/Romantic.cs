@@ -211,7 +211,7 @@ public class Romantic : Subrole, IInfoResender
                     .Build())
                 .Build());
 
-    protected override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _vengefulRomantic, _ruthlessRomantic }).ToList();
+    public override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _vengefulRomantic, _ruthlessRomantic }).ToList();
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
             .RoleColor(RomanticColor)

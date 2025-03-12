@@ -369,7 +369,7 @@ public abstract class AbstractBaseRole
     /// If you're looking to change the options from % chance to "Show" / "Hide" refer to <see cref="RoleFlags"/> on the child role.
     /// </summary>
     /// <returns>Linked Roles</returns>
-    protected virtual List<CustomRole> LinkedRoles() => new();
+    public virtual List<CustomRole> LinkedRoles() => new();
 
     /// <summary>
     /// Force the path for the Role Image or Role Outfit.

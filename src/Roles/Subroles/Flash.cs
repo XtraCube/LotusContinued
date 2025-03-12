@@ -45,7 +45,7 @@ public class Flash : Subrole, IVariantSubrole
                 .BindFloat(f => playerSpeedIncrease = f)
                 .Build());
 
-    protected override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _escalation }).ToList();
+    public override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _escalation }).ToList();
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
