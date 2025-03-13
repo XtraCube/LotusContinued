@@ -4,6 +4,7 @@ using System.Linq;
 using AmongUs.GameOptions;
 using Lotus.API;
 using Lotus.API.Odyssey;
+using Lotus.API.Player;
 using Lotus.Factions;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Components;
@@ -14,6 +15,9 @@ using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Extensions;
+using Lotus.Factions.Interfaces;
+using Lotus.GameModes.Standard;
+using Lotus.Managers;
 using Lotus.Roles.RoleGroups.Crew;
 using Lotus.Roles.RoleGroups.Neutral;
 using UnityEngine;
@@ -23,6 +27,9 @@ using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using Lotus.Options.Roles;
 using Lotus.Roles.RoleGroups.Undead.Roles;
+using Lotus.Utilities;
+using MonoMod.Utils;
+using VentLib.Options;
 
 namespace Lotus.Roles.Subroles;
 
@@ -48,13 +55,18 @@ public class Rogue : Subrole
         typeof(Charmer),
         typeof(Jailor)
     };
+    private static ColorGradient _psychoGradient = new(new Color(0.41f, 0.1f, 0.18f), new Color(0.85f, 0.77f, 0f));
+    public static Dictionary<Type, int> FactionMaxDictionary = new();
 
     private bool restrictedToCompatibleRoles;
-    private static ColorGradient _psychoGradient = new(new Color(0.41f, 0.1f, 0.18f), new Color(0.85f, 0.77f, 0f));
     public bool requiresBaseKillMethod;
 
-
     public override string Identifier() => "";
+
+    public Rogue()
+    {
+        StandardRoles.Callbacks.Add(AddFactionSettings);
+    }
 
     [RoleAction(LotusActionType.Attack)]
     private bool TryKill(PlayerControl target)
@@ -84,8 +96,17 @@ public class Rogue : Subrole
         requiresBaseKillMethod = !role.GetActions(LotusActionType.Attack).Any();
     }
 
+    private int GetAmountOfPeopleOnFaction(Type faction) => Players.GetAlivePlayers().Count(p =>
+        p.PrimaryRole().Faction.GetType() == faction && p.GetSubroles().Any(s => s is Rogue));
+
     public override bool IsAssignableTo(PlayerControl player)
     {
+        Type myFaction = player.PrimaryRole().Faction.GetType();
+
+        // Check if their faction already has the max amount of allowed players.
+        // If they are maxed out, we don't even call base and just immediately exit.
+        if (GetAmountOfPeopleOnFaction(myFaction) >= FactionMaxDictionary.GetValueOrDefault(myFaction, 0)) return false;
+
         // If the role is NOT a neutral killing role, then we immediately pass and it's legal
         if (player.PrimaryRole().SpecialType is not SpecialType.NeutralKilling) return base.IsAssignableTo(player);
         NeutralTeaming teaming = Options.RoleOptions.NeutralOptions.NeutralTeamingMode;
@@ -108,6 +129,28 @@ public class Rogue : Subrole
 
     public override CompatabilityMode RoleCompatabilityMode => CompatabilityMode.Blacklisted;
 
+    private void AddFactionSettings()
+    {
+        Dictionary<Type, IFaction> allFactions = new() {
+            {FactionInstances.Impostors.GetType(), FactionInstances.Impostors},
+            {FactionInstances.Crewmates.GetType(), FactionInstances.Crewmates},
+            {FactionInstances.Neutral.GetType(), FactionInstances.Neutral},
+            {FactionInstances.TheUndead.GetType(), FactionInstances.TheUndead}
+        };
+        allFactions.AddRange(FactionInstances.AddonFactions);
+        allFactions.ForEach(kvp =>
+        {
+            string keyName = Translations.Options.FactionMaxRogues.Formatted(kvp.Value.Name());
+            Option option = new GameOptionBuilder()
+                .KeyName(TranslationUtil.Remove(keyName), TranslationUtil.Colorize(keyName, kvp.Value.Color))
+                .AddIntRange(0, ModConstants.MaxPlayers, 1, 1)
+                .BindInt(i => FactionMaxDictionary[kvp.Key] = i)
+                .Build();
+            RoleOptions.AddChild(option);
+            GlobalRoleManager.RoleOptionManager.Register(option, OptionLoadMode.LoadOrCreate);
+        });
+    }
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         AddRestrictToCrew(base.RegisterOptions(optionStream))
             .SubOption(sub => sub.KeyName("Restrict to Compatible Roles", Translations.Options.RestrictToCompatbileRoles)
@@ -125,8 +168,9 @@ public class Rogue : Subrole
         [Localized(ModConstants.Options)]
         internal static class Options
         {
-            [Localized(nameof(RestrictToCompatbileRoles))]
-            public static string RestrictToCompatbileRoles = "Restrict to Compatible Roles";
+            [Localized(nameof(RestrictToCompatbileRoles))] public static string RestrictToCompatbileRoles = "Restrict to Compatible Roles";
+
+            [Localized(nameof(FactionMaxRogues))] public static string FactionMaxRogues = "{0}::0 Faction Max Rogues";
         }
     }
 }
