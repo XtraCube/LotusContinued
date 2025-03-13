@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using AmongUs.GameOptions;
-using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
 using Lotus.Factions;
@@ -10,7 +9,6 @@ using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name.Holders;
-using Lotus.Managers;
 using Lotus.Roles.Interactions.Interfaces;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals;
@@ -19,16 +17,18 @@ using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities.Extensions;
-using Lotus.GameModes.Standard;
 using Lotus.Victory;
 using Lotus.Utilities;
-using System.Collections.Generic;
+using Lotus.API.Player;
+using Lotus.Managers.History;
+using Lotus.Managers.History.Events;
+using VentLib.Utilities;
+using VentLib.Utilities.Optionals;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
 public class SchrodingersCat : CustomRole
 {
-
     private PlayerControl? turnedAttacker;
     private Type? turnedType;
 
@@ -56,6 +56,7 @@ public class SchrodingersCat : CustomRole
         turnedAttacker = actor;
         turnedType = role.GetType();
         IFaction faction = role.Faction;
+        Game.MatchData.GameHistory.AddEvent(new FactionChangeEvent(MyPlayer, Faction, faction));
         Faction = faction;
         RoleColor = role.RoleColor;
         OverridenRoleName = Translations.CatFactionChangeName.Formatted(role.RoleName);
@@ -114,5 +115,20 @@ public class SchrodingersCat : CustomRole
             [Localized(nameof(KillerKnowsCat))] public static string KillerKnowsCat = "Killer Knows Schrodinger's::0 Cat::1";
             [Localized(nameof(NumberOfLives))] public static string NumberOfLives = "Number of Lives";
         }
+    }
+
+    private class FactionChangeEvent(PlayerControl player, IFaction oldFaction, IFaction newFaction): IRoleEvent
+    {
+        private readonly FrozenPlayer? user = Game.MatchData.GetFrozenPlayer(player);
+        private readonly Optional<CustomRole> role = Optional<CustomRole>.Of(player.PrimaryRole());
+        private readonly string oldFactionName = oldFaction.Color.Colorize(oldFaction.Name());
+        private readonly string newFactionName = newFaction.Color.Colorize(newFaction.Name());
+        private readonly Timestamp timestamp = new();
+
+        public bool IsCompletion() => true;
+        public FrozenPlayer Player() => user!;
+        public Optional<CustomRole> RelatedRole() => role;
+        public Timestamp Timestamp() => timestamp;
+        public string Message() => $"{Game.GetName(user)} changed Factions from {oldFactionName} to {newFactionName}.";
     }
 }
