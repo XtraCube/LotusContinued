@@ -57,8 +57,10 @@ public abstract class Subrole : CustomRole, ISubrole
         }
 
         if (RestrictedRoles() == null || RestrictedRoles()!.Count == 0) return true;
+        List<CustomRole> subroles = player.GetSubroles();
 
-        bool anyMatchRoles = RestrictedRoles()!.Any(r => r == role.GetType());
+        bool anyMatchRoles = RestrictedRoles()!.Any(r => r == role.GetType()) |
+                             subroles.Any(r => RestrictedRoles()!.Contains(r.GetType()));
         if (anyMatchRoles && RoleCompatabilityMode is CompatabilityMode.Blacklisted) return false;
         return anyMatchRoles || FactionCompatabilityMode is not CompatabilityMode.Whitelisted;
     }
