@@ -82,6 +82,7 @@ public class Rogue : Subrole
         CustomRole role = MyPlayer.PrimaryRole();
         RoleHolder roleHolder = MyPlayer.NameModel().GetComponentHolder<RoleHolder>();
         string newRoleName = _psychoGradient.Apply(role.RoleName);
+        role.RoleColorGradient = _psychoGradient;
         roleHolder.Add(new RoleComponent(new LiveString(newRoleName), Game.InGameStates, ViewMode.Replace, MyPlayer));
         role.RoleFlags &= ~RoleFlag.CannotWinAlone;
         new RoleModifier(role)
