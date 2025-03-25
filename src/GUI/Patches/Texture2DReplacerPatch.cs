@@ -15,12 +15,11 @@ public class Texture2DReplacerPatch
 {
     public static readonly string[] ReplacedGraphics =
     [
-        "GameSettingReworkAssets", "UiButtons"
+        "GameSettingReworkAssets", "UiButtons", "LobbyReworkAssets", "MainMenuSprites", "OldButtons"
     ];
 
     public const string StartPath = "Replaced/";
 
-    [QuickPostfix(typeof(HudManager), nameof(HudManager.Start))]
     public static void CheckForTextures()
     {
         Resources.FindObjectsOfTypeAll(Il2CppType.Of<Texture2D>())
@@ -36,7 +35,7 @@ public class Texture2DReplacerPatch
                 try
                 {
                     Graphics.CopyTexture(spriteTexture.texture, texture);
-                    texture.filterMode = FilterMode.Trilinear;
+                    texture.filterMode = FilterMode.Bilinear;
 
                     texture.name += "_Replaced"; // Makes it so we don't override the same texture twice
                 }
@@ -54,4 +53,9 @@ public class Texture2DReplacerPatch
         __instance.FindChild<SpriteRenderer>("LeftSideTint", true).gameObject.SetActive(false);
         CheckForTextures();
     }
+
+    [QuickPostfix(typeof(HudManager), nameof(HudManager.Start))] private static void HudManagerPostfix(HudManager __instance) => CheckForTextures();
+    [QuickPostfix(typeof(AccountManager), nameof(AccountManager.Awake))] private static void AccountManagerPostfix(AccountManager __instance) => CheckForTextures();
+    [QuickPostfix(typeof(ProgressTracker), nameof(ProgressTracker.Start))] private static void ProgressTrackerPostfix(ProgressTracker __instance) => CheckForTextures();
+    [QuickPostfix(typeof(LobbyViewSettingsPane), nameof(LobbyViewSettingsPane.Awake))] private static void LobbyViewSettingsPanePostfix(LobbyViewSettingsPane __instance) => CheckForTextures();
 }

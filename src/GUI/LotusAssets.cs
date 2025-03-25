@@ -1,4 +1,6 @@
-﻿using Lotus.Extensions;
+﻿using System.Linq;
+using Lotus.Extensions;
+using Lotus.Logging;
 using Lotus.Utilities;
 using UnityEngine;
 
@@ -25,25 +27,20 @@ public class LotusAssets
         return Bundle.LoadAsset<T>(name)!;
     }
 
-    public static Sprite LoadSprite(string name, float pixelsPerUnit = 100f)
+    public static Sprite LoadSprite(string name, float pixelsPerUnit = 100f, bool linear = false, int mipMapLevel = 0)
     {
         Sprite? originalSprite = Bundle.LoadAsset<Sprite>(name);
         if (originalSprite == null) return null!;
 
-        Texture2D texture = originalSprite.texture;
+        Texture2D originalTexture = originalSprite.texture;
         Rect rect = originalSprite.rect;
-        Vector2 pivot = originalSprite.pivot;
 
-        Sprite newSprite = Sprite.Create(
-            texture,
-            rect,
-            new Vector2(pivot.x / rect.width, pivot.y / rect.height),
-            pixelsPerUnit,
-            0,
-            SpriteMeshType.Tight,
-            originalSprite.border
-        );
+        Texture2D texture = new((int)rect.width, (int)rect.height, TextureFormat.ARGB32, true, linear);
+        texture.SetPixels(originalTexture.GetPixels());
+        texture.Apply(true, false);
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), pixelsPerUnit);
+        sprite.texture.requestedMipmapLevel = mipMapLevel;
 
-        return newSprite;
+        return sprite;
     }
 }
