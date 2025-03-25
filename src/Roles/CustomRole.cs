@@ -180,6 +180,8 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
             goto finishAssignment;
         }
 
+        MyPlayer.GetTeamInfo().MyRole = RealRole;
+
         // as impostor, its get a bit tricky.
         // we need to be wary of Noisemaker and Phantom since those cause issues if not replicated properly
         log.Trace($"Setting {MyPlayer.name} Role => {RealRole} | IsStartGame = {isStartOfGame}", "CustomRole::Assign");
@@ -204,6 +206,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
 
         RpcV3.Immediate(MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RealRole).Write(ProjectLotus.AdvancedRoleAssignment).SendInclusive(alliedPlayerClientIds);
         if (isStartOfGame) alliedPlayers.ForEach(p => p.GetTeamInfo().AddPlayer(MyPlayer.PlayerId, RealRole.IsImpostor()));
+        if (!isStartOfGame) alliedPlayers.ForEach(ap => RpcV3.Immediate(ap.NetId, RpcCalls.SetRole).Write((ushort)ap.GetTeamInfo().MyRole).Write(ProjectLotus.AdvancedRoleAssignment).Send(MyPlayer.GetClientId()));
 
         RpcV3.Immediate(MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RoleTypes.Crewmate).Write(ProjectLotus.AdvancedRoleAssignment).SendInclusive(nonAlliedImpostorClientIds);
         if (isStartOfGame) nonAlliedImpostors.ForEach(p => p.GetTeamInfo().AddVanillaCrewmate(MyPlayer.PlayerId));
@@ -235,7 +238,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         else if (Relationship(PlayerControl.LocalPlayer) is Relation.FullAllies && Faction.CanSeeRole(PlayerControl.LocalPlayer) || MyPlayer.IsHost()) MyPlayer.StartCoroutine(MyPlayer.CoSetRole(RealRole, ProjectLotus.AdvancedRoleAssignment));
         else MyPlayer.StartCoroutine(MyPlayer.CoSetRole(PlayerControl.LocalPlayer.GetVanillaRole().IsImpostor() ? RoleTypes.Crewmate : RoleTypes.Impostor, ProjectLotus.AdvancedRoleAssignment));
 
-        SyncOptions(new GameOptionOverride[] { new(Override.KillCooldown, 0.1f) }, true);
+        SyncOptions([new GameOptionOverride(Override.KillCooldown, 0.1f)], true);
         HudManager.Instance.SetHudActive(true);
     }
 
@@ -298,11 +301,10 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
             log.Warn("Error Showing Roles to Allies. Role Component does not exist.", "CustomRole::ShowRoleToTeammates");
             return;
         }
-        RoleComponent roleComponent = roleHolder[0];
         allies.Where(Faction.CanSeeRole).ForEach(a =>
         {
             log.Trace($"Showing Role {EnglishRoleName} to {a.name}", "ShowRoleToTeammates");
-            roleComponent.AddViewer(a);
+            roleHolder.ForEach(rc => rc.AddViewer(a));
         });
     }
 
