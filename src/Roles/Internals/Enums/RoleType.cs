@@ -4,5 +4,6 @@ public enum RoleType
 {
     Normal,
     Variation,
-    Transformation
+    Transformation,
+    DontShow
 }

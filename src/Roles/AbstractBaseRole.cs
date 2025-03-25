@@ -157,14 +157,26 @@ public abstract class AbstractBaseRole
 
         LinkedRoles().ForEach(lRole =>
         {
+            if (lRole.GetRoleType() is RoleType.DontShow)
+            {
+                Create();
+                return;
+            }
             optionBuilder.SubOption(_ =>
             {
+                Create();
+                return lRole.RoleOptions;
+            });
+            return;
+
+            void Create()
+            {
+
                 lRole.RoleOptions = lRole.GetGameOptionBuilder().IsHeader(false).Build();
                 lRole.Modify(new RoleModifier(lRole));
                 lRole.RoleOptions.Color = lRole.RoleColor;
                 lRole.SetupRoleActions();
-                return lRole.RoleOptions;
-            });
+            }
         });
 
         RoleOptions = optionBuilder.Build();
@@ -369,7 +381,7 @@ public abstract class AbstractBaseRole
     /// If you're looking to change the options from % chance to "Show" / "Hide" refer to <see cref="RoleFlags"/> on the child role.
     /// </summary>
     /// <returns>Linked Roles</returns>
-    public virtual List<CustomRole> LinkedRoles() => new();
+    public virtual List<CustomRole> LinkedRoles() => [];
 
     /// <summary>
     /// Force the path for the Role Image or Role Outfit.
