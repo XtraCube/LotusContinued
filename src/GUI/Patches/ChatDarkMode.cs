@@ -52,17 +52,17 @@ public class ChatDarkMode
 
             if (QuickChatIcon == null)
                 QuickChatIcon = __instance.GetComponentsInChildren<SpriteRenderer>(true).FirstOrDefault(c => c.name == "QuickChatIcon")!;
-            else
+            else if (!string.IsNullOrEmpty(QuickChatIcon.sprite.name))
                 QuickChatIcon.sprite = LotusAssets.LoadSprite("DarkTheme/DarkQuickChat.png");
 
             if (OpenBanMenuIcon == null)
                 OpenBanMenuIcon = __instance.GetComponentsInChildren<SpriteRenderer>(true).FirstOrDefault(c => c.name == "OpenBanMenuIcon")!;
-            else
+            else if (!string.IsNullOrEmpty(OpenBanMenuIcon.sprite.name))
                 OpenBanMenuIcon.sprite = LotusAssets.LoadSprite("DarkTheme/DarkKeyboard.png");
 
             if (OpenKeyboardIcon == null)
                 OpenKeyboardIcon = __instance.GetComponentsInChildren<SpriteRenderer>(true).FirstOrDefault(c => c.name == "OpenKeyboardIcon")!;
-            else
+            else if (!string.IsNullOrEmpty(OpenKeyboardIcon.sprite.name))
                 OpenKeyboardIcon.sprite = LotusAssets.LoadSprite("DarkTheme/DarkReport.png");
         }
         else __instance.freeChatField.textArea.outputText.color = Color.black;
