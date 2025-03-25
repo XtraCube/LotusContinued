@@ -127,6 +127,9 @@ public class EndGameResultPatch
             else gameInfoTextMesh.text += "No events for this session.";
         }
 
+        // The code onwards is so inefficient...
+        // but do I care? That's right, no. I do not.
+
         Object.FindObjectsOfType<PoolablePlayer>()
             .Where(p => p.transform.parent == __instance.transform)
             .Do(p => p.gameObject.Destroy());
@@ -147,17 +150,48 @@ public class EndGameResultPatch
         while (playersInRow > 0)
         {
             playersInRow = bottomRowCount - row * 2;
+            if (playersInRow <= 0) break;
 
             float startX = -(playersInRow - 1) * xSpacing / 2;
             float rowYBase = row * rowHeight;
             int midpoint = playersInRow / 2;
 
+            int[] positions = new int[playersInRow];
+
             for (int i = 0; i < playersInRow; i++)
             {
-                if (playerIndex >= cachedPlayerData.Count) break;
+                positions[i] = i;
+            }
 
-                float xPosition = startX + i * xSpacing;
-                int distanceFromMid = Mathf.Abs(i - midpoint);
+            int[] reorderedPositions = new int[playersInRow];
+
+            reorderedPositions[0] = midpoint;
+
+            int rightPos = midpoint + 1;
+            int leftPos = midpoint - 1;
+            int index = 1; // Start at 1 because we already placed the middle position
+
+            while (index < playersInRow)
+            {
+                // Place right player if within bounds
+                if (rightPos < playersInRow && index < playersInRow)
+                {
+                    reorderedPositions[index++] = rightPos++;
+                }
+
+                // Place left player if within bounds
+                if (leftPos >= 0 && index < playersInRow)
+                {
+                    reorderedPositions[index++] = leftPos--;
+                }
+            }
+
+            // create players
+            for (int i = 0; i < playersInRow && playerIndex < cachedPlayerData.Count; i++)
+            {
+                int posIndex = reorderedPositions[i];
+                float xPosition = startX + posIndex * xSpacing;
+                int distanceFromMid = Mathf.Abs(posIndex - midpoint);
 
                 float zPosition = zBase + distanceFromMid * 2f;
                 float yPosition = rowYBase - (midpoint - distanceFromMid) * .1f;
@@ -166,18 +200,18 @@ public class EndGameResultPatch
 
                 PoolablePlayer poolablePlayer = Object.Instantiate<PoolablePlayer>(__instance.PlayerPrefab, __instance.transform);
                 poolablePlayer.transform.localPosition = new Vector3(xPosition, yPosition -1.2f, zPosition) * 0.9f;
-                // float scale = Mathf.Lerp(1f, 0.65f, row / Mathf.Floor(bottomRowCount / 2)) * baseScale;
-                // float scale = Mathf.Lerp(baseScale, .65f, (playersInRow - distanceFromMid) / playersInRow) * 0.9f;
+
                 float scale = Mathf.Lerp(baseScale, 0.65f, (float)distanceFromMid / (playersInRow / 2)) * 0.9f;
                 Vector3 scaleVector = new(scale, scale, 1f);
                 poolablePlayer.transform.localScale = scaleVector;
 
+                bool shouldFlipX = (posIndex - midpoint) < 0;
                 if (cachedPlayerData2.IsDead)
                 {
                     poolablePlayer.SetBodyAsGhost();
-                    poolablePlayer.SetDeadFlipX((i - midpoint) < 0);
+                    poolablePlayer.SetDeadFlipX(shouldFlipX);
                 }
-                else poolablePlayer.SetFlipX((i - midpoint) < 0);
+                else poolablePlayer.SetFlipX(shouldFlipX);
 
                 poolablePlayer.UpdateFromPlayerOutfit(cachedPlayerData2.Outfit, PlayerMaterial.MaskType.None, cachedPlayerData2.IsDead, true, null, false);
                 if (flag) poolablePlayer.ToggleName(false);
@@ -248,7 +282,7 @@ public class EndGameResultPatch
         float elasped = 0f;
         while (elasped < LERP_DURATION)
         {
-            if (!Object.IsNativeObjectAlive(gameManager.gameObject) || !gameManager.gameObject.activeSelf) break;
+            if (gameManager == null || gameManager.gameObject == null || !Object.IsNativeObjectAlive(gameManager.gameObject) || !gameManager.gameObject.activeSelf) break;
             elasped += Time.deltaTime;
             float t = Mathf.Clamp01(EaseSineInOut(elasped / LERP_DURATION));
 
