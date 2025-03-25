@@ -54,7 +54,7 @@ public class CrewPostor : Engineer
                 .BindBool(b => refreshTasks = b)
                 .Build()));
 
-    protected override string ForceRoleImageDirectory() => "RoleImages/Imposter/crewpostor.png";
+    protected override string ForceRoleImageDirectory() => "RoleImages/Imposter/crewpostor.yaml";
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)

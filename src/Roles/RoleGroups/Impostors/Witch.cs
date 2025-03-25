@@ -114,7 +114,7 @@ public class Witch : Vanilla.Impostor
 
 
     [Localized(nameof(Witch))]
-    private static class Translations
+    public static class Translations
     {
         [Localized(nameof(CursedStatusDescription))]
         public static string CursedStatusDescription = "You have been hexed. Hexed players will die after the meeting unless the source of the hex is voted out.";

@@ -92,7 +92,7 @@ public class PlagueBearer : NeutralKillingBase
         indicatorRemotes.ForEach(remote => remote.Delete());
         var counterHolder = MyPlayer.NameModel().GetComponentHolder<CounterHolder>();
         if (counterHolder.Count > 0) counterHolder.RemoveAt(0);
-        Game.AssignRole(MyPlayer, Pestilence);
+        Game.CurrentGameMode.Assign(MyPlayer, Pestilence);
 
         Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(MyPlayer, Pestilence));
     }
@@ -115,7 +115,7 @@ public class PlagueBearer : NeutralKillingBase
             .OptionOverride(new IndirectKillCooldown(KillCooldown));
 
     [Localized(nameof(PlagueBearer))]
-    private static class Translations
+    public static class Translations
     {
         [Localized(nameof(InfectedHistoryMessage))]
         public static string InfectedHistoryMessage = "{0}::0 infected {1}::1.";
