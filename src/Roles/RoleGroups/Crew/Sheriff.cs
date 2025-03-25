@@ -43,7 +43,7 @@ public class Sheriff : Crewmate
 
     private static bool NeutralKillingCheck(CustomRole r) => r.SpecialType is SpecialType.NeutralKilling or SpecialType.Undead;
     private static bool NeutralCheck(CustomRole r) => r.SpecialType is SpecialType.Neutral;
-    private static bool MadmateCheck(CustomRole r) => r.Faction is Factions.Impostors.Madmates;
+    private static bool MadmateCheck(CustomRole r) => r.Faction is Lotus.Factions.Impostors.Madmates;
     public static List<(Func<CustomRole, bool> predicate, GameOptionBuilder builder)> RoleTypeBuilders = new()
     {
         (NeutralKillingCheck, new GameOptionBuilder()

@@ -46,7 +46,7 @@ public class Executioner : CustomRole
             if (p.PlayerId == MyPlayer.PlayerId) return false;
             IFaction faction = p.PrimaryRole().Faction;
             if (!canTargetImpostors && faction is ImpostorFaction) return false;
-            return canTargetNeutrals || faction is not Factions.Neutrals.Neutral;
+            return canTargetNeutrals || faction is not Lotus.Factions.Neutrals.Neutral;
         }).ToList().GetRandom();
         log.Trace($"Executioner ({MyPlayer.name}) Target: {target}");
 
