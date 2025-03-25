@@ -61,4 +61,13 @@ public static class GeneralOptionTranslations
 
     [Localized(nameof(Options))]
     public static string Options = "Options";
+
+    [Localized(nameof(Kill))]
+    public static string Kill = "Kill";
+
+    [Localized(nameof(Vent))]
+    public static string Vent = "Vent";
+
+    [Localized(nameof(Pet))]
+    public static string Pet = "Pet";
 }
