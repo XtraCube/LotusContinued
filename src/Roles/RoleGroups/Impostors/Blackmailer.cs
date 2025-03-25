@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using AmongUs.GameOptions;
 using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Chat;
@@ -21,8 +22,9 @@ using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Optionals;
-using static Lotus.Roles.RoleGroups.Impostors.Blackmailer.Translations;
+using static Lotus.Roles.RoleGroups.Impostors.Blackmailer.BlackmailerTranslations;
 using Lotus.API.Player;
+using Lotus.GUI;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -31,19 +33,39 @@ public class Blackmailer : Shapeshifter
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Blackmailer));
     private Remote<TextComponent>? blackmailingText;
     private Optional<PlayerControl> blackmailedPlayer = Optional<PlayerControl>.Null();
+    private bool inBlackmailingMode = true;
 
     private bool showBlackmailedToAll;
+    private bool usesShapeshifter;
 
     private int warnsUntilKick;
     private int currentWarnings;
 
+    [UIComponent(UI.Text)]
+    private string ModeDisplay() => usesShapeshifter ? "" : Color.red.Colorize(inBlackmailingMode ? BlackmailingMode : Witch.Translations.KillingModeText);
+
+
     [RoleAction(LotusActionType.Attack)]
-    public override bool TryKill(PlayerControl target) => base.TryKill(target);
+    public override bool TryKill(PlayerControl target)
+    {
+        if (usesShapeshifter | !inBlackmailingMode) return base.TryKill(target);
+
+        InteractionResult result = MyPlayer.InteractWith(target, LotusInteraction.HostileInteraction.Create(this));
+        if (result is InteractionResult.Halt) return false;
+        TryBlackmail(target);
+        return false;
+    }
 
     [RoleAction(LotusActionType.Shapeshift)]
     public void Blackmail(PlayerControl target, ActionHandle handle)
     {
         handle.Cancel();
+        if (!usesShapeshifter) return;
+        TryBlackmail(target);
+    }
+
+    private void TryBlackmail(PlayerControl target)
+    {
         blackmailingText?.Delete();
         blackmailedPlayer = Optional<PlayerControl>.NonNull(target);
         TextComponent textComponent = new(new LiveString(BlackmailedText, Color.red), Game.InGameStates, viewers: MyPlayer);
@@ -64,7 +86,7 @@ public class Blackmailer : Shapeshifter
         if (!blackmailedPlayer.Exists()) return;
         List<PlayerControl> allPlayers = showBlackmailedToAll
             ? Players.GetAllPlayers().ToList()
-            : blackmailedPlayer.Transform(p => new List<PlayerControl> { p, MyPlayer }, () => new List<PlayerControl> { MyPlayer });
+            : blackmailedPlayer.Transform<List<PlayerControl>>(p => [p, MyPlayer], () => [MyPlayer]);
         if (!blackmailingText?.IsDeleted() ?? false) blackmailingText?.Get().SetViewerSupplier(() => allPlayers);
         blackmailedPlayer.IfPresent(p =>
         {
@@ -80,6 +102,13 @@ public class Blackmailer : Shapeshifter
     {
         blackmailedPlayer = Optional<PlayerControl>.Null();
         blackmailingText?.Delete();
+    }
+
+    [RoleAction(LotusActionType.OnPet)]
+    private void TrySwitchMode()
+    {
+        if (usesShapeshifter) return;
+        inBlackmailingMode = !inBlackmailingMode;
     }
 
     [RoleAction(LotusActionType.Chat, ActionFlag.GlobalDetector | ActionFlag.WorksAfterDeath)]
@@ -108,35 +137,38 @@ public class Blackmailer : Shapeshifter
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
-            .SubOption(sub => sub.KeyName("Warnings Until Death", Translations.Options.WarningsUntilDeath)
+            .SubOption(sub => sub.KeyName("Warnings Until Death", BlackmailerTranslations.Options.WarningsUntilDeath)
                 .AddIntRange(0, 5, 1)
                 .BindInt(i => warnsUntilKick = i)
                 .Build())
-            .SubOption(sub => sub.KeyName("Show Blackmailed to All", Translations.Options.ShowBlackmailedToAll)
-                .AddOnOffValues()
+            .SubOption(sub => sub.KeyName("Show Blackmailed to All", BlackmailerTranslations.Options.ShowBlackmailedToAll)
+                .AddBoolean()
+                .BindBool(b => showBlackmailedToAll = b)
+                .Build())
+            .SubOption(sub => sub.KeyName("Uses Shapeshifter", BlackmailerTranslations.Options.BlackmailerIsSSBased)
+                .AddBoolean()
                 .BindBool(b => showBlackmailedToAll = b)
                 .Build());
 
+    protected override RoleModifier Modify(RoleModifier roleModifier) => base.Modify(roleModifier)
+        .VanillaRole(usesShapeshifter ? RoleTypes.Shapeshifter : RoleTypes.Impostor)
+        .RoleAbilityFlags(usesShapeshifter ? RoleAbilityFlags : RoleAbilityFlags & RoleAbilityFlag.UsesPet);
+
     [Localized(nameof(Blackmailer))]
-    public static class Translations
+    public static class BlackmailerTranslations
     {
-        [Localized(nameof(BlackmailedMessage))]
-        public static string BlackmailedMessage = "You have been blackmailed! Sending a chat message will kill you.";
+        [Localized(nameof(BlackmailedMessage))] public static string BlackmailedMessage = "You have been blackmailed! Sending a chat message will kill you.";
+        [Localized(nameof(WarningMessage))] public static string WarningMessage = "You are not allowed to speak! If you speak again you may be killed.";
+        [Localized(nameof(BlackmailedText))] public static string BlackmailedText = "BLACKMAILED";
 
-        [Localized(nameof(WarningMessage))]
-        public static string WarningMessage = "You are not allowed to speak! If you speak again you may be killed.";
-
-        [Localized(nameof(BlackmailedText))]
-        public static string BlackmailedText = "BLACKMAILED";
+        [Localized(nameof(BlackmailingMode))] public static string BlackmailingMode = "Blackmailing";
 
         [Localized(ModConstants.Options)]
         public static class Options
         {
-            [Localized(nameof(WarningsUntilDeath))]
-            public static string WarningsUntilDeath = "Warnings Until Death";
-
-            [Localized(nameof(ShowBlackmailedToAll))]
-            public static string ShowBlackmailedToAll = "Show Blackmailed to All";
+            [Localized(nameof(WarningsUntilDeath))] public static string WarningsUntilDeath = "Warnings Until Death";
+            [Localized(nameof(ShowBlackmailedToAll))] public static string ShowBlackmailedToAll = "Show Blackmailed to All";
+            [Localized(nameof(BlackmailerIsSSBased))] public static string BlackmailerIsSSBased = "Blackmailer Uses Shapeshifter";
         }
     }
 }
