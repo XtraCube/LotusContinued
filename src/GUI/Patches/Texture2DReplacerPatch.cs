@@ -15,7 +15,8 @@ public class Texture2DReplacerPatch
 {
     public static readonly string[] ReplacedGraphics =
     [
-        "GameSettingReworkAssets", "UiButtons", "LobbyReworkAssets", "MainMenuSprites", "OldButtons"
+        "GameSettingReworkAssets", "LobbyReworkAssets", "MainMenuSprites", "OldButtons"
+        //, "UiButtons" // This texture got changed... so to prevent issues, we just won't replace it for now.
     ];
 
     public const string StartPath = "Replaced/";

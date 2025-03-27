@@ -8,6 +8,7 @@ using Lotus.Utilities;
 using Lotus.Extensions;
 using VentLib.Networking.RPC;
 using VentLib.Utilities.Attributes;
+using VentLib.Utilities.Extensions;
 using EnumerableExtensions = VentLib.Utilities.Extensions.EnumerableExtensions;
 
 namespace Lotus.Managers.Reporting;

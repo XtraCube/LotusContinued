@@ -54,15 +54,15 @@ public static class VictoryScreen
     {
         return reason switch
         {
-            GameOverReason.HumansByVote => false,
-            GameOverReason.HumansByTask => false,
-            GameOverReason.ImpostorByVote => true,
-            GameOverReason.ImpostorByKill => true,
-            GameOverReason.ImpostorBySabotage => true,
+            GameOverReason.CrewmatesByVote => false,
+            GameOverReason.CrewmatesByTask => false,
+            GameOverReason.ImpostorsByVote => true,
+            GameOverReason.ImpostorsByKill => true,
+            GameOverReason.ImpostorsBySabotage => true,
             GameOverReason.ImpostorDisconnect => false,
-            GameOverReason.HumansDisconnect => true,
-            GameOverReason.HideAndSeek_ByTimer => false,
-            GameOverReason.HideAndSeek_ByKills => true,
+            GameOverReason.CrewmateDisconnect => true,
+            GameOverReason.HideAndSeek_CrewmatesByTimer => false,
+            GameOverReason.HideAndSeek_ImpostorsByKills => true,
             _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, null)
         };
     }

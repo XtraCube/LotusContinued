@@ -68,14 +68,14 @@ public class CheckEndGamePatch
 
         GameOverReason reason = winDelegate.GetWinReason().ReasonType switch
         {
-            ReasonType.FactionLastStanding => impostorsWon ? GameOverReason.ImpostorByKill : GameOverReason.HumansByVote,
-            ReasonType.RoleSpecificWin => impostorsWon ? GameOverReason.ImpostorByKill : GameOverReason.HumansByVote,
-            ReasonType.TasksComplete => GameOverReason.HumansByTask,
-            ReasonType.Sabotage => GameOverReason.ImpostorBySabotage,
+            ReasonType.FactionLastStanding => impostorsWon ? GameOverReason.ImpostorsByKill : GameOverReason.CrewmatesByVote,
+            ReasonType.RoleSpecificWin => impostorsWon ? GameOverReason.ImpostorsByKill : GameOverReason.CrewmatesByVote,
+            ReasonType.TasksComplete => GameOverReason.CrewmatesByTask,
+            ReasonType.Sabotage => GameOverReason.ImpostorsBySabotage,
             ReasonType.NoWinCondition => GameOverReason.ImpostorDisconnect,
             ReasonType.HostForceEnd => GameOverReason.ImpostorDisconnect,
-            ReasonType.GameModeSpecificWin => GameOverReason.ImpostorByKill,
-            ReasonType.SoloWinner => GameOverReason.ImpostorByKill,
+            ReasonType.GameModeSpecificWin => GameOverReason.ImpostorsByKill,
+            ReasonType.SoloWinner => GameOverReason.ImpostorsByKill,
         };
 
 
