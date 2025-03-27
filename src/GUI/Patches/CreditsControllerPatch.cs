@@ -37,8 +37,8 @@ public static class CreditsControllerPatch
     }
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.LoadCredits))]
-    public static void LoadCreditsPrefix(CreditsController __instance) => __instance.CSVCredits = LotusAssets.LoadAsset<TextAsset>("Credits/" +
-        (TestCredits ? "testcredits" : "plcredits") + ".txt");
+    public static void LoadCreditsPrefix(CreditsController __instance) => DestroyableSingleton<ReferenceDataManager>.Instance.Refdata.credits =
+        LotusAssets.LoadAsset<TextAsset>("Credits/" + (TestCredits ? "testcredits" : "plcredits") + ".txt");
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.Start))]
     public static bool StartPrefix(CreditsController __instance)
@@ -93,6 +93,13 @@ public static class CreditsControllerPatch
             }
         }
         return false;
+    }
+
+    [QuickPostfix(typeof(CreditsController), nameof(CreditsController.OnEnable))]
+    public static void CreditsOnEnable()
+    {
+        var playOnlineAnchor = GameObject.Find("PlayOnlineAnchor");
+        if (playOnlineAnchor != null) playOnlineAnchor.SetActive(false);
     }
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.FixedUpdate))]

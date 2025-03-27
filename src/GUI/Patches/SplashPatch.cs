@@ -28,6 +28,8 @@ class SplashPatch
 
     private static GameObject howToPlayButton = null!;
 
+    private static bool onlineBgActive;
+
     private static (string name, float pixelsPerUnit)[] buttonsToFind = [
         ("PlayButton", 105), ("AcountButton", 100), ("SettingsButton", 100), ("BottomButtonBounds/CreditsButton", 100), ("BottomButtonBounds/ExitGameButton", 100)
     ]; // yes "Account" is mispelled lmao
@@ -179,12 +181,66 @@ class SplashPatch
         // inactiveSpriteRender.color = new Color(1f, 0f, 0.35f);
         // inactiveSpriteRender.sprite = activeSpriteRender.sprite;
 
+        var playBG = new GameObject("PlayOnlineAnchor");
+        playBG.transform.localPosition = new Vector3(1.5f, .4f, 0f);
+        playBG.transform.localScale = Vector3.one;
+        playBG.gameObject.SetActive(false);
+
+        var bgRenderer = playBG.AddComponent<SpriteRenderer>();
+        bgRenderer.sprite = LotusAssets.LoadSprite("Credits/Images/background.png", 180);
+
         __instance.playButton.activeTextColor = Color.white;
         __instance.playButton.inactiveTextColor = Color.white;
-        __instance.playButton.OnClick = __instance.PlayOnlineButton.OnClick;
+
+        var enterCodeButtons = __instance.FindChild<Transform>("EnterCodeButtons", true).gameObject;
+        enterCodeButtons.GetComponent<AspectPosition>().Destroy();
+        enterCodeButtons.transform.SetParent(playBG.transform);
+
+        var onlineButtons = __instance.FindChild<Transform>("OnlineButtons", true).gameObject;
+        onlineButtons.GetComponent<AspectPosition>().Destroy();
+        onlineButtons.transform.SetParent(playBG.transform);
+
+        SpriteRenderer onlineDivider = onlineButtons.FindChild<SpriteRenderer>("Divider");
+        onlineDivider.transform.localPosition = new(0, 1.84f, 0f);
+        onlineDivider.transform.localScale = new(0.8f, 1f, 1f);
+        onlineButtons.transform.localPosition = new(0, -.35f, -9);
+        {
+            onlineButtons.FindChild<AspectPosition>("Text_TMP").DistanceFromEdge = new(-.3f, 0f, 0f);
+            onlineButtons.FindChild<PassiveButton>("BackButton").gameObject.SetActive(false);
+
+            PassiveButton enterCodeButton = onlineButtons.FindChild<PassiveButton>("Enter Code Button");
+            enterCodeButton.Modify(() =>
+            {
+                onlineButtons.gameObject.SetActive(false);
+                enterCodeButtons.gameObject.SetActive(true);
+            });
+        }
+
+        SpriteRenderer codeDivider = enterCodeButtons.FindChild<SpriteRenderer>("Divider");
+        codeDivider.transform.localPosition = new(0, 1.84f, 0f);
+        codeDivider.transform.localScale = new(0.61f, 1f, 1f);
+        enterCodeButtons.transform.localPosition = new(0, -.3f, -9);
+        {
+            PassiveButton backButton = enterCodeButtons.FindChild<PassiveButton>("BackButton");
+            backButton.Modify(() =>
+            {
+                onlineButtons.gameObject.SetActive(true);
+                enterCodeButtons.gameObject.SetActive(false);
+            });
+        }
+
+        onlineBgActive = false;
+        __instance.playButton.Modify(() =>
+        {
+            __instance.ResetScreen();
+            onlineBgActive = !onlineBgActive;
+            playBG.gameObject.SetActive(onlineBgActive);
+            onlineButtons.gameObject.SetActive(true);
+            enterCodeButtons.gameObject.SetActive(false);
+        });
         Async.Schedule(() => __instance.playButton.buttonText.text = "Play Online", 0.001f);
 
-        // you dont even want to know the pain we went through to do this...
+        // you don't even want to know the pain we went through to do this...
         buttonsToFind.ForEach(buttonInfo =>
         {
             GameObject buttonObject = GameObject.Find("Main Buttons/" + buttonInfo.name);
@@ -269,6 +325,10 @@ class SplashPatch
         // __instance.myAccountButton.activeSprites.GetComponent<SpriteRenderer>().color = new Color(1f, 0f, 0.85f);
         __instance.myAccountButton.activeTextColor = Color.white;
         __instance.myAccountButton.inactiveTextColor = Color.white;
+        __instance.myAccountButton.OnClick.AddListener((Action)(() =>
+        {
+            playBG.SetActive(false);
+        }));
 
         // __instance.settingsButton.inactiveSprites.GetComponent<SpriteRenderer>().color = new Color(1f, 0f, 0.85f);
         // __instance.settingsButton.activeSprites.GetComponent<SpriteRenderer>().color = new Color(1f, 0f, 0.85f);
@@ -313,6 +373,13 @@ class SplashPatch
         if (!ProjectLotus.ModUpdater.HasUpdate) updateButton.gameObject.SetActive(false);*/
         FriendsListManager.Instance.StopPolling();
         FriendsListManager.Instance.OnSignOut();
+    }
+
+    [QuickPostfix(typeof(MainMenuManager), nameof(MainMenuManager.ResetScreen))]
+    public static void ResetScreenPostfix(MainMenuManager __instance)
+    {
+        var playOnlineAnchor = GameObject.Find("PlayOnlineAnchor");
+        // if (playOnlineAnchor != null) playOnlineAnchor.SetActive(false);
     }
 
     private static GameObject InitializeSplash()
