@@ -29,7 +29,11 @@ public class BugReportCommand : ICommandReceiver
     [Localized(nameof(ReportingBug))] public static string ReportingBug = "Your request has went through and we are now reporting your bug. Thanks!";
     [Localized(nameof(ReportedBug))] public static string ReportedBug = "Your bug has been successfully reported. Again, thank you!";
     [Localized(nameof(ReportSuggest))] public static string ReportSuggest = "{0} suggests you to report \"{1}\".";
+    [Localized(nameof(UploadingLog))] public static string UploadingLog = "Uploading log file... (Chunk {0}/{1})";
+
     private const string boundary = "---------------------------7d5e3d6f4509c";
+    private const int CHUNK_SIZE = 4 * 1024 * 1024; // 4 MB in bytes
+
     private static readonly List<byte> reportingPlayerIds = new();
     public void Receive(PlayerControl source, CommandContext context)
     {
@@ -66,57 +70,92 @@ public class BugReportCommand : ICommandReceiver
         bool flag = PrivacyPolicyInfo.Instance != null && PrivacyPolicyInfo.Instance.AnonymousBugReports;
         if (source == PlayerControl.LocalPlayer && message == "log")
         {
-            reportingPlayerIds.Remove(source.PlayerId);
             FileInfo? lastLogFile = GetLatestLogFile();
             if (lastLogFile == null)
             {
                 LogManager.SendInGame("Could not find latest log file. Please make sure logs are enabled.");
+                reportingPlayerIds.Remove(source.PlayerId);
                 yield break;
             }
 
             byte[] fileData = File.ReadAllBytes(lastLogFile.FullName);
             string fileName = lastLogFile.Name;
 
-            // why can't we just use a WWWFORM. like whyyyyyy man
-            UnityWebRequest request = UnityWebRequest.Post(NetConstants.Host + "uploadlog", UnityWebRequest.kHttpVerbPOST);
-            StringBuilder sb = new();
-            sb.Append("--" + boundary + "\r\n");
-            sb.Append("Content-Disposition: form-data; name=\"logFile\"; filename=\"" + fileName + "\"\r\n"); // Use "logFile" as the field name
-            sb.Append("Content-Type: application/octet-stream\r\n\r\n");
+            // Calculate number of chunks
+            int totalChunks = (int)Math.Ceiling((double)fileData.Length / CHUNK_SIZE);
+            bool success = true;
+            string? logMessage = "";
 
-            // Prepare the headers and file data
-            byte[] headerBytes = Encoding.UTF8.GetBytes(sb.ToString());
-            byte[] footerBytes = Encoding.UTF8.GetBytes("\r\n--" + boundary + "\r\n" +
-                "Content-Disposition: form-data; name=\"hostName\"\r\n\r\n" + GetName() + "\r\n" +
-                "--" + boundary + "--\r\n");
-
-            // Combine header, file data, and footer
-            byte[] bodyRaw = new byte[headerBytes.Length + fileData.Length + footerBytes.Length];
-            Buffer.BlockCopy(headerBytes, 0, bodyRaw, 0, headerBytes.Length);
-            Buffer.BlockCopy(fileData, 0, bodyRaw, headerBytes.Length, fileData.Length);
-            Buffer.BlockCopy(footerBytes, 0, bodyRaw, headerBytes.Length + fileData.Length, footerBytes.Length);
-
-            // Set up the request
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "multipart/form-data; boundary=" + boundary);
-
-            // Send the request and wait for a response
-            yield return request.SendWebRequest();
-
-            // Handle the result
-            if (request.result == UnityWebRequest.Result.Success)
+            for (int chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++)
             {
-                ChatHandler.Of(ReportedBug).Send(source);
-            }
-            else
-            {
-                ChatHandler.Of("Result: {0}\nError: {1}\nResponseCode: {2}\nSever Response: {3}".Formatted(request.result.ToString(), request.error,
-                    request.responseCode, request.downloadHandler.text)).LeftAlign().Send(source);
-            }
+                // Update user on upload progress
+                ChatHandler.Of(UploadingLog.Formatted(chunkIndex + 1, totalChunks)).Send(source);
 
+                // Calculate chunk size and offset
+                int offset = chunkIndex * CHUNK_SIZE;
+                int currentChunkSize = Math.Min(CHUNK_SIZE, fileData.Length - offset);
+
+                // Create chunk data
+                byte[] chunkData = new byte[currentChunkSize];
+                Buffer.BlockCopy(fileData, offset, chunkData, 0, currentChunkSize);
+
+                // Prepare multipart form data
+                UnityWebRequest request = UnityWebRequest.Post(NetConstants.Host + "uploadlog", UnityWebRequest.kHttpVerbPOST);
+                StringBuilder sb = new();
+                sb.Append("--" + boundary + "\r\n");
+                sb.Append("Content-Disposition: form-data; name=\"logFile\"; filename=\"" + fileName + ".part" + (chunkIndex + 1) + "of" + totalChunks + "\"\r\n");
+                sb.Append("Content-Type: application/octet-stream\r\n\r\n");
+
+                // Add additional metadata for chunked upload
+                string metadataFooter = "\r\n--" + boundary + "\r\n" +
+                    "Content-Disposition: form-data; name=\"hostName\"\r\n\r\n" + GetName() + "\r\n" +
+                    "--" + boundary + "\r\n" +
+                    "Content-Disposition: form-data; name=\"chunkIndex\"\r\n\r\n" + chunkIndex + "\r\n" +
+                    "--" + boundary + "\r\n" +
+                    "Content-Disposition: form-data; name=\"totalChunks\"\r\n\r\n" + totalChunks + "\r\n" +
+                    "--" + boundary + "\r\n" +
+                    "Content-Disposition: form-data; name=\"originalFileName\"\r\n\r\n" + fileName + "\r\n" +
+                    "--" + boundary + "--\r\n";
+
+                // Prepare the headers and file data
+                byte[] headerBytes = Encoding.UTF8.GetBytes(sb.ToString());
+                byte[] footerBytes = Encoding.UTF8.GetBytes(metadataFooter);
+
+                // Combine header, chunk data, and footer
+                byte[] bodyRaw = new byte[headerBytes.Length + chunkData.Length + footerBytes.Length];
+                Buffer.BlockCopy(headerBytes, 0, bodyRaw, 0, headerBytes.Length);
+                Buffer.BlockCopy(chunkData, 0, bodyRaw, headerBytes.Length, chunkData.Length);
+                Buffer.BlockCopy(footerBytes, 0, bodyRaw, headerBytes.Length + chunkData.Length, footerBytes.Length);
+
+                // Set up the request
+                request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+                // Send the request and wait for a response
+                yield return request.SendWebRequest();
+
+                // Handle the result for each chunk
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    success = false;
+                    logMessage += "Result: {0}\nError: {1}\nResponseCode: {2}\nSever Response: {3}\n".Formatted(
+                        request.result.ToString(), request.error, request.responseCode, request.downloadHandler.text);
+                    request.Dispose();
+                    break;
+                }
+
+                request.Dispose();
+                yield return new WaitForSeconds(0.5f);
+            }
+            if (success)ChatHandler.Of(ReportedBug).Send(source);
+            else ChatHandler.Of(FailedReport.Formatted(logMessage)).LeftAlign().Send(source);
+
+
+            reportingPlayerIds.Remove(source.PlayerId);
             yield break;
         }
+
         if (string.IsNullOrEmpty(message) || message.Length < 7)
         {
             reportingPlayerIds.Remove(source.PlayerId);
@@ -166,7 +205,7 @@ public class BugReportCommand : ICommandReceiver
 
     public static FileInfo? GetLatestLogFile()
     {
-        DirectoryInfo logsDirectory = new("logs");
+        DirectoryInfo logsDirectory = new("log");
         if (!logsDirectory.Exists) return null;
         FileInfo[] logs = logsDirectory.GetFiles();
         if (logs.Length == 0) return null;
