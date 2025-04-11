@@ -1,15 +1,21 @@
 using System.Collections.Generic;
+using System.Linq;
 using AmongUs.Data;
 using AmongUs.GameOptions;
 using HarmonyLib;
 using InnerNet;
 using Lotus.API;
+using Lotus.API.Player;
+using Lotus.Chat;
 using Lotus.Options.General;
 using Lotus.Options;
 using UnityEngine;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities;
 using Lotus.Logging;
+using Lotus.Roles;
+using Lotus.Roles.Managers.Interfaces;
+using VentLib.Localization.Attributes;
 
 namespace Lotus.Patches;
 
@@ -74,8 +80,13 @@ public static class GameStartManagerPatch
     }
 }
 [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.BeginGame))]
+[Localized("PetWarning")]
 public class GameStartRandomMap
 {
+    [Localized(nameof(WarningToHost))] public static string WarningToHost = "The following players do not have pets: {0}\nThe following enabled roles require pet: {1}";
+    [Localized(nameof(WarningToPlayer))] public static string WarningToPlayer = "There are roles enabled that have pets. Please equip one in the cosmetics area.";
+    [Localized(nameof(WarningTitle))] public static string WarningTitle = "⚠ WARNING ⚠";
+
     public static bool Prefix(GameStartManager __instance)
     {
         if (__instance.startState != GameStartManager.StartingStates.NotStarting)
@@ -83,6 +94,30 @@ public class GameStartRandomMap
             return false;
         }
         if (GeneralOptions.AdminOptions.HostGM) LogManager.SendInGame("[Info] GM is Enabled");
+
+        List<PlayerControl> playersWithoutPets = Players.GetAllPlayers()
+            .Where(p => p.cosmetics?.CurrentPet?.Data?.ProductId == "pet_EmptyPet")
+            .ToList();
+        if (playersWithoutPets.Any())
+        {
+            // Some players do not have pets.
+            List<CustomRole> rolesWithPets = IRoleManager.Current.AllCustomRoles()
+                .Where(r => r.RoleAbilityFlags.HasFlag(RoleAbilityFlag.UsesPet))
+                .Where(r => r.Count > 0 && r.Chance > 0)
+                .ToList();
+            if (rolesWithPets.Any())
+            {
+                // We have roles with pets.
+                playersWithoutPets.ForEach(p =>
+                {
+                    ChatHandler.Of(WarningToPlayer, Color.yellow.Colorize(WarningTitle)).Send(p);
+                });
+                ChatHandler.Of(WarningToHost.Formatted(
+                        playersWithoutPets.Join(p => p.name),
+                        rolesWithPets.Join(r => r.RoleName)),
+                    Color.yellow.Colorize(WarningTitle)).Send(PlayerControl.LocalPlayer);
+            }
+        }
 
         __instance.ReallyBegin(false);
         return false;

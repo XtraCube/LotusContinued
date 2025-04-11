@@ -35,6 +35,8 @@ using Lotus.API.Player;
 using Lotus.Managers.Blackscreen.Interfaces;
 using Lotus.Managers.Blackscreen;
 using Lotus.API.Vanilla.Meetings;
+using Lotus.GUI;
+using Lotus.Logging;
 using VentLib.Lobbies;
 using Lotus.Network;
 using Lotus.RPC;
@@ -58,8 +60,8 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public const string MajorVersion = "1";
     public const string MinorVersion = "1"; // Update with each release
-    public const string PatchVersion = "2";
-    public const string BuildNumber = "0046";
+    public const string PatchVersion = "3";
+    public const string BuildNumber = "0182";
 
     public static string PluginVersion = typeof(ProjectLotus).Assembly.GetName().Version!.ToString();
 
@@ -67,7 +69,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public static readonly string ModName = "Project Lotus";
     public static readonly string ModColor = "#4FF918";
-    public static readonly string DevVersionStr = "Dev February 23 2025";
+    public static readonly string DevVersionStr = "Dev March 25 2025";
 
     public static bool DevVersion;
 
@@ -112,7 +114,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
             ModUpdateMenu.AddUpdateItem("VentFrameworkContinued", null, ex => ModUpdater.Update(ventAssembly, ex)!);
     }
 
-    public static NormalGameOptionsV08 NormalOptions => GameOptionsManager.Instance.currentNormalGameOptions;
+    public static NormalGameOptionsV09 NormalOptions => GameOptionsManager.Instance.currentNormalGameOptions;
 
     public static GameModeManager GameModeManager = null!;
     public static List<byte> ResetCamPlayerList = null!;
@@ -120,13 +122,12 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public void SetBlackscreenResolver(Func<MeetingDelegate, IBlackscreenResolver> newResolver)
     {
-        log.Debug($"{Assembly.GetCallingAssembly().GetName().Name} overrided the current blackscreen resolver.");
+        log.Debug($"{Assembly.GetCallingAssembly().GetName().Name} overrode the current blackscreen resolver.");
         GetNewBlackscreenResolver = newResolver;
     }
 
     public override void Load()
     {
-
         _harmony = new Harmony(Id);
         //Profilers.Global.SetActive(false);
         log.Info($"AmongUs Version - {Application.version}");
@@ -150,8 +151,8 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
         SearchBarController.SetEnabled(true);
         SearchBarController.SetSearchInfo(new SearchBar(
-            () => AssetLoader.LoadLotusSprite("searchbar.png", 300, true),
-            () => AssetLoader.LoadLotusSprite("searchicon.png", 100, true),
+            () => LotusAssets.LoadSprite("searchbar.png", 300f),
+            () => LotusAssets.LoadSprite("searchicon.png", 100f),
             greenOnHover: false
         ));
         LobbyChecker.AddEndpoint(new LotusLobbyEndpoints(), false); // do not replace all, so default endpoint is still sent.
@@ -188,8 +189,6 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
         }
         if (version is not NoVersion)
         {
-            //ModRPC rpc = Vents.FindRPC((uint)ModCalls.SendOptionPreview)!;
-            //rpc.Send(new[] { player.GetClientId() }, new BatchList<Option>(OptionManager.GetManager().GetOptions()));
             ModVersion.AddVersionShowerToPlayer(player, version);
             Players.GetAllPlayers()
                 .Where(p => p.PlayerId != player.PlayerId && (p.IsModded() | p.IsHost()))

@@ -17,6 +17,7 @@ using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using AmongUs.GameOptions;
 using Lotus.Managers.Blackscreen.Interfaces;
+using Lotus.Victory.Patches;
 
 namespace Lotus.Managers.Blackscreen;
 

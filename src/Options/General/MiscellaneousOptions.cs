@@ -43,6 +43,7 @@ public class MiscellaneousOptions
     private bool randomMapOn;
 
     public List<GameOption> AllOptions = new();
+    public GameOption BlackscreenOption;
 
     public MiscellaneousOptions()
     {
@@ -155,6 +156,7 @@ public class MiscellaneousOptions
                 if (BlackscreenResolvers.TryGetValue(s, out Action? onSelect)) onSelect();
             })
             .Build());
+        BlackscreenOption = AllOptions.Last();
 
         AllOptions.Add(new GameOptionBuilder()
             .Builder("Event Log", _optionColor)

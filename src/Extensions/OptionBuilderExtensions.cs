@@ -1,3 +1,4 @@
+using System;
 using Lotus.Options;
 using VentLib.Options.UI;
 
@@ -5,6 +6,7 @@ namespace Lotus.Extensions;
 
 public static class GameOptionBuilderExtensions
 {
+    [Obsolete("Please use AddBoolean(bool) instead, that gives a checkmark instead of +/-.")]
     public static GameOptionBuilder AddOnOffValues(this GameOptionBuilder builder, bool defaultOn = true)
     {
         return builder.Value(val =>

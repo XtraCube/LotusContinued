@@ -28,6 +28,8 @@ class SplashPatch
 
     private static GameObject howToPlayButton = null!;
 
+    private static bool onlineBgActive;
+
     private static (string name, float pixelsPerUnit)[] buttonsToFind = [
         ("PlayButton", 105), ("AcountButton", 100), ("SettingsButton", 100), ("BottomButtonBounds/CreditsButton", 100), ("BottomButtonBounds/ExitGameButton", 100)
     ]; // yes "Account" is mispelled lmao
@@ -39,7 +41,7 @@ class SplashPatch
         if ((AmongUsLogo = GameObject.Find("LOGO-AU")) != null)
         {
             AmongUsLogo.transform.localPosition = new Vector3(0.008f, -0.3125f, 0f);
-            AmongUsLogo.GetComponent<SpriteRenderer>().sprite = AssetLoader.LoadLotusSprite("main_menu.newautitle.png", 110);
+            AmongUsLogo.GetComponent<SpriteRenderer>().sprite = LotusAssets.LoadSprite("main_menu/newautitle.png", 110);
             AmongUsLogo.transform.parent.GetComponent<AspectSize>().Destroy();
             Async.Schedule(() => AmongUsLogo.transform.localScale = new Vector3(0.35f, 0.35f, 1f), 0.01f);
         }
@@ -99,8 +101,8 @@ class SplashPatch
         leftPanel.FindChild<SpriteRenderer>("Divider").enabled = false;
         leftPanel.GetComponentsInChildren<SpriteRenderer>(true).Where(r => r.name == "Shine").ForEach(r => r.enabled = false);
 
-        PassiveButton inventoryButton = MakeIconButton(__instance.inventoryButton, new Vector3(0.26f, 1.2f, 1f), AssetLoader.LoadLotusSprite("main_menu.InventoryIconInactive.png", 100),
-            activeSprite: AssetLoader.LoadLotusSprite("main_menu.InventoryIconHighlighted.png", 100));
+        PassiveButton inventoryButton = MakeIconButton(__instance.inventoryButton, new Vector3(0.26f, 1.2f, 1f), LotusAssets.LoadSprite("main_menu/InventoryIconInactive.png"),
+            activeSprite: LotusAssets.LoadSprite("main_menu/InventoryIconHighlighted.png"));
         inventoryButton.transform.localPosition = new Vector3(5.25f, -1.96f, 0f);
 
         PassiveButton discordButton = Object.Instantiate(inventoryButton, __instance.transform);
@@ -118,8 +120,8 @@ class SplashPatch
                 discordRenderer = discordIcon.AddComponent<SpriteRenderer>();
                 discordIcon.transform.localScale = new Vector3(1.7f, 1f, 1f);
             }
-            Sprite activeSprite = AssetLoader.LoadLotusSprite("main_menu.DiscordHighlighted.png", 200);
-            Sprite inactiveSprite = AssetLoader.LoadLotusSprite("main_menu.DiscordInactive.png", 200);
+            Sprite activeSprite = LotusAssets.LoadSprite("main_menu/DiscordHighlighted.png", 200);
+            Sprite inactiveSprite = LotusAssets.LoadSprite("main_menu/DiscordInactive.png", 200);
             ogRender.sprite = activeSprite;
             discordButton.activeSprites = null;
             discordButton.OnMouseOver = new UnityEngine.Events.UnityEvent();
@@ -147,8 +149,8 @@ class SplashPatch
                 websiteRenderer = websiteIcon.AddComponent<SpriteRenderer>();
                 websiteIcon.transform.localScale = new Vector3(1f, 1f, 1f);
             }
-            Sprite activeSprite = AssetLoader.LoadLotusSprite("main_menu.WebsiteHighlighted.png", 100);
-            Sprite inactiveSprite = AssetLoader.LoadLotusSprite("main_menu.WebsiteInactive.png", 100);
+            Sprite activeSprite = LotusAssets.LoadSprite("main_menu/WebsiteHighlighted.png");
+            Sprite inactiveSprite = LotusAssets.LoadSprite("main_menu/WebsiteInactive.png");
             ogRender.sprite = activeSprite;
             websiteButton.activeSprites = null;
             websiteButton.OnMouseOver = new UnityEngine.Events.UnityEvent();
@@ -161,12 +163,12 @@ class SplashPatch
         }
         websiteButton.name = "WebsiteButton";
 
-        PassiveButton shopButton = MakeIconButton(__instance.shopButton, new Vector3(0.26f, 1.2f, 1f), AssetLoader.LoadLotusSprite("main_menu.ShopIconInactive.png", 100),
-            activeSprite: AssetLoader.LoadLotusSprite("main_menu.ShopIconHighlighted.png", 100));
+        PassiveButton shopButton = MakeIconButton(__instance.shopButton, new Vector3(0.26f, 1.2f, 1f), LotusAssets.LoadSprite("main_menu/ShopIconInactive.png"),
+            activeSprite: LotusAssets.LoadSprite("main_menu/ShopIconHighlighted.png"));
         shopButton.transform.localPosition = new Vector3(6.355f, -1.9571f, 0f);
 
-        PassiveButton newsButton = MakeIconButton(__instance.newsButton, new Vector3(0.22f, 1.5f, 0f), AssetLoader.LoadLotusSprite("main_menu.AnnouncementIconInactive.png", 100),
-            activeSprite: AssetLoader.LoadLotusSprite("main_menu.AnnouncementIconHighlighted.png", 100));
+        PassiveButton newsButton = MakeIconButton(__instance.newsButton, new Vector3(0.22f, 1.5f, 0f), LotusAssets.LoadSprite("main_menu/AnnouncementIconInactive.png"),
+            activeSprite: LotusAssets.LoadSprite("main_menu/AnnouncementIconHighlighted.png"));
         newsButton.transform.localPosition = new Vector3(7.4629f, -1.8329f, 0f);
 
         __instance.playButton.transform.localPosition -= new Vector3(0f, 1.4f);
@@ -179,12 +181,66 @@ class SplashPatch
         // inactiveSpriteRender.color = new Color(1f, 0f, 0.35f);
         // inactiveSpriteRender.sprite = activeSpriteRender.sprite;
 
+        var playBG = new GameObject("PlayOnlineAnchor");
+        playBG.transform.localPosition = new Vector3(1.5f, .4f, 0f);
+        playBG.transform.localScale = Vector3.one;
+        playBG.gameObject.SetActive(false);
+
+        var bgRenderer = playBG.AddComponent<SpriteRenderer>();
+        bgRenderer.sprite = LotusAssets.LoadSprite("Credits/Images/background.png", 180);
+
         __instance.playButton.activeTextColor = Color.white;
         __instance.playButton.inactiveTextColor = Color.white;
-        __instance.playButton.OnClick = __instance.PlayOnlineButton.OnClick;
+
+        var enterCodeButtons = __instance.FindChild<Transform>("EnterCodeButtons", true).gameObject;
+        enterCodeButtons.GetComponent<AspectPosition>().Destroy();
+        enterCodeButtons.transform.SetParent(playBG.transform);
+
+        var onlineButtons = __instance.FindChild<Transform>("OnlineButtons", true).gameObject;
+        onlineButtons.GetComponent<AspectPosition>().Destroy();
+        onlineButtons.transform.SetParent(playBG.transform);
+
+        SpriteRenderer onlineDivider = onlineButtons.FindChild<SpriteRenderer>("Divider");
+        onlineDivider.transform.localPosition = new(0, 1.84f, 0f);
+        onlineDivider.transform.localScale = new(0.8f, 1f, 1f);
+        onlineButtons.transform.localPosition = new(0, -.35f, -9);
+        {
+            onlineButtons.FindChild<AspectPosition>("Text_TMP").DistanceFromEdge = new(-.3f, 0f, 0f);
+            onlineButtons.FindChild<PassiveButton>("BackButton").gameObject.SetActive(false);
+
+            PassiveButton enterCodeButton = onlineButtons.FindChild<PassiveButton>("Enter Code Button");
+            enterCodeButton.Modify(() =>
+            {
+                onlineButtons.gameObject.SetActive(false);
+                enterCodeButtons.gameObject.SetActive(true);
+            });
+        }
+
+        SpriteRenderer codeDivider = enterCodeButtons.FindChild<SpriteRenderer>("Divider");
+        codeDivider.transform.localPosition = new(0, 1.84f, 0f);
+        codeDivider.transform.localScale = new(0.61f, 1f, 1f);
+        enterCodeButtons.transform.localPosition = new(0, -.3f, -9);
+        {
+            PassiveButton backButton = enterCodeButtons.FindChild<PassiveButton>("BackButton");
+            backButton.Modify(() =>
+            {
+                onlineButtons.gameObject.SetActive(true);
+                enterCodeButtons.gameObject.SetActive(false);
+            });
+        }
+
+        onlineBgActive = false;
+        __instance.playButton.Modify(() =>
+        {
+            __instance.ResetScreen();
+            onlineBgActive = !onlineBgActive;
+            playBG.gameObject.SetActive(onlineBgActive);
+            onlineButtons.gameObject.SetActive(true);
+            enterCodeButtons.gameObject.SetActive(false);
+        });
         Async.Schedule(() => __instance.playButton.buttonText.text = "Play Online", 0.001f);
 
-        // you dont even want to know the pain we went through to do this...
+        // you don't even want to know the pain we went through to do this...
         buttonsToFind.ForEach(buttonInfo =>
         {
             GameObject buttonObject = GameObject.Find("Main Buttons/" + buttonInfo.name);
@@ -194,7 +250,7 @@ class SplashPatch
                 return;
             }
 
-            string directoryName = buttonInfo.name switch
+            string directoryName = "main_menu/" + buttonInfo.name switch
             {
                 "BottomButtonBounds/CreditsButton" => "Credits",
                 "BottomButtonBounds/ExitGameButton" => "Quit",
@@ -203,8 +259,8 @@ class SplashPatch
                 "PlayButton" => "Top",
                 _ => buttonInfo.name.Replace("Button", "")
             };
-            buttonObject.FindChild<SpriteRenderer>("Highlight", true).sprite = AssetLoader.LoadLotusSprite("main_menu." + directoryName + "Highlighted.png", buttonInfo.pixelsPerUnit);
-            buttonObject.FindChild<SpriteRenderer>("Inactive", true).sprite = AssetLoader.LoadLotusSprite("main_menu." + directoryName + "Inactive.png", buttonInfo.pixelsPerUnit);
+            buttonObject.FindChild<SpriteRenderer>("Highlight", true).sprite = LotusAssets.LoadSprite(directoryName + "Highlighted.png", buttonInfo.pixelsPerUnit);
+            buttonObject.FindChild<SpriteRenderer>("Inactive", true).sprite = LotusAssets.LoadSprite(directoryName + "Inactive.png", buttonInfo.pixelsPerUnit);
             buttonObject.FindChild<SpriteRenderer>("Highlight", true).color = Color.white;
             buttonObject.FindChild<SpriteRenderer>("Inactive", true).color = Color.white;
             switch (buttonInfo.name)
@@ -258,8 +314,8 @@ class SplashPatch
         playLocalButton.transform.localPosition = new Vector3(-0f, 0.0429f, playLocalButton.transform.localPosition.z);
         playLocalButton.transform.localScale = new Vector3(1, 1.1f, 1f);
         // playLocalButton.activeSprites.GetComponent<SpriteRenderer>().color = activeSpriteRender.color;
-        playLocalButton.inactiveSprites.FindChild<SpriteRenderer>("Icon", true).sprite = AssetLoader.LoadLotusSprite("main_menu.LittleDudeIconNew.png", 450);
-        playLocalButton.activeSprites.FindChild<SpriteRenderer>("Icon", true).sprite = AssetLoader.LoadLotusSprite("main_menu.LittleDudeIconNew.png", 450);
+        playLocalButton.inactiveSprites.FindChild<SpriteRenderer>("Icon", true).sprite = LotusAssets.LoadSprite("main_menu/LittleDudeIconNew.png", 450);
+        playLocalButton.activeSprites.FindChild<SpriteRenderer>("Icon", true).sprite = LotusAssets.LoadSprite("main_menu/LittleDudeIconNew.png", 450);
         playLocalButton.inactiveSprites.FindChild<SpriteRenderer>("Icon", true).transform.localScale = new Vector3(.8f, .7f, 1f);
         playLocalButton.activeSprites.FindChild<SpriteRenderer>("Icon", true).transform.localScale = new Vector3(.8f, .7f, 1f);
         playLocalButton.OnClick = __instance.playLocalButton.OnClick;
@@ -269,6 +325,10 @@ class SplashPatch
         // __instance.myAccountButton.activeSprites.GetComponent<SpriteRenderer>().color = new Color(1f, 0f, 0.85f);
         __instance.myAccountButton.activeTextColor = Color.white;
         __instance.myAccountButton.inactiveTextColor = Color.white;
+        __instance.myAccountButton.OnClick.AddListener((Action)(() =>
+        {
+            playBG.SetActive(false);
+        }));
 
         // __instance.settingsButton.inactiveSprites.GetComponent<SpriteRenderer>().color = new Color(1f, 0f, 0.85f);
         // __instance.settingsButton.activeSprites.GetComponent<SpriteRenderer>().color = new Color(1f, 0f, 0.85f);
@@ -279,7 +339,7 @@ class SplashPatch
         tohLogo.transform.position = new Vector3(4.5f, -2.1f);
         tohLogo.transform.localScale = new Vector3(1f, 1f, 1f);
         var renderer = tohLogo.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetLoader.LoadSprite("Lotus.assets.Lotus_Icon.png", 1100f);
+        renderer.sprite = LotusAssets.LoadSprite("Lotus_Icon.png", 1100);
 
         _customSplash.OrElseSet(InitializeSplash);
         PlayerParticles particles = Object.FindObjectOfType<PlayerParticles>();
@@ -315,12 +375,21 @@ class SplashPatch
         FriendsListManager.Instance.OnSignOut();
     }
 
+    [QuickPostfix(typeof(MainMenuManager), nameof(MainMenuManager.ResetScreen))]
+    public static void ResetScreenPostfix(MainMenuManager __instance)
+    {
+        var playOnlineAnchor = GameObject.Find("PlayOnlineAnchor");
+        // if (playOnlineAnchor != null) playOnlineAnchor.SetActive(false);
+    }
+
     private static GameObject InitializeSplash()
     {
         GameObject splashArt = new("SplashArt");
-        splashArt.transform.localPosition = new Vector3(0.3545f, -0.0455f, 600f);
+        // splashArt.transform.localPosition = new Vector3(0.3545f, -0.0455f, 600f);
+        splashArt.transform.localPosition = new Vector3(0f, 0f, 600f);
         var spriteRenderer = splashArt.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = AssetLoader.LoadSprite("Lotus.assets.PLBackground-Upscale.png", 250f);
+        // spriteRenderer.sprite = LotusAssets.LoadSprite("PLBackground-Upscale.png", 250);
+        spriteRenderer.sprite = LotusAssets.LoadSprite("PLBackground-Upscale.png", 190);
         return splashArt;
     }
 

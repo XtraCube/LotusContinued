@@ -97,10 +97,11 @@ class IntroDestroyPatch
             playerData.Tasks?.Clear();
         }
 
-        bool hasPet = !(player.cosmetics?.CurrentPet?.Data?.ProductId == "pet_EmptyPet");
+        bool hasPet = player.cosmetics?.CurrentPet?.Data?.ProductId != "pet_EmptyPet";
         if (hasPet) log.Trace($"Player: {player.name} has pet: {player.cosmetics?.CurrentPet?.Data?.ProductId}. Skipping assigning pet: {pet}.", "PetAssignment");
         else if (player.AmOwner) player.SetPet(pet);
         else playerData.DefaultOutfit.PetId = pet;
+
         playerData.PlayerName = player.name;
 
         Players.SendPlayerData(playerData, autoSetName: false);

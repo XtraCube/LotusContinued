@@ -19,6 +19,8 @@ public class Madmate : Impostor
                 .AddOnOffValues()
                 .Build());
 
+    protected override string ForceRoleImageDirectory() => "RoleImages/Imposter/madmate.yaml";
+
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         roleModifier
             .CanVent(true)

@@ -74,9 +74,9 @@ public class Hitman : NeutralKillingBase
         .RoleFlags(RoleFlag.CannotWinAlone);
 
 
-    private class HitmanFaction : Factions.Neutrals.Neutral
+    private class HitmanFaction : Lotus.Factions.Neutrals.Neutral
     {
-        public override Relation Relationship(Factions.Neutrals.Neutral sameFaction)
+        public override Relation Relationship(Lotus.Factions.Neutrals.Neutral sameFaction)
         {
             return Relation.SharedWinners;
         }

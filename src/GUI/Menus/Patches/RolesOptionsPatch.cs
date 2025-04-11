@@ -23,10 +23,10 @@ public static class RolesSettingsMenuPatch
         }
     }
 }
-[HarmonyPatch(typeof(NormalGameOptionsV08), nameof(NormalGameOptionsV08.SetRecommendations), typeof(int), typeof(bool), typeof(RulesPresets))]
+[HarmonyPatch(typeof(NormalGameOptionsV09), nameof(NormalGameOptionsV09.SetRecommendations), typeof(int), typeof(bool), typeof(RulesPresets))]
 public static class SetRecommendationsPatch
 {
-    public static bool Prefix(NormalGameOptionsV08 __instance, int numPlayers, bool isOnline, RulesPresets rulesPresets)
+    public static bool Prefix(NormalGameOptionsV09 __instance, int numPlayers, bool isOnline, RulesPresets rulesPresets)
     {
         numPlayers = Mathf.Clamp(numPlayers, 4, ModConstants.MaxPlayers);
         __instance.PlayerSpeedMod = __instance.MapId == 4 ? 1.25f : 1f; //AirShipなら1.25、それ以外は1
@@ -38,7 +38,7 @@ public static class SetRecommendationsPatch
         __instance.NumShortTasks = 6;
         __instance.NumEmergencyMeetings = 1;
         if (!isOnline)
-            __instance.NumImpostors = NormalGameOptionsV08.RecommendedImpostors[numPlayers];
+            __instance.NumImpostors = NormalGameOptionsV09.RecommendedImpostors[numPlayers];
         __instance.KillDistance = 0;
         __instance.DiscussionTime = 0;
         __instance.VotingTime = 150;
@@ -87,10 +87,10 @@ public static class SetRecommendationsPatch
     }
 }
 
-[HarmonyPatch(typeof(NormalGameOptionsV08), nameof(NormalGameOptionsV08.SetRecommendations), typeof(int), typeof(bool))]
+[HarmonyPatch(typeof(NormalGameOptionsV09), nameof(NormalGameOptionsV09.SetRecommendations), typeof(int), typeof(bool))]
 class NoRulesRecommendationPatch
 {
-    public static bool Prefix(NormalGameOptionsV08 __instance, int numPlayers, bool isOnline)
+    public static bool Prefix(NormalGameOptionsV09 __instance, int numPlayers, bool isOnline)
     {
         return SetRecommendationsPatch.Prefix(__instance, numPlayers, isOnline, RulesPresets.Standard);
     }

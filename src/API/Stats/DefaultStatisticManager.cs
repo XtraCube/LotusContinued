@@ -22,7 +22,7 @@ sealed class DefaultStatisticManager : Statistics
 
     static DefaultStatisticManager()
     {
-        OptionManager reportingOptionManager = OptionManager.GetManager(file: "file_options.txt");
+        OptionManager reportingOptionManager = OptionManager.GetManager(file: "file_options.txt", managerFlags: OptionManagerFlags.IgnorePreset);
 
         var cacheStatsOption = new OptionBuilder().Name("Cache Player Statistics")
             .Description("Allows caching of player statistics")

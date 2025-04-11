@@ -15,6 +15,7 @@ public class AssetLoader
     private const string AssetPath = "Lotus.assets";
     private readonly Dictionary<string, LazySprite> cachedLazySprites = new();
 
+    [Obsolete("Instead of embedding resources, create an asset bundle instead.")]
     public static Sprite LoadSprite(string path, float pixelsPerUnit = 100f, bool linear = false, int mipMapLevel = 0, Assembly? assembly = null)
     {
         assembly ??= Assembly.GetCallingAssembly();
@@ -42,6 +43,8 @@ public class AssetLoader
 
         return sprite;
     }
+
+    [Obsolete("Instead of embedding resources, create an asset bundle instead.")]
     public static TMP_FontAsset LoadFont(string path, Assembly? assembly = null)
     {
         assembly ??= Assembly.GetCallingAssembly();
@@ -64,9 +67,34 @@ public class AssetLoader
             TMP_FontAsset tmpFontAsset = TMP_FontAsset.CreateFontAsset(customFont);
 
             File.Delete(tempFontPath);
-            stream.Dispose();
 
             return tmpFontAsset;
+        }
+        catch (Exception ex)
+        {
+            log.Exception($"Failed to load embedded font: {ex.Message}");
+            return null!;
+        }
+    }
+
+    public static AssetBundle LoadAssetBundle(string path, Assembly? assembly = null)
+    {
+        // it's up to the devs to cache the bundle and NOT load it more than once.
+        assembly ??= Assembly.GetCallingAssembly();
+        try
+        {
+            using Stream? stream = assembly.GetManifestResourceStream(path);
+            if (stream == null)
+            {
+                log.Fatal($"Embedded asset bundle '{path}' not found.");
+                return null!;
+            }
+
+            byte[] assetData = new byte[stream.Length];
+            stream.Read(assetData, 0, assetData.Length);
+
+            AssetBundle bundle = AssetBundle.LoadFromMemory(assetData);
+            return bundle;
         }
         catch (Exception ex)
         {
@@ -85,6 +113,7 @@ public class AssetLoader
         return false;
     }
 
+    [Obsolete("Instead of embedding resources, create an asset bundle instead.")]
     internal static Sprite LoadLotusSprite(string path, float pixelsPerUnit, bool linear = false, int mipMapLevels = 0)
     {
         if (path.StartsWith('.')) path = AssetPath + path;

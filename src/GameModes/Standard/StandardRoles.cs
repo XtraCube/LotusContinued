@@ -61,8 +61,17 @@ public class StandardRoles : RoleHolder
         AllRoles.AddRange(SpecialRoles);
         AllRoles.AddRange(AddonRoles);
 
+        // avioid `Collection was modified` error
+        var newRoles = new List<CustomRole>();
+        AllRoles.ForEach(r => newRoles.AddRange(r.LinkedRoles()));
+        AllRoles.AddRange(newRoles);
+
         // solidify every role to finish them off
-        AllRoles.ForEach(r => r.Solidify());
+        AllRoles.ForEach(r =>
+        {
+            if (!r.RoleFlags.HasFlag(RoleFlag.TransformationRole) &&
+                !r.RoleFlags.HasFlag(RoleFlag.VariationRole)) r.Solidify();
+        });
     }
 
     public static void AddRole(CustomRole role)
@@ -142,6 +151,7 @@ public class StandardRoles : RoleHolder
         public Genie Genie = new();
         public Herbalist Herbalist = new();
         public Investigator Investigator = new();
+        public Jailor Jailor = new();
         public Mayor Mayor = new();
         public Medic Medic = new();
         public Medium Medium = new();
@@ -182,7 +192,6 @@ public class StandardRoles : RoleHolder
         public Werewolf Werewolf = new();
 
         /// Neutral Non-Killing
-        public Amalgamation Amalgamation = new();
         public Amnesiac Amnesiac = new();
         public Archangel Archangel = new();
         public Copycat Copycat = new();

@@ -58,7 +58,7 @@ public class Egoist : Shapeshifter
         else winDelegate.CancelGameWin();
     }
 
-    protected override string ForceRoleImageDirectory() => "Lotus.assets.RoleImages.Neutral.egoist";
+    protected override string ForceRoleImageDirectory() => "RoleImages/Neutral/egoist.yaml";
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -77,7 +77,7 @@ public class Egoist : Shapeshifter
             .SpecialType(SpecialType.NeutralKilling)
             .RoleColor(new Color(0.34f, 0f, 1f));
 
-    private class EgoistFaction : Factions.Neutrals.Neutral
+    private class EgoistFaction : Lotus.Factions.Neutrals.Neutral
     {
         public override bool CanSeeRole(PlayerControl player) => false;
 

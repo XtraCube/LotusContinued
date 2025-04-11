@@ -43,7 +43,7 @@ public class VideoOptions
 
     public VideoOptions()
     {
-        OptionManager optionManager = OptionManager.GetManager(file: "display.txt");
+        OptionManager optionManager = OptionManager.GetManager(file: "display.txt", managerFlags: OptionManagerFlags.IgnorePreset);
         fpsOption = new GameOptionBuilder()
             .Values(2, FpsLimits)
             .KeyName("Max Framerate", "Max Framerate")

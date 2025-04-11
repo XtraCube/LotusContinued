@@ -2,10 +2,8 @@ using HarmonyLib;
 using Lotus.API.Odyssey;
 using Lotus.Options;
 using Lotus.Utilities;
-using Lotus.Options;
 using UnityEngine;
 using VentLib.Localization;
-using VentLib.Utilities;
 
 
 namespace Lotus.Patches.Network;

@@ -13,11 +13,6 @@ namespace Lotus.Options.Patches;
 [LoadStatic]
 public class GearIconPatch
 {
-    public static Sprite GearSprite => PersistentAssetLoader.GetSprite("GearSprite");
-    static GearIconPatch()
-    {
-        PersistentAssetLoader.RegisterSprite("GearSprite", "Lotus.assets.gearicon.png", 100);
-    }
     public static void AddGearToSettings(RoleOptionSetting roleOption, AbstractBaseRole role)
     {
         PassiveButton settingsButton = roleOption.FindChild<PassiveButton>("Chance %/MinusButton");
@@ -29,7 +24,7 @@ public class GearIconPatch
         settingsButton.FindChild<TextMeshPro>("Text_TMP").gameObject.SetActive(false);
 
         SpriteRenderer minusActiveSprite = settingsButton.FindChild<SpriteRenderer>("ButtonSprite");
-        minusActiveSprite.sprite = GearSprite;
+        minusActiveSprite.sprite = LotusAssets.LoadSprite("gearicon.png");
         minusActiveSprite.color = Color.white;
         settingsButton.Modify(() =>
         {

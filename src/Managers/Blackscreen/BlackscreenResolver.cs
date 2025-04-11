@@ -18,6 +18,7 @@ using VentLib.Utilities.Extensions;
 using AmongUs.GameOptions;
 using HarmonyLib;
 using Lotus.Managers.Blackscreen.Interfaces;
+using Lotus.Victory.Patches;
 using Sentry.Internal.Extensions;
 
 namespace Lotus.Managers.Blackscreen;
@@ -91,32 +92,33 @@ internal class BlackscreenResolver : IBlackscreenResolver
             });
             GeneralRPC.SendGameData(clientId);
         }
+        GameData.Instance.AllPlayers.ToArray().Where(i => i != null).ForEach(info =>
+        {
+            if (!playerStates.TryGetValue(info.PlayerId, out var val)) return;
+            info.IsDead = val.isDead;
+            info.Disconnected = val.isDisconnected;
+            try
+            {
+                if (info.Object != null) info.PlayerName = info.Object.name;
+            }
+            catch { }
+        });
         if (unpatchable.Count == 0) return;
 
-        log.Debug($"Trying to patch Unpatchable Players: {unpatchable.Filter(Utils.PlayerById).Select(p => p.name).Fuse()}");
-        unpatchable.Filter(Utils.PlayerById).Do(p =>
-        {
-            if (!LegacyResolver.PerformForcedReset(p)) log.Debug($"Could not patch {p.name}.");
-        });
+        log.Debug($"Un-patchable Players: {unpatchable.Filter(Utils.PlayerById).Select(p => p.name).Fuse()}");
     }
 
     public virtual void FixBlackscreens(Action runOnFinish)
     {
         if (!AmongUsClient.Instance.AmHost) return;
+        log.Debug($"Trying to patch Unpatchable Players: {unpatchable.Filter(Utils.PlayerById).Select(p => p.name).Fuse()}");
+        unpatchable.Filter(Utils.PlayerById).Do(p =>
+        {
+            if (!LegacyResolver.PerformForcedReset(p)) log.Debug($"Could not patch {p.name}.");
+        });
         Async.Schedule(() =>
         {
             _patching = false;
-            GameData.Instance.AllPlayers.ToArray().Where(i => i != null).ForEach(info =>
-            {
-                if (!playerStates.TryGetValue(info.PlayerId, out var val)) return;
-                info.IsDead = val.isDead;
-                info.Disconnected = val.isDisconnected;
-                try
-                {
-                    if (info.Object != null) info.PlayerName = info.Object.name;
-                }
-                catch { }
-            });
             GeneralRPC.SendGameData();
             CheckEndGamePatch.Deferred = false;
             runOnFinish();

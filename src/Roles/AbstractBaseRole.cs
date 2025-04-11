@@ -52,7 +52,7 @@ public abstract class AbstractBaseRole
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(AbstractBaseRole));
     public PlayerControl MyPlayer { get; protected set; } = null!;
     // public string Description => Localizer.Translate($"Roles.{EnglishRoleName.RemoveHtmlTags()}.Description", assembly: DeclaringAssembly);
-    public string Blurb => Localizer.Translate($"Roles.{EnglishRoleName.RemoveHtmlTags()}.Blurb", assembly: DeclaringAssembly);
+    public string Blurb => RoleFlags.HasFlag(RoleFlag.DoNotTranslate) ? "" : Localizer.Translate($"Roles.{EnglishRoleName.RemoveHtmlTags()}.Blurb", assembly: DeclaringAssembly);
 
     public string RoleName
     {
@@ -157,14 +157,26 @@ public abstract class AbstractBaseRole
 
         LinkedRoles().ForEach(lRole =>
         {
+            if (lRole.GetRoleType() is RoleType.DontShow)
+            {
+                Create();
+                return;
+            }
             optionBuilder.SubOption(_ =>
             {
+                Create();
+                return lRole.RoleOptions;
+            });
+            return;
+
+            void Create()
+            {
+
                 lRole.RoleOptions = lRole.GetGameOptionBuilder().IsHeader(false).Build();
                 lRole.Modify(new RoleModifier(lRole));
                 lRole.RoleOptions.Color = lRole.RoleColor;
                 lRole.SetupRoleActions();
-                return lRole.RoleOptions;
-            });
+            }
         });
 
         RoleOptions = optionBuilder.Build();
@@ -369,7 +381,7 @@ public abstract class AbstractBaseRole
     /// If you're looking to change the options from % chance to "Show" / "Hide" refer to <see cref="RoleFlags"/> on the child role.
     /// </summary>
     /// <returns>Linked Roles</returns>
-    protected virtual List<CustomRole> LinkedRoles() => new();
+    public virtual List<CustomRole> LinkedRoles() => [];
 
     /// <summary>
     /// Force the path for the Role Image or Role Outfit.
@@ -386,24 +398,25 @@ public abstract class AbstractBaseRole
 
         if (resourceDirectory != "N/A") goto finish;
 
-        resourceDirectory = "";
-
         if (this is GameMaster) resourceDirectory = "gm";
-        else if ((Faction is ImpostorFaction | SpecialType is SpecialType.Madmate) && this is not NeutralKillingBase && SpecialType is SpecialType.None) resourceDirectory = "Imposter." + EnglishRoleName.ToLower();
-        else if (Faction is Crewmates && SpecialType is SpecialType.None) resourceDirectory = "Crew." + EnglishRoleName.ToLower();
-        else if (Faction is Modifiers | RoleFlags.HasFlag(RoleFlag.IsSubrole)) resourceDirectory = "Modifiers." + EnglishRoleName.ToLower();
-        else resourceDirectory = "Neutral." + EnglishRoleName.ToLower();
+        else if ((Faction is ImpostorFaction | SpecialType is SpecialType.Madmate) && this is not NeutralKillingBase && SpecialType is SpecialType.None) resourceDirectory = "Imposter/" + EnglishRoleName.ToLower();
+        else if (Faction is Crewmates && SpecialType is SpecialType.None) resourceDirectory = "Crew/" + EnglishRoleName.ToLower();
+        else if (Faction is Modifiers | RoleFlags.HasFlag(RoleFlag.IsSubrole)) resourceDirectory = "Modifiers/" + EnglishRoleName.ToLower();
+        else resourceDirectory = "Neutral/" + EnglishRoleName.ToLower();
 
-        resourceDirectory = "Lotus.assets.RoleImages." + resourceDirectory;
+        resourceDirectory = "RoleImages/" + resourceDirectory;
+        resourceDirectory = resourceDirectory.ToLower();
 
     finish:
+        if (DeclaringAssembly == Assembly.GetExecutingAssembly()) return RoleOutfitLotus(resourceDirectory);
+
         if (AssetLoader.ResourceExists(resourceDirectory.EndsWith(".png") ? resourceDirectory : resourceDirectory + ".png", DeclaringAssembly))
         {
             if (!resourceDirectory.EndsWith(".png")) resourceDirectory += ".png";
             PersistentAssetLoader.RegisterSprite(EnglishRoleName + "RoleImage", resourceDirectory, 500, DeclaringAssembly);
             return CompletedAction((roleOption) => roleOption.RoleImage.sprite = PersistentAssetLoader.GetSprite(EnglishRoleName + "RoleImage"));
         }
-        else if (AssetLoader.ResourceExists(resourceDirectory.EndsWith(".yaml") ? resourceDirectory : resourceDirectory + ".yaml", DeclaringAssembly))
+        if (AssetLoader.ResourceExists(resourceDirectory.EndsWith(".yaml") ? resourceDirectory : resourceDirectory + ".yaml", DeclaringAssembly))
         {
             if (!resourceDirectory.EndsWith(".yaml")) resourceDirectory += ".yaml";
             return CompletedAction((roleOption) =>
@@ -426,20 +439,47 @@ public abstract class AbstractBaseRole
                 fakePlayer.FindChild<Transform>("Names", true).gameObject.SetActive(false);
             });
         }
-        else
+        // log we can't find it and default to an empty image
+        string? debugMessage = $"Could not find RoleImage for {EnglishRoleName}. Defaulting to no image. Path (.png/.yaml): {resourceDirectory}";
+        return CompletedAction((roleOption) =>
         {
-            // log we can't find it and default to an empty image
-            string? debugMessage = $"Could not find RoleImage for {EnglishRoleName}. Defaulting to no image. Path (.png/.yaml): {resourceDirectory}";
-            return CompletedAction((roleOption) =>
+            if (debugMessage != null)
             {
-                if (debugMessage != null)
-                {
-                    log.Debug(debugMessage);
-                    debugMessage = null;
-                }
-                roleOption.RoleImage.enabled = false;
-            });
-        }
+                log.Debug(debugMessage);
+                debugMessage = null;
+            }
+            roleOption.RoleImage.enabled = false;
+        });
+
+        Action<RoleOptionIntializer.RoleOptionIntialized> CompletedAction(Action<RoleOptionIntializer.RoleOptionIntialized> internalAction) => (roleOption) =>
+        {
+            GearIconPatch.AddGearToSettings(roleOption.RoleSetting, this);
+            internalAction(roleOption);
+        };
+    }
+
+    private Action<RoleOptionIntializer.RoleOptionIntialized> RoleOutfitLotus(string resourceDirectory)
+    {
+        if (!resourceDirectory.EndsWith(".yaml")) resourceDirectory += ".yaml";
+        return CompletedAction(roleOption =>
+        {
+            roleOption.RoleImage.enabled = false;
+            PoolablePlayer fakePlayer = Object.Instantiate<PoolablePlayer>(DestroyableSingleton<HudManager>.Instance.IntroPrefab.PlayerPrefab, roleOption.RoleImage.transform);
+            fakePlayer.name = "RoleOutfit";
+            fakePlayer.transform.localPosition = new Vector3(0, -.2f, 0);
+            fakePlayer.transform.localScale = Vector3.one;
+            fakePlayer.enabled = true;
+            fakePlayer.cosmetics.initialized = false;
+            fakePlayer.cosmetics.EnsureInitialized(PlayerBodyTypes.Normal);
+            OutfitFile outfit = OutfitFile.FromAssetBundle(resourceDirectory, LotusAssets.Bundle);
+            fakePlayer.UpdateFromPlayerOutfit(outfit.ToPlayerOutfit(), PlayerMaterial.MaskType.SimpleUI, outfit.ShowDead, false);
+            if (outfit.ShowDead)
+            {
+                fakePlayer.cosmetics.SetBodyAsGhost();
+                // Async.Schedule(() => fakePlayer.FindChild<Transform>("Cosmetics", true).position = new Vector3(.245f, .2f, 0), 0.1f);
+            }
+            fakePlayer.FindChild<Transform>("Names", true).gameObject.SetActive(false);
+        });
 
         Action<RoleOptionIntializer.RoleOptionIntialized> CompletedAction(Action<RoleOptionIntializer.RoleOptionIntialized> internalAction) => (roleOption) =>
         {

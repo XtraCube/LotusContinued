@@ -18,6 +18,6 @@ public class UIComponent: Attribute
     {
         this.Component = component;
         this.ViewMode = viewMode;
-        this.GameStates = gameStates.Length > 0 ? gameStates : new [] { GameState.Roaming };
+        this.GameStates = gameStates.Length > 0 ? gameStates : [GameState.Roaming];
     }
 }

@@ -1,5 +1,8 @@
 using System.IO;
 using System.Reflection;
+using Lotus.Extensions;
+using Lotus.GUI;
+using UnityEngine;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -39,6 +42,14 @@ public class OutfitFile
         using (StreamReader reader = new(stream)) result = reader.ReadToEnd();
         stream.Dispose();
         return FromPlainText(result);
+    }
+
+    public static OutfitFile FromAssetBundle(string assetName, AssetBundle? bundle = null)
+    {
+        bundle ??= LotusAssets.Bundle;
+        TextAsset? textAsset = bundle.LoadAsset<TextAsset>(assetName);
+        if (textAsset == null) return null!;
+        return FromPlainText(textAsset.text);
     }
 
     public static OutfitFile FromFileInfo(FileInfo file)

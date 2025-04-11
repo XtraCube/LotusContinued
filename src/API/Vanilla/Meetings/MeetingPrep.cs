@@ -3,7 +3,6 @@ using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.API.Processes;
 using Lotus.API.Reactive;
-using Lotus.Victory;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
@@ -13,10 +12,10 @@ using VentLib.Utilities.Optionals;
 using Lotus.GameModes.Standard;
 using Lotus.Options;
 using HarmonyLib;
-using Lotus.Extensions;
 using Lotus.Patches.Actions;
 using Lotus.RPC;
 using Lotus.Patches.Meetings;
+using Lotus.Victory.Patches;
 
 namespace Lotus.API.Vanilla.Meetings;
 
@@ -39,7 +38,7 @@ public class MeetingPrep
     }
 
     /// <summary>
-    /// This API is a little bit strange, but basically if you provide the report the meeting will actually be called. Otherwise this guarantees meeting prep has been done and returns the most recent meeting delegate.
+    /// This API is a little bit strange, but basically if you provide the report the meeting will actually be called. However, this guarantees meeting prep has been done and returns the most recent meeting delegate.
     /// </summary>
     /// <param name="reporter">Optional player, if provided, uses rpc to call meeting</param>
     /// <param name="deadBody">Optional reported body</param>

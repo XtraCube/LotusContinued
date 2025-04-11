@@ -128,7 +128,7 @@ public class Necromancer : UndeadRole
         else undeadWinners.Where(tc => IsConvertedUndead(tc) || MyPlayer.IsAlive() && IsUnconvertedUndead(tc)).ForEach(uw => winners.Remove(uw));
     }
 
-    protected override string ForceRoleImageDirectory() => "Lotus.assets.RoleImages.Neutral.necromancer";
+    protected override string ForceRoleImageDirectory() => "RoleImages/Neutral/necromancer.yaml";
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -143,7 +143,7 @@ public class Necromancer : UndeadRole
                 .BindBool(b => immuneToPartialConverted = b)
                 .Build());
 
-    protected override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _deathknight }).ToList();
+    public override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _deathknight }).ToList();
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)

@@ -33,7 +33,6 @@ public class CustomOptionContainer : MonoBehaviour
     [Localized(nameof(ReturnButton))] private static string ReturnButton = "Return";
     [Localized(nameof(LeaveGameButton))] private static string LeaveGameButton = "Leave Game";
 
-
     public static UnityOptional<TMP_FontAsset> CustomOptionFont = UnityOptional<TMP_FontAsset>.Null();
 
     public SpriteRenderer background;
@@ -245,8 +244,8 @@ public class CustomOptionContainer : MonoBehaviour
     {
         return CustomOptionFont.OrElseSet(() =>
         {
-            var embeddedFont = AssetLoader.LoadFont("Lotus.assets.Fonts.NunitoMedium.ttf");
-            if (embeddedFont != null) return embeddedFont;
+            var embeddedFont = LotusAssets.LoadAsset<Font>("Fonts/NunitoMedium.ttf");
+            if (embeddedFont != null) return TMP_FontAsset.CreateFontAsset(embeddedFont);
             DevLogger.Log("couldn't use embedded font. using a random system font.");
             string? path = Font.GetPathsToOSFonts()
                 .FirstOrOptional(f => f.Contains("ARLRDBD"))

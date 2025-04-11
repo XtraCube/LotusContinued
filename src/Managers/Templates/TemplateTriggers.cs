@@ -80,7 +80,7 @@ public class TemplateTriggers
 
     public static ResolvedTrigger ResultFromPlayerMessageHook(PlayerMessageHookEvent playerHookEvent)
     {
-        return new ResolvedTrigger { Player = playerHookEvent.Player, Data = playerHookEvent.Message };
+        return new ResolvedTrigger { Player = playerHookEvent.Player, Data = playerHookEvent.Message.Trim() };
     }
 
     public static ResolvedTrigger ResultFromPlayerDeathHook(PlayerDeathHookEvent playerHookEvent)

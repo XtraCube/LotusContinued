@@ -275,18 +275,19 @@ public class Guesser : Subrole
         return restrictedRoles;
     }
 
-    private int GetAmountOfPeopleOnFaction(Type faction) => Players.GetAlivePlayers().Where(p => p.PrimaryRole().Faction.GetType() == faction && p.GetSubroles().Any(s => s is Guesser)).Count();
+    private int GetAmountOfPeopleOnFaction(Type faction) => Players.GetAlivePlayers().Count(p =>
+        p.PrimaryRole().Faction.GetType() == faction && p.GetSubroles().Any(s => s is Guesser));
 
     public override bool IsAssignableTo(PlayerControl player)
     {
         Type myFaction = player.PrimaryRole().Faction.GetType();
 
         // Check if their faction already has the max amount of allowed players.
-        // If they are maxxed out, we don't even call base and just immediately exit.
+        // If they are maxed out, we don't even call base and just immediately exit.
         if (GetAmountOfPeopleOnFaction(myFaction) >= FactionMaxDictionary.GetValueOrDefault(myFaction, 0))
             return false;
 
-        // Return base as thats the only check.
+        // Return base as that''s the only check.
         // Base checks restricted roles.
         return base.IsAssignableTo(player);
     }
@@ -323,7 +324,7 @@ public class Guesser : Subrole
             string keyName = Translations.Options.FactionMaxGuessers.Formatted(kvp.Value.Name());
             Option option = new GameOptionBuilder()
                 .KeyName(TranslationUtil.Remove(keyName), TranslationUtil.Colorize(keyName, kvp.Value.Color))
-                .AddIntRange(0, ModConstants.MaxPlayers, 1, 0)
+                .AddIntRange(0, ModConstants.MaxPlayers, 1, 1)
                 .BindInt(i => FactionMaxDictionary[kvp.Key] = i)
                 .Build();
             RoleOptions.AddChild(option);

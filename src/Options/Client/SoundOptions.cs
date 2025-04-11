@@ -37,7 +37,7 @@ public class SoundOptions
 
     public SoundOptions()
     {
-        OptionManager optionManager = OptionManager.GetManager(file: "sound.txt");
+        OptionManager optionManager = OptionManager.GetManager(file: "sound.txt", managerFlags: OptionManagerFlags.IgnorePreset);
         lobbyMusicOption = new GameOptionBuilder()
             .Values(AllSoundTypes)
             .Key("Lobby Music Type")

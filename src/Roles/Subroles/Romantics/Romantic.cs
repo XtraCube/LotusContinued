@@ -27,6 +27,7 @@ using VentLib.Utilities.Optionals;
 using System.Collections.Generic;
 using Lotus.API.Vanilla.Meetings;
 using Lotus.GameModes.Standard;
+using Lotus.Managers.History.Events;
 using Lotus.Roles.Interfaces;
 
 namespace Lotus.Roles.Subroles.Romantics;
@@ -148,7 +149,11 @@ public class Romantic : Subrole, IInfoResender
     [RoleAction(LotusActionType.MeetingEnd)]
     public void KillIfUndecided(bool _, bool isForceEnd)
     {
-        if (!partnerLockedIn && !isForceEnd) ProtectedRpc.CheckMurder(MyPlayer, MyPlayer);
+        if (!partnerLockedIn && !isForceEnd)
+        {
+            ProtectedRpc.CheckMurder(MyPlayer, MyPlayer);
+            Game.MatchData.GameHistory.SetCauseOfDeath(MyPlayer.PlayerId, new SuicideEvent(MyPlayer));
+        }
     }
 
     private void InterceptWinCondition(WinDelegate winDelegate)
@@ -206,7 +211,7 @@ public class Romantic : Subrole, IInfoResender
                     .Build())
                 .Build());
 
-    protected override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _vengefulRomantic, _ruthlessRomantic }).ToList();
+    public override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _vengefulRomantic, _ruthlessRomantic }).ToList();
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
             .RoleColor(RomanticColor)

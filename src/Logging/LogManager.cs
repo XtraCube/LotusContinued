@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Lotus.API.Odyssey;
 using Lotus.API.Reactive;
+using Lotus.GUI;
 using Lotus.Managers;
 using Lotus.Utilities;
 using UnityEngine;
@@ -55,7 +56,7 @@ public class LogManager
 
             LobbyNotificationMessage newMessage = UnityEngine.Object.Instantiate<LobbyNotificationMessage>(notifier.notificationMessageOrigin, Vector3.zero, Quaternion.identity, notifier.transform);
             newMessage.transform.localPosition = new Vector3(0f, 0f, -2f);
-            newMessage.SetUp("  " + message.Trim(), AssetLoader.LoadSprite("Lotus.assets.Lotus_Icon.png", 1100f), Color.white, (Action)(() => notifier.OnMessageDestroy(newMessage)));
+            newMessage.SetUp("  " + message.Trim(), LotusAssets.LoadSprite("Lotus_Icon.png", 1100), Color.white, (Action)(() => notifier.OnMessageDestroy(newMessage)));
             notifier.ShiftMessages();
             notifier.AddMessageToQueue(newMessage);
             SoundManager.Instance.PlaySound(notifier.playerDisconnectSound, false, 1f, null);

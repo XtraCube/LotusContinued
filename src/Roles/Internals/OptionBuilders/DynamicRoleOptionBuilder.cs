@@ -33,7 +33,7 @@ public class DynamicRoleOptionBuilder
         {
             new(r => r.SpecialType is SpecialType.NeutralKilling, "Neutral Killing Settings", neutralKillingName, false),
             new(r => r.SpecialType is SpecialType.Neutral, "Neutral Passive Settings", neutralPassiveName, false),
-            new(r => r.Faction is Factions.Impostors.Madmates, "Madmates Settings", madmateName, false)
+            new(r => r.Faction is Lotus.Factions.Impostors.Madmates, "Madmates Settings", madmateName, false)
         }, defaultPredicate);
     }
 

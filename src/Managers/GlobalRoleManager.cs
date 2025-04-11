@@ -18,7 +18,7 @@ using VentLib.Utilities.Extensions;
 namespace Lotus.Managers;
 public class GlobalRoleManager
 {
-    public static OptionManager RoleOptionManager = OptionManager.GetManager(file: "roleoptions.txt");
+    public static readonly OptionManager RoleOptionManager = OptionManager.GetManager(file: "roleoptions.txt", managerFlags: OptionManagerFlags.SyncOverRpc);
 
     private readonly Dictionary<Assembly, Dictionary<ulong, CustomRole>> rolesbyAssembly = new();
     protected OrderedDictionary<string, CustomRole> OrderedCustomRoles { get; } = new();

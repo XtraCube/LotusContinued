@@ -1,3 +1,4 @@
+using Lotus.API.Odyssey;
 using Lotus.GUI;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
@@ -10,6 +11,7 @@ using Lotus.Options;
 using Lotus.Extensions;
 using VentLib.Options.UI;
 using Lotus.GameModes.Colorwars.Factions;
+using Lotus.Roles.Events;
 
 namespace Lotus.Roles.RoleGroups.Colorwars;
 
@@ -45,6 +47,7 @@ public class Painter : NeutralKillingBase
         target.RpcSetColor((byte)myColor);
         target.PrimaryRole().RoleColor = (Color)Palette.PlayerColors[MyPlayer.cosmetics.bodyMatProperties.ColorId];
         MyPlayer.RpcMark(target);
+        Game.MatchData.GameHistory.AddEvent(new ConvertEvent(MyPlayer, target, (byte)myColor));
         return false;
     }
     protected override RoleModifier Modify(RoleModifier roleModifier) => base.Modify(roleModifier)
@@ -61,5 +64,18 @@ public class Painter : NeutralKillingBase
     {
         [Localized(nameof(GracePeriodText))]
         public static string GracePeriodText = "No-Kill Grace Period: {0}";
+    }
+
+    private class ConvertEvent : TargetedAbilityEvent
+    {
+        private byte colorId;
+        public ConvertEvent(PlayerControl source, PlayerControl target, byte colorId) : base(source, target, true)
+        {
+            this.colorId = colorId;
+        }
+
+        public byte GetNewColor() => colorId;
+        public override string Message() =>
+            $"{Game.GetName(Player())} converted {Game.GetName(Target())} to Team {((Color)(Palette.PlayerColors[colorId])).Colorize(ModConstants.ColorNames[colorId])}";
     }
 }

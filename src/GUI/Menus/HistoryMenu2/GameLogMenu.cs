@@ -21,7 +21,7 @@ public class GameLogMenu : MonoBehaviour, IHistoryMenuChild
     {
         tabButton = Instantiate(prefab, tabIconObject.transform);
         tabButtonRenderer = tabButton.GetComponentsInChildren<SpriteRenderer>().Last();
-        tabButtonRenderer.sprite = AssetLoader.LoadLotusSprite("HistoryMenu.ResultsIcon.png", 100, true);
+        tabButtonRenderer.sprite = LotusAssets.LoadSprite("HistoryMenu/ResultsIcon.png", 100);
         tabButton.transform.localPosition += new Vector3(-6.9f, 4.102f);
         return tabButton;
     }

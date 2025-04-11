@@ -45,7 +45,7 @@ public class Investigator : Crewmate
             .Value(v => v.Text(GeneralOptionTranslations.AllText).Value(1).Color(Color.green).Build())
             .Value(v => v.Text(GeneralOptionTranslations.CustomText).Value(2).Color(new Color(0.73f, 0.58f, 1f)).Build())
             .ShowSubOptionPredicate(i => (int)i == 2)),
-        (r => r.Faction is Factions.Impostors.Madmates, new GameOptionBuilder()
+        (r => r.Faction is Lotus.Factions.Impostors.Madmates, new GameOptionBuilder()
             .KeyName("Madmates Are Red", TranslationUtil.Colorize(MadmateRed, Color.red, ModConstants.Palette.MadmateColor))
             .Value(v => v.Text(GeneralOptionTranslations.OffText).Value(0).Color(Color.red).Build())
             .Value(v => v.Text(GeneralOptionTranslations.AllText).Value(1).Color(Color.green).Build())

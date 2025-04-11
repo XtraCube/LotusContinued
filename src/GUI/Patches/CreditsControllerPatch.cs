@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -6,6 +7,7 @@ using Lotus.Utilities;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Harmony.Attributes;
 using Object = UnityEngine.Object;
 
@@ -17,18 +19,6 @@ public static class CreditsControllerPatch
 
     private const bool TestCredits = false;
 
-    private static string GetCreditsText()
-    {
-        string creditsText = "";
-
-        using System.IO.Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"Lotus.assets.Credits.{(TestCredits ? "testcredits" : "plcredits")}.txt")!;
-        byte[] buffer = new byte[stream.Length];
-        stream.Read(buffer, 0, buffer.Length);
-
-        creditsText = Encoding.UTF8.GetString(buffer);
-        stream.Dispose();
-        return creditsText;
-    }
     private static void PassCreditsController(GameObject mainObject)
     {
         mainObject.transform.parent.FindChild("FollowUs").gameObject.SetActive(false); // nobody is following my facebook!!!!!! 😡😡
@@ -43,11 +33,12 @@ public static class CreditsControllerPatch
         creditsBG.transform.localPosition += new Vector3(0.1f, 0, 0);
 
         var renderer = creditsBG.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetLoader.LoadLotusSprite("Credits.Images.background.png", 180);
+        renderer.sprite = LotusAssets.LoadSprite("Credits/Images/background.png", 180);
     }
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.LoadCredits))]
-    public static void LoadCreditsPrefix(CreditsController __instance) => __instance.CSVCredits = new TextAsset(GetCreditsText());
+    public static void LoadCreditsPrefix(CreditsController __instance) => DestroyableSingleton<ReferenceDataManager>.Instance.Refdata.credits =
+        LotusAssets.LoadAsset<TextAsset>("Credits/" + (TestCredits ? "testcredits" : "plcredits") + ".txt");
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.Start))]
     public static bool StartPrefix(CreditsController __instance)
@@ -85,11 +76,11 @@ public static class CreditsControllerPatch
                 else if (format.creditType == CreditsController.CreditType.IMAGE)
                 {
                     string creditsPath = __instance.credits[i].columns[j];
-                    if (!creditsPath.Contains("Lotus.assets")) gameObject3.GetComponent<Image>().sprite = Resources.Load<Sprite>("Credits/" + __instance.credits[i].columns[j]);
+                    if (!creditsPath.Contains("Credits/Images/")) gameObject3.GetComponent<Image>().sprite = Resources.Load<Sprite>("Credits/" + __instance.credits[i].columns[j]);
                     else
                     {
                         string[] assetSplit = creditsPath.Split(";;");
-                        gameObject3.GetComponent<Image>().sprite = AssetLoader.LoadSprite(assetSplit[1], float.Parse(assetSplit[0]), true);
+                        gameObject3.GetComponent<Image>().sprite = LotusAssets.LoadSprite(assetSplit[1], float.Parse(assetSplit[0]));
                         if (assetSplit.Length > 2)
                         {
                             float[] sizeValues = assetSplit[2].Split(";").Select(float.Parse).ToArray();
@@ -102,6 +93,13 @@ public static class CreditsControllerPatch
             }
         }
         return false;
+    }
+
+    [QuickPostfix(typeof(CreditsController), nameof(CreditsController.OnEnable))]
+    public static void CreditsOnEnable()
+    {
+        var playOnlineAnchor = GameObject.Find("PlayOnlineAnchor");
+        if (playOnlineAnchor != null) playOnlineAnchor.SetActive(false);
     }
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.FixedUpdate))]
