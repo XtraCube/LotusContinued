@@ -1,3 +1,4 @@
+using System.Linq;
 using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Holders;
@@ -13,6 +14,7 @@ using VentLib.Localization.Attributes;
 using Lotus.Roles.Internals.Enums;
 using VentLib.Options.UI;
 using VentLib.Utilities;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
@@ -75,9 +77,26 @@ public class Werewolf : NeutralKillingBase, IRoleUI
         UIManager.PetButton.BindCooldown(rampageCooldown);
         rampaging = false;
         rampageCooldown.Start();
+        if (!canVentNormally && MyPlayer.walkingToVent | MyPlayer.inVent) ExitCurrentVent();
+
     }
 
-    public override bool CanVent() => canVentNormally || rampaging;
+    private void ExitCurrentVent()
+    {
+        int ventId;
+
+        ISystemType ventilation = ShipStatus.Instance.Systems[SystemTypes.Ventilation];
+        if (ventilation.TryCast(out VentilationSystem ventilationSystem))
+        {
+            if (ventilationSystem.PlayersInsideVents.TryGetValue(MyPlayer.PlayerId, out byte byteId)) ventId = byteId;
+            else ventId = Object.FindObjectsOfType<Vent>().ToList().GetRandom().Id;
+        }
+        else ventId = Object.FindObjectsOfType<Vent>().ToList().GetRandom().Id;
+
+        MyPlayer.MyPhysics.RpcBootFromVent(ventId);
+    }
+
+    public override bool CanVent() => canVentNormally || rampaging && canVentDuringRampage;
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
