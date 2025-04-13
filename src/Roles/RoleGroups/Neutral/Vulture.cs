@@ -14,6 +14,8 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using Lotus.Victory.Conditions;
 using Lotus.Extensions;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Subroles;
 using UnityEngine;
 using VentLib.Localization.Attributes;
@@ -26,7 +28,7 @@ using VentLib.Utilities.Optionals;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
-public class Vulture : CustomRole
+public class Vulture : CustomRole, IRoleUI
 {
     public static HashSet<Type> VultureBannedModifiers = new() { typeof(Oblivious), typeof(Sleuth) };
     public override HashSet<Type> BannedModifiers() => canSwitchMode ? new HashSet<Type>() : VultureBannedModifiers;
@@ -39,8 +41,7 @@ public class Vulture : CustomRole
     private bool canSwitchMode;
     private bool hasArrowsToBodies;
     private bool isEatMode = true;
-
-
+    public RoleButton ReportButton(IRoleButtonEditor reportButton) => UpdateReportButton(reportButton);
 
     [UIComponent(UI.Counter)]
     private string BodyCounter() => RoleUtils.Counter(bodyCount, bodyAmount, RoleColor);
@@ -69,7 +70,12 @@ public class Vulture : CustomRole
     {
         if (!canSwitchMode) return;
         isEatMode = !isEatMode;
+        UpdateReportButton(UIManager.ReportButton);
     }
+
+    private RoleButton UpdateReportButton(IRoleButtonEditor reportButton) => isEatMode
+        ? reportButton.SetText(Translations.EatButtonText)
+        : reportButton.SetText(Translations.ReportButtonText);
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -82,20 +88,20 @@ public class Vulture : CustomRole
             .SubOption(opt =>
                 opt.KeyName("Has Impostor Vision", HasImpostorVision)
                 .BindBool(v => impostorVision = v)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build())
             .SubOption(opt =>
                 opt.KeyName("Can Switch between Eat and Report", SwitchModes)
                 .BindBool(v => canSwitchMode = v)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build())
             .SubOption(opt => opt.KeyName("Can Use Vents", CanUseVent)
                 .BindBool(v => canUseVents = v)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build())
             .SubOption(sub => sub.KeyName("Has Arrow To Bodies", HasArrowsToBody)
                 .BindBool(b => hasArrowsToBodies = b)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build());
 
 
@@ -116,6 +122,12 @@ public class Vulture : CustomRole
 
         [Localized(nameof(ReportingModeText))]
         public static string ReportingModeText = "Reporting";
+
+        [Localized(nameof(EatButtonText))]
+        public static string EatButtonText = "Devour";
+
+        [Localized(nameof(ReportButtonText))]
+        public static string ReportButtonText = "Report";
 
         [Localized(ModConstants.Options)]
         public static class Options
