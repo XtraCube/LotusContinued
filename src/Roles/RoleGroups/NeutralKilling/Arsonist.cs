@@ -57,7 +57,7 @@ public class Arsonist : NeutralKillingBase
     private string DisplayWin() => dousedPlayers.Count >= backedAlivePlayers ? RoleColor.Colorize(Translations.PressIgniteToWinMessage) : "";
 
     [RoleAction(LotusActionType.Attack)]
-    public new bool TryKill(PlayerControl target)
+    public override bool TryKill(PlayerControl target)
     {
         bool douseAttempt = MyPlayer.InteractWith(target, LotusInteraction.HostileInteraction.Create(this)) is InteractionResult.Proceed;
         if (!douseAttempt) return false;
@@ -92,7 +92,7 @@ public class Arsonist : NeutralKillingBase
 
 
     [RoleAction(LotusActionType.OnPet)]
-    private void KillDoused() => dousedPlayers.Filter(p => Utils.PlayerById(p)).Where(p => p.IsAlive()).Do(p =>
+    private void KillDoused() => dousedPlayers.Filter(Utils.PlayerById).Where(p => p.IsAlive()).Do(p =>
     {
         if (dousedPlayers.Count < CountAlivePlayers() && !canIgniteAnyitme) return;
         FatalIntent intent = new(true, () => new CustomDeathEvent(p, MyPlayer, Translations.IncineratedDeathName));
@@ -119,11 +119,11 @@ public class Arsonist : NeutralKillingBase
         base.RegisterOptions(optionStream)
             .Color(RoleColor)
             .SubOption(sub => sub.KeyName("Attacks to Complete Douse", Translations.Options.AttacksToCompleteDouse)
-                .AddIntRange(3, 100, defaultIndex: 16)
+                .AddIntRange(1, 100, defaultIndex: 2)
                 .BindInt(i => requiredAttacks = i)
                 .Build())
             .SubOption(sub => sub.KeyName("Can Ignite Anytime", Translations.Options.CanIgniteAnytime)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .BindBool(b => canIgniteAnyitme = b)
                 .Build());
 
