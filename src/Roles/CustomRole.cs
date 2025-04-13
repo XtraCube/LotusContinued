@@ -128,10 +128,12 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
     public virtual List<GameOptionOverride> GetRoleOverrides(IEnumerable<GameOptionOverride>? newOverrides = null)
     {
         DevLogger.Log($"(GetRoleOverrides) My player: {(MyPlayer == null ? "MyPlayer is null." : MyPlayer.name)}");
-        List<GameOptionOverride> thisList = new(this.RoleSpecificGameOptionOverrides);
+        List<GameOptionOverride> thisList = [];
 
-        thisList.AddRange(currentOverrides);
-        thisList.AddRange(Game.MatchData.Roles.GetOverrides(MyPlayer.PlayerId));
+        thisList.AddRange(MatchData.GetGlobalOverrides()); // Global Overrides have last priority
+        thisList.AddRange(RoleSpecificGameOptionOverrides); // Role overrides from Modify have third priority
+        thisList.AddRange(currentOverrides);  // Overrides added during game have second priority
+        thisList.AddRange(Game.MatchData.Roles.GetOverrides(MyPlayer.PlayerId)); // Player specific overrides have the highest priority
 
         if (newOverrides != null) thisList.AddRange(newOverrides);
 
