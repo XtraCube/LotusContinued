@@ -18,6 +18,8 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Utilities;
 using Lotus.Extensions;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
 using VentLib.Logging;
 using VentLib.Options.UI;
@@ -27,7 +29,7 @@ using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Transporter : Crewmate
+public class Transporter : Crewmate, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Transporter));
     private int totalTransports;
@@ -39,6 +41,12 @@ public class Transporter : Crewmate
 
     [UIComponent(UI.Counter)]
     private string RemainingTransportCounter() => RoleUtils.Counter(transportsRemaining, totalTransports);
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .BindCooldown(transportCooldown)
+        .SetText(Translations.ButtonText)
+        .BindUses(() => transportsRemaining)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/transporter_transport.png", 130, true));
 
     protected override void PostSetup()
     {
@@ -137,6 +145,7 @@ public class Transporter : Crewmate
     [Localized(nameof(Transporter))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Transport";
         [Localized(ModConstants.Options)]
         public static class Options
         {

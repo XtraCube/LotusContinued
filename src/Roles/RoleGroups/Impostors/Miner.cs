@@ -10,15 +10,24 @@ using VentLib.Logging;
 using VentLib.Options.UI;
 using VentLib.Localization.Attributes;
 using Lotus.Extensions;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Miner : Impostor
+public class Miner : Impostor, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Miner));
+
     [UIComponent(UI.Cooldown)]
     private Cooldown minerAbilityCooldown;
+
     private Vector2 lastEnteredVentLocation = Vector2.zero;
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => petButton
+        .SetText(Translations.ButtonText)
+        .BindCooldown(minerAbilityCooldown)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/miner_mine.png", 130, true));
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target) => base.TryKill(target);
@@ -51,6 +60,9 @@ public class Miner : Impostor
     [Localized(nameof(Miner))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Mine";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

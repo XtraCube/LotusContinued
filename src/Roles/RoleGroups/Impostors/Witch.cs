@@ -24,10 +24,12 @@ using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using Lotus.GameModes.Standard;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Witch : Vanilla.Impostor
+public class Witch : Vanilla.Impostor, IRoleUI
 {
     private static Color cursingColor = new(0.37f, 0.74f, 0.35f);
     private bool freelySwitchModes;
@@ -37,9 +39,25 @@ public class Witch : Vanilla.Impostor
     [NewOnSetup] private Dictionary<byte, Remote<IStatus>?> cursedPlayers;
 
     private bool isCursingMode = true;
+    private bool killButtonMode;
+
+    protected override void Setup(PlayerControl player)
+    {
+        base.Setup(player);
+        killButtonMode = !isCursingMode;
+    }
 
     [UIComponent(UI.Text)]
     private string ModeDisplay() => (freelySwitchModes || switchModesAfterAttack) ? (isCursingMode ? cursingColor.Colorize(Translations.CursingModeText) : Color.red.Colorize(Translations.KillingModeText)) : "";
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => !freelySwitchModes
+        ? petButton.Default(true)
+        : petButton.SetText(RoleTranslations.Switch)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/generic_switch_ability.png", 130, true));
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Translations.CursingButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/witch_hex.png", 130, true));
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
@@ -47,11 +65,13 @@ public class Witch : Vanilla.Impostor
         if (!isCursingMode)
         {
             if (switchModesAfterAttack) isCursingMode = !isCursingMode;
+            UpdateKillButton();
             return base.TryKill(target);
         }
 
         MyPlayer.RpcMark(target);
         if (switchModesAfterAttack) isCursingMode = !isCursingMode;
+        UpdateKillButton();
         if (MyPlayer.InteractWith(target, LotusInteraction.HostileInteraction.Create(this)) is InteractionResult.Halt) return false;
         if (cursedPlayers.ContainsKey(target.PlayerId)) return false;
 
@@ -69,6 +89,7 @@ public class Witch : Vanilla.Impostor
     public void SwitchWitchMode()
     {
         if (freelySwitchModes) isCursingMode = !isCursingMode;
+        UpdateKillButton();
     }
 
     [RoleAction(LotusActionType.MeetingEnd, ActionFlag.WorksAfterDeath)]
@@ -94,16 +115,29 @@ public class Witch : Vanilla.Impostor
         indicators.Clear();
     }
 
+    private void UpdateKillButton()
+    {
+        if (killButtonMode == !isCursingMode) return;
+        killButtonMode = !isCursingMode;
+
+        if (killButtonMode) UIManager.KillButton
+            .RevertSprite()
+            .SetText(Translations.KillButtonText);
+        else UIManager.KillButton
+            .SetText(Translations.CursingButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/witch_hex.png", 130, true));
+    }
+
     public override void HandleDisconnect() => ClearCursedPlayers();
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Freely Switch Modes", Translations.Options.FreelySwitchModes)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => freelySwitchModes = b)
                 .Build())
             .SubOption(sub => sub.KeyName("Switch Modes After Attack", Translations.Options.SwitchModesAfterAttack)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => switchModesAfterAttack = b)
                 .Build());
 
@@ -121,6 +155,13 @@ public class Witch : Vanilla.Impostor
 
         [Localized(nameof(CursedMessage))]
         public static string CursedMessage = "{0}::0 cursed {1}::1 to die at the end of next meeting.";
+
+        [Localized(nameof(CursingButtonText))]
+        public static string CursingButtonText = "Curse";
+
+        [Localized(nameof(KillButtonText))]
+        public static string KillButtonText = "Kill";
+
 
         [Localized(nameof(CursingModeText))]
         public static string CursingModeText = "Cursing";

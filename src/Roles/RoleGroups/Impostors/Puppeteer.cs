@@ -14,20 +14,28 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using Lotus.Extensions;
+using Lotus.GUI;
 using Lotus.Logging;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Utilities;
 using UnityEngine;
+using VentLib.Localization.Attributes;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Puppeteer : Vanilla.Impostor
+public class Puppeteer : Vanilla.Impostor, IRoleUI
 {
     [NewOnSetup] private List<PlayerControl> cursedPlayers;
     [NewOnSetup] private Dictionary<byte, Remote<IndicatorComponent>> playerRemotes = null!;
 
     private FixedUpdateLock fixedUpdateLock = new();
+
+    public RoleButton KillButton(IRoleButtonEditor editor) => editor
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/puppeteer_operate.png", 130, true));
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
@@ -95,4 +103,10 @@ public class Puppeteer : Vanilla.Impostor
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier).OptionOverride(new IndirectKillCooldown(KillCooldown));
+
+    [Localized(nameof(Puppeteer))]
+    public static class Translations
+    {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Puppet";
+    }
 }

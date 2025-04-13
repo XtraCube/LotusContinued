@@ -10,6 +10,8 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Victory;
 using Lotus.Victory.Conditions;
 using Lotus.Extensions;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
 using VentLib.Options.UI;
 using VentLib.Utilities;
@@ -17,7 +19,7 @@ using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
-public class Survivor : CustomRole
+public class Survivor : CustomRole, IRoleUI
 {
     [UIComponent(UI.Cooldown)]
     private Cooldown vestCooldown;
@@ -32,11 +34,24 @@ public class Survivor : CustomRole
     [UIComponent(UI.Indicator)]
     private string GetVestString() => vestDuration.IsReady() ? "" : RoleColor.Colorize("♣");
 
+    public RoleButton PetButton(IRoleButtonEditor petButton) => petButton
+        .SetText(Translations.ButtonText)
+        .BindUses(() => remainingVests)
+        .BindCooldown(vestCooldown)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/survivor_protect.png", 130, true));
 
     protected override void PostSetup()
     {
         remainingVests = vestUsages;
         Game.GetWinDelegate().AddSubscriber(GameEnd);
+    }
+
+    [RoleAction(LotusActionType.RoundStart)]
+    private void OnRoundStart(bool gameStart)
+    {
+        UIManager.PetButton.BindCooldown(vestCooldown);
+        vestDuration.Finish(true);
+        vestCooldown.Start(gameStart ? 10 : float.MinValue);
     }
 
     [RoleAction(LotusActionType.Interaction)]
@@ -52,7 +67,12 @@ public class Survivor : CustomRole
     {
         if (remainingVests == 0 || vestDuration.NotReady() || vestCooldown.NotReady()) return;
         remainingVests--;
-        vestDuration.StartThenRun(() => vestCooldown.Start()); ;
+        UIManager.PetButton.BindCooldown(vestDuration);
+        vestDuration.StartThenRun(() =>
+        {
+            vestCooldown.Start();
+            UIManager.PetButton.BindCooldown(vestCooldown);
+        });
     }
 
     private void GameEnd(WinDelegate winDelegate)
@@ -91,6 +111,9 @@ public class Survivor : CustomRole
     [Localized(nameof(Survivor))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Shield";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

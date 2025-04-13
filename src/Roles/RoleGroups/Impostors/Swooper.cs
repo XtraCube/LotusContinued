@@ -26,11 +26,13 @@ using VentLib.Utilities.Optionals;
 using Lotus.API.Player;
 using VentLib.Localization.Attributes;
 using System.Numerics;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Utilities;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Swooper : Impostor
+public class Swooper : Impostor, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Swooper));
     private ReturnLocation returnLocation;
@@ -45,8 +47,17 @@ public class Swooper : Impostor
     private Cooldown swooperCooldown = null!;
     private Optional<Vent> initialVent = null!;
 
+    public RoleButton VentButton(IRoleButtonEditor ventButton) => ventButton
+        .BindCooldown(swooperCooldown)
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/swooper_disappear.png", 130, true));
+
     [RoleAction(LotusActionType.RoundStart)]
-    private void OnRoundStart(bool gameStart) => swooperCooldown.Start(gameStart ? 10 : float.MinValue);
+    private void OnRoundStart(bool gameStart)
+    {
+        UIManager.VentButton.BindCooldown(swooperCooldown);
+        swooperCooldown.Start(gameStart ? 10 : float.MinValue);
+    }
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
@@ -62,7 +73,7 @@ public class Swooper : Impostor
     {
         MyPlayer.NameModel().GetComponentHolder<CooldownHolder>()[0].SetTextColor(new Color(0.2f, 0.63f, 0.29f));
         LiveString swoopingString = new(() => swoopingDuration.NotReady() ? "Swooping" : "", Color.red);
-        MyPlayer.NameModel().GetComponentHolder<TextHolder>().Add(new TextComponent(swoopingString, new[] { GameState.Roaming }, viewers: GetUnaffected));
+        MyPlayer.NameModel().GetComponentHolder<TextHolder>().Add(new TextComponent(swoopingString, [GameState.Roaming], viewers: GetUnaffected));
         MyPlayer.NameModel().GetComponentHolder<TextHolder>().Add(new TextComponent(LiveString.Empty, GameState.Roaming, ViewMode.Replace, MyPlayer));
     }
 
@@ -79,6 +90,7 @@ public class Swooper : Impostor
         List<PlayerControl> unaffected = GetUnaffected();
         initialVent = Optional<Vent>.Of(vent);
 
+        UIManager.VentButton.BindCooldown(swoopingDuration);
         swoopingDuration.StartThenRun(EndSwooping);
         Game.MatchData.GameHistory.AddEvent(new GenericAbilityEvent(MyPlayer, $"{MyPlayer.name} began swooping."));
         Async.Schedule(() => KickFromVent(vent, unaffected), NetUtils.DeriveDelay(0.4f));
@@ -106,7 +118,15 @@ public class Swooper : Impostor
                 Async.Schedule(() => Utils.Teleport(MyPlayer.NetTransform, currentLocation), NetUtils.DeriveDelay(0.8f));
                 break;
         }
+        UIManager.VentButton.BindCooldown(swooperCooldown);
         swooperCooldown.Start();
+    }
+
+    [RoleAction(LotusActionType.RoundEnd)]
+    private void EndSwoopOnRoundEnd()
+    {
+        swooperCooldown.Finish();
+        swoopingDuration.Finish(true);
     }
 
     private List<PlayerControl> GetUnaffected() => Players.GetAllPlayers().Where(p => !p.IsAlive() || canBeSeenByAllied && p.Relationship(MyPlayer) is Relation.FullAllies).AddItem(MyPlayer).ToList();
@@ -151,6 +171,8 @@ public class Swooper : Impostor
     [Localized(nameof(Swooper))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Swoop";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

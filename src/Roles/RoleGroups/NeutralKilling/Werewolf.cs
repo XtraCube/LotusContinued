@@ -6,6 +6,8 @@ using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using Lotus.Roles.Internals.Enums;
@@ -14,7 +16,7 @@ using VentLib.Utilities;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
-public class Werewolf : NeutralKillingBase
+public class Werewolf : NeutralKillingBase, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Werewolf));
     private bool rampaging;
@@ -27,8 +29,22 @@ public class Werewolf : NeutralKillingBase
     [UIComponent(UI.Cooldown)]
     private Cooldown rampageCooldown;
 
+    public RoleButton KillButton(IRoleButtonEditor killButton) =>
+        killButton.SetText(Translations.KillButtonText).BindUses(() => 0);
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) =>
+        petButton
+            .BindCooldown(rampageCooldown)
+            .SetText(Translations.PetButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/werewolf_rampage.png", 130, true));
+
     [RoleAction(LotusActionType.RoundStart)]
-    private void OnRoundStart(bool gameStart) => rampageCooldown.Start(gameStart ? 10 : float.MinValue);
+    private void OnRoundStart(bool gameStart)
+    {
+        UIManager.KillButton.BindUses(() => 0);
+        UIManager.PetButton.BindCooldown(rampageCooldown);
+        rampageCooldown.Start(gameStart ? 10 : float.MinValue);
+    }
 
     protected override void PostSetup()
     {
@@ -37,13 +53,15 @@ public class Werewolf : NeutralKillingBase
     }
 
     [RoleAction(LotusActionType.Attack)]
-    public new bool TryKill(PlayerControl target) => rampaging && base.TryKill(target);
+    public override bool TryKill(PlayerControl target) => rampaging && base.TryKill(target);
 
     [RoleAction(LotusActionType.OnPet)]
     private void EnterRampage()
     {
         if (rampageDuration.NotReady() || rampageCooldown.NotReady()) return;
         log.Trace($"{MyPlayer.GetNameWithRole()} Starting Rampage");
+        UIManager.KillButton.BindUses(() => -1);
+        UIManager.PetButton.BindCooldown(rampageDuration);
         rampaging = true;
         rampageDuration.Start();
         Async.Schedule(ExitRampage, rampageDuration.Duration);
@@ -53,6 +71,8 @@ public class Werewolf : NeutralKillingBase
     private void ExitRampage()
     {
         log.Trace($"{MyPlayer.GetNameWithRole()} Ending Rampage");
+        UIManager.KillButton.BindUses(() => 0);
+        UIManager.PetButton.BindCooldown(rampageCooldown);
         rampaging = false;
         rampageCooldown.Start();
     }
@@ -78,13 +98,13 @@ public class Werewolf : NeutralKillingBase
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Can Vent Normally", Translations.Options.CanVentNormally)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .BindBool(b => canVentNormally = b)
                 .ShowSubOptionPredicate(o => !(bool)o)
                 .SubOption(sub2 => sub2
                     .KeyName("Can Vent in Rampage", Translations.Options.CanVentInRampage)
                     .BindBool(b => canVentDuringRampage = b)
-                    .AddOnOffValues()
+                    .AddBoolean()
                     .Build())
                 .Build());
 
@@ -101,6 +121,8 @@ public class Werewolf : NeutralKillingBase
     [Localized(nameof(Werewolf))]
     public static class Translations
     {
+        [Localized(nameof(PetButtonText))] public static string PetButtonText = "Rampage";
+        [Localized(nameof(KillButtonText))] public static string KillButtonText = "Maul";
         [Localized(nameof(Rampage))] public static string Rampage = "RAMPAGING";
 
         [Localized(ModConstants.Options)]

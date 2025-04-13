@@ -9,6 +9,8 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Internals;
 using VentLib.Options.UI;
 using VentLib.Utilities;
@@ -16,7 +18,7 @@ using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Grenadier : Vanilla.Impostor
+public class Grenadier : Vanilla.Impostor, IRoleUI
 {
     [UIComponent(UI.Cooldown)]
     private Cooldown blindCooldown;
@@ -27,15 +29,21 @@ public class Grenadier : Vanilla.Impostor
     private int grenadeAmount;
     private int grenadesLeft;
 
+    public RoleButton PetButton(IRoleButtonEditor petButton) =>
+        petButton
+            .BindUses(() => grenadesLeft)
+            .SetText(Translations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/grenadier_blind.png", 130, true));
+
     [RoleAction(LotusActionType.Attack)]
-    public new bool TryKill(PlayerControl target) => base.TryKill(target);
+    public override bool TryKill(PlayerControl target) => base.TryKill(target);
 
     [RoleAction(LotusActionType.OnPet)]
     private void GrenadierBlind()
     {
         if (blindCooldown.NotReady() || grenadesLeft <= 0) return;
 
-        GameOptionOverride[] overrides = { new(Override.CrewLightMod, 0f), new(Override.ImpostorLightMod, 0f) };
+        GameOptionOverride[] overrides = [ new(Override.CrewLightMod, 0f), new(Override.ImpostorLightMod, 0f) ];
         List<PlayerControl> playersInDistance = blindDistance > 0
             ? RoleUtils.GetPlayersWithinDistance(MyPlayer, blindDistance).ToList()
             : MyPlayer.GetPlayersInAbilityRangeSorted();
@@ -80,12 +88,12 @@ public class Grenadier : Vanilla.Impostor
             .SubOption(sub => sub
                 .KeyName("Can Blind Allies", Translations.Options.CanBlindAllies)
                 .Bind(v => canBlindAllies = (bool)v)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Can Vent", RoleTranslations.CanVent)
                 .Bind(v => canVent = (bool)v)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build());
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
@@ -96,6 +104,8 @@ public class Grenadier : Vanilla.Impostor
     [Localized(nameof(Grenadier))]
     public static class Translations
     {
+        public static string ButtonText = "Grenade";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

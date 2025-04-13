@@ -19,16 +19,23 @@ using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using Lotus.API.Vanilla.Meetings;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Tracker : Vanilla.Tracker
+public class Tracker : Vanilla.Tracker, IRoleUI
 {
     private TrackBodyValue canTrackBodies;
     private bool canTrackUnreportableBodies;
 
-    private Cooldown trackBodyCooldown;
-    private Cooldown trackBodyDuration;
+    [UIComponent(UI.Cooldown)] private Cooldown trackBodyCooldown;
+    [UIComponent(UI.Cooldown)] private Cooldown trackBodyDuration;
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .BindCooldown(trackBodyCooldown)
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/tracker_track_bodies.png", 130, true));
 
     [UIComponent(UI.Indicator)]
     public string DisplayDeadBodies()
@@ -46,7 +53,12 @@ public class Tracker : Vanilla.Tracker
     {
         if (canTrackBodies is not TrackBodyValue.OnPet) return;
         if (trackBodyCooldown.NotReady() || trackBodyDuration.NotReady()) return;
-        trackBodyDuration.StartThenRun(() => trackBodyCooldown.Start());
+        UIManager.PetButton.BindCooldown(trackBodyDuration);
+        trackBodyDuration.StartThenRun(() =>
+        {
+            UIManager.PetButton.BindCooldown(trackBodyCooldown);
+            trackBodyCooldown.Start();
+        });
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
@@ -59,7 +71,7 @@ public class Tracker : Vanilla.Tracker
                 .ShowSubOptionPredicate(i => (int)i != 0)
                 .SubOption(sub2 => sub2.KeyName("Can Track Unreportable Bodies", Translations.Options.CanTrackUnreportableBodies)
                     .BindBool(b => canTrackUnreportableBodies = b)
-                    .AddOnOffValues()
+                    .AddBoolean()
                     .Build())
                 .SubOption(sub2 => sub2.KeyName("Track Body Duration", Translations.Options.TrackBodyDuration)
                     .AddFloatRange(2.5f, 120f, 2.5f, 4, GeneralOptionTranslations.SecondsSuffix)
@@ -76,8 +88,9 @@ public class Tracker : Vanilla.Tracker
             // .RoleColor(new Color(0.82f, 0.24f, 0.82f))
             .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
 
-    private static class Translations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Locate";
         public static class Options
         {
 

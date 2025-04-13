@@ -11,6 +11,8 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using Lotus.Extensions;
 using Lotus.GUI;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Utilities;
 using UnityEngine;
 using VentLib.Localization;
@@ -20,7 +22,7 @@ using VentLib.Utilities.Collections;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class YinYanger : Vanilla.Impostor
+public class YinYanger : Vanilla.Impostor, IRoleUI
 {
     [NewOnSetup] private Dictionary<byte, Remote<IndicatorComponent>> remotes;
 
@@ -34,6 +36,10 @@ public class YinYanger : Vanilla.Impostor
 
     [UIComponent(UI.Text)]
     private string ModeIndicator() => !InYinMode ? "" : Color.black.Colorize("Yin") + Color.white.Colorize("Yanging");
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/yinyanger_yinyang.png", 130, true))
+        .SetText(Localizer.Translate($"Roles.{nameof(YinYanger)}.YinYangButtonText", "Yinyang"));
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)

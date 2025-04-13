@@ -10,7 +10,10 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Extensions;
+using Lotus.GUI;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using VentLib.Options.IO;
@@ -19,23 +22,28 @@ using static Lotus.Roles.RoleGroups.Crew.Bastion.BastionTranslations.BastionOpti
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Bastion : Engineer
+public class Bastion : Engineer, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Bastion));
     private int bombsPerRounds;
+
     // Here we can use the vent button as cooldown
     [NewOnSetup] private HashSet<int> bombedVents;
 
     private int currentBombs;
     private Remote<CounterComponent>? counterRemote;
 
+    public RoleButton AbilityButton(IRoleButtonEditor abilityButton) => abilityButton
+        .BindUses(() => currentBombs)
+        .SetText(BastionTranslations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/bastion_plant_bomb.png", 130, true));
 
     protected override void PostSetup()
     {
         if (bombsPerRounds == -1) return;
         CounterHolder counterHolder = MyPlayer.NameModel().GetComponentHolder<CounterHolder>();
         LiveString ls = new(() => RoleUtils.Counter(currentBombs, bombsPerRounds, ModConstants.Palette.GeneralColor2));
-        counterRemote = counterHolder.Add(new CounterComponent(ls, new[] { GameState.Roaming }, ViewMode.Additive, MyPlayer));
+        counterRemote = counterHolder.Add(new CounterComponent(ls, [GameState.Roaming], ViewMode.Additive, MyPlayer));
     }
 
     [RoleAction(LotusActionType.VentEntered, ActionFlag.GlobalDetector)]
@@ -85,13 +93,15 @@ public class Bastion : Engineer
                 .Build());
 
 
-    protected override RoleModifier Modify(RoleModifier roleModifier) =>
-        base.Modify(roleModifier)
+    protected override RoleModifier Modify(RoleModifier roleModifier) => base.Modify(roleModifier)
         .RoleColor("#524f4d");
 
     [Localized(nameof(Bastion))]
-    internal static class BastionTranslations
+    public static class BastionTranslations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Bomb";
+
         [Localized(ModConstants.Options)]
         public static class BastionOptionTranslations
         {

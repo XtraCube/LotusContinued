@@ -12,6 +12,8 @@ using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name.Holders;
 using Lotus.Options;
 using Lotus.Roles.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Enums;
@@ -31,7 +33,7 @@ using VentLib.Utilities.Optionals;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Mastermind : Impostor
+public class Mastermind : Impostor, IRoleUI
 {
     private int manipulatedPlayerLimit;
     private bool impostorsCanSeeManipulated;
@@ -43,6 +45,8 @@ public class Mastermind : Impostor
     [NewOnSetup] private Dictionary<byte, HashSet<byte>> manipuletedKills = null!;
 
     private bool CanManipulate => manipulatedPlayerLimit == -1 || manipulatedPlayers.Count < manipulatedPlayerLimit;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => UpdateKillButton(killButton);
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
@@ -62,6 +66,7 @@ public class Mastermind : Impostor
 
         Async.Schedule(() => BeginSuicideCountdown(target), 5f);
         RefreshKillCooldown(target);
+        UpdateKillButton(UIManager.KillButton);
         return false;
     }
 
@@ -137,6 +142,9 @@ public class Mastermind : Impostor
         target.InteractWith(target, new UnblockedInteraction(new FatalIntent(false, () => new ManipulatedPlayerDeathEvent(target, target)), this));
     }
 
+    private RoleButton UpdateKillButton(IRoleButtonEditor killButton) => CanManipulate
+        ? killButton.SetText(ManipulateButtonText).SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/mastermind_manipulate.png", 130, true))
+        : killButton.SetText(Witch.Translations.KillButtonText).RevertSprite();
 
     [RoleAction(LotusActionType.PlayerDeath)] // MY DEATH
     [RoleAction(LotusActionType.RoundEnd)]
@@ -160,9 +168,10 @@ public class Mastermind : Impostor
     {
         remotes.GetValueOrDefault(player.PlayerId)?.ForEach(r => r?.Delete());
         manipulatedPlayers.Remove(player.PlayerId);
-        expirationTimers.GetValueOrDefault(player.PlayerId)?.Finish();
+        expirationTimers.GetValueOrDefault(player.PlayerId)?.Finish(true);
         expirationTimers.Remove(player.PlayerId);
         remotes.Remove(player.PlayerId);
+        UpdateKillButton(UIManager.KillButton);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
@@ -173,7 +182,7 @@ public class Mastermind : Impostor
                 .BindInt(i => manipulatedPlayerLimit = i)
                 .Build())
             .SubOption(sub => sub.KeyName("Impostors Can See Manipulated", TranslationUtil.Colorize(ImpostorsCanSeeManipulated, RoleColor))
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => impostorsCanSeeManipulated = b)
                 .Build())
             .SubOption(sub => sub.KeyName("Time Until Suicide", TimeUntilSuicide)
@@ -191,6 +200,9 @@ public class Mastermind : Impostor
     [Localized(nameof(Mastermind))]
     internal static class MastermindTranslations
     {
+        [Localized(nameof(ManipulateButtonText))]
+        public static string ManipulateButtonText = "Manipulate";
+
         [Localized(nameof(ManipulatedText))]
         public static string ManipulatedText = "Manipulated!";
 

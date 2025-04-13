@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
-using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Chat;
 using Lotus.GUI.Name;
@@ -13,11 +12,9 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;
-using Lotus.Utilities;
 using Lotus.Extensions;
 using UnityEngine;
 using VentLib.Localization.Attributes;
-using Lotus.Logging;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Collections;
@@ -25,10 +22,12 @@ using VentLib.Utilities.Optionals;
 using static Lotus.Roles.RoleGroups.Impostors.Blackmailer.BlackmailerTranslations;
 using Lotus.API.Player;
 using Lotus.GUI;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Blackmailer : Shapeshifter
+public class Blackmailer : Shapeshifter, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Blackmailer));
     private Remote<TextComponent>? blackmailingText;
@@ -44,6 +43,18 @@ public class Blackmailer : Shapeshifter
     [UIComponent(UI.Text)]
     private string ModeDisplay() => usesShapeshifter ? "" : Color.red.Colorize(inBlackmailingMode ? BlackmailingMode : Witch.Translations.KillingModeText);
 
+    public RoleButton AbilityButton(IRoleButtonEditor editor) => !usesShapeshifter
+        ? editor.Default(true)
+        : editor.SetText(BlackmailButtonText).SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/blackmailer_blackmail.png", 130, true));
+
+    public RoleButton KillButton(IRoleButtonEditor editor) => usesShapeshifter || !inBlackmailingMode
+        ? editor.Default(true)
+        : editor.SetText(BlackmailButtonText).SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/blackmailer_blackmail.png", 130, true));
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => usesShapeshifter
+        ? petButton.Default(true)
+        : petButton.SetText(RoleTranslations.Switch)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/generic_switch_ability.png", 130, true));
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
@@ -109,6 +120,11 @@ public class Blackmailer : Shapeshifter
     {
         if (usesShapeshifter) return;
         inBlackmailingMode = !inBlackmailingMode;
+        RoleButton killButton = UIManager.KillButton;
+        if (inBlackmailingMode)
+            killButton.SetText(BlackmailButtonText).SetSprite(() =>
+                LotusAssets.LoadSprite("Buttons/Imp/blackmailer_blackmail.png", 130, true));
+        else killButton.RevertSprite().SetText(Witch.Translations.KillButtonText);
     }
 
     [RoleAction(LotusActionType.Chat, ActionFlag.GlobalDetector | ActionFlag.WorksAfterDeath)]
@@ -146,8 +162,8 @@ public class Blackmailer : Shapeshifter
                 .BindBool(b => showBlackmailedToAll = b)
                 .Build())
             .SubOption(sub => sub.KeyName("Uses Shapeshifter", BlackmailerTranslations.Options.BlackmailerIsSSBased)
-                .AddBoolean()
-                .BindBool(b => showBlackmailedToAll = b)
+                .AddBoolean(false)
+                .BindBool(b => usesShapeshifter = b)
                 .Build());
 
     protected override RoleModifier Modify(RoleModifier roleModifier) => base.Modify(roleModifier)
@@ -161,6 +177,7 @@ public class Blackmailer : Shapeshifter
         [Localized(nameof(WarningMessage))] public static string WarningMessage = "You are not allowed to speak! If you speak again you may be killed.";
         [Localized(nameof(BlackmailedText))] public static string BlackmailedText = "BLACKMAILED";
 
+        [Localized(nameof(BlackmailButtonText))] public static string BlackmailButtonText = "Blackmail";
         [Localized(nameof(BlackmailingMode))] public static string BlackmailingMode = "Blackmailing";
 
         [Localized(ModConstants.Options)]

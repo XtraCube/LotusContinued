@@ -23,10 +23,13 @@ using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using Lotus.GameModes.Standard;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.Roles.RoleGroups.Impostors;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
-public class Occultist : NeutralKillingBase
+public class Occultist : NeutralKillingBase, IRoleUI
 {
     private bool freelySwitchModes;
     private bool switchModesAfterAttack;
@@ -35,9 +38,25 @@ public class Occultist : NeutralKillingBase
     [NewOnSetup] private Dictionary<byte, Remote<IStatus>?> cursedPlayers;
 
     private bool isCursingMode = true;
+    private bool killButtonMode;
+
+    protected override void Setup(PlayerControl player)
+    {
+        base.Setup(player);
+        killButtonMode = !isCursingMode;
+    }
 
     [UIComponent(UI.Text)]
     private string ModeDisplay() => (freelySwitchModes || switchModesAfterAttack) ? (isCursingMode ? RoleColor.Colorize(Translations.CursingModeText) : Color.red.Colorize(Translations.KillingModeText)) : "";
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => !freelySwitchModes
+        ? petButton.Default(true)
+        : petButton.SetText(RoleTranslations.Switch)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/generic_switch_ability.png", 130, true));
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Witch.Translations.CursingButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/occultist_hex.png", 130, true));
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
@@ -67,6 +86,7 @@ public class Occultist : NeutralKillingBase
     public void SwitchWitchMode()
     {
         if (freelySwitchModes) isCursingMode = !isCursingMode;
+        UpdateKillButton();
     }
 
     [RoleAction(LotusActionType.MeetingEnd)]
@@ -93,14 +113,27 @@ public class Occultist : NeutralKillingBase
 
     public override void HandleDisconnect() => ClearCursedPlayers();
 
+    private void UpdateKillButton()
+    {
+        if (killButtonMode == !isCursingMode) return;
+        killButtonMode = !isCursingMode;
+
+        if (killButtonMode) UIManager.KillButton
+            .RevertSprite()
+            .SetText(Witch.Translations.KillButtonText);
+        else UIManager.KillButton
+            .SetText(Witch.Translations.CursingButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/occultist_hex.png", 130, true));
+    }
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Freely Switch Modes", Translations.Options.FreelySwitchModes)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => freelySwitchModes = b)
                 .Build())
             .SubOption(sub => sub.KeyName("Switch Modes After Attack", Translations.Options.SwitchModesAfterAttack)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => switchModesAfterAttack = b)
                 .Build());
 

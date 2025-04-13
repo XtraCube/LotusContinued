@@ -26,10 +26,12 @@ using VentLib.Utilities.Extensions;
 using static Lotus.Roles.RoleGroups.Crew.Investigator.Translations.Options;
 using Lotus.Logging;
 using Lotus.GameModes.Standard;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Investigator : Crewmate
+public class Investigator : Crewmate, IRoleUI
 {
     public static List<(Func<CustomRole, bool> predicate, GameOptionBuilder builder)> RoleTypeBuilders = new()
     {
@@ -65,6 +67,11 @@ public class Investigator : Crewmate
     {
         StandardRoles.Callbacks.Add(PopulateInvestigatorOptions);
     }
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .BindCooldown(abilityCooldown)
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/investigator_investigate.png", 130, true));
 
     [RoleAction(LotusActionType.OnPet)]
     private void Investigate()
@@ -130,8 +137,11 @@ public class Investigator : Crewmate
     }
 
     [Localized(nameof(Investigator))]
-    internal static class Translations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Investigate";
+
         [Localized(ModConstants.Options)]
         internal static class Options
         {

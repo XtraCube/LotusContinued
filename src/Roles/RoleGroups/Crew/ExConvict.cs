@@ -9,6 +9,9 @@ using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.Roles.RoleGroups.Impostors;
 using UnityEngine;
 using VentLib.Options.UI;
 using VentLib.Utilities;
@@ -16,7 +19,7 @@ using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class ExConvict : Crewmate
+public class ExConvict : Crewmate, IRoleUI
 {
     private Vector2? location;
     private bool clearMarkAfterMeeting;
@@ -30,6 +33,8 @@ public class ExConvict : Crewmate
 
     [UIComponent(UI.Text)]
     private string TpIndicator() => canEscapeCooldown.IsReady() && location != null ? Color.cyan.Colorize("Press Pet to Escape") : "";
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => UpdatePetButton(editor);
 
     protected override void PostSetup()
     {
@@ -48,6 +53,7 @@ public class ExConvict : Crewmate
     private void ClearMark()
     {
         if (clearMarkAfterMeeting) location = null;
+        UpdatePetButton(UIManager.PetButton);
     }
 
     private void TryMarkLocation()
@@ -55,6 +61,7 @@ public class ExConvict : Crewmate
         if (canMarkCooldown.NotReady()) return;
         location = MyPlayer.GetTruePosition();
         canEscapeCooldown.Start();
+        UpdatePetButton(UIManager.PetButton);
     }
 
     private void TryEscape()
@@ -63,7 +70,18 @@ public class ExConvict : Crewmate
         Utils.Teleport(MyPlayer.NetTransform, location.Value);
         location = null;
         canMarkCooldown.Start();
+        UpdatePetButton(UIManager.PetButton);
     }
+
+    private RoleButton UpdatePetButton(IRoleButtonEditor editor) => location == null
+        ? editor
+            .SetText(Escapist.Translations.MarkButtonText)
+            .BindCooldown(canMarkCooldown)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/ex-convict_teleport.png", 130, true))
+        : editor
+            .SetText(Escapist.Translations.EscapeButtonText)
+            .BindCooldown(canEscapeCooldown)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/ex-convict_teleport.png", 130, true));
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -79,7 +97,7 @@ public class ExConvict : Crewmate
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Clear Mark After Meeting", Translations.Options.ClearAfterMeeting)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => clearMarkAfterMeeting = b)
                 .Build());
 

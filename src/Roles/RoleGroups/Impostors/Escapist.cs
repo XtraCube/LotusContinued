@@ -9,6 +9,8 @@ using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
 using VentLib.Options.UI;
 using VentLib.Utilities;
@@ -16,7 +18,7 @@ using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Escapist : Impostor
+public class Escapist : Impostor, IRoleUI
 {
     private bool clearMarkAfterMeeting;
 
@@ -27,6 +29,8 @@ public class Escapist : Impostor
 
     [UIComponent(UI.Cooldown)]
     private Cooldown canMarkCooldown;
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => UpdatePetButton(editor);
 
     [UIComponent(UI.Text)]
     private string TpIndicator() => canEscapeCooldown.IsReady() && location != null ? Color.red.Colorize("Press Pet to Escape") : "";
@@ -51,6 +55,7 @@ public class Escapist : Impostor
     private void ClearMark()
     {
         if (clearMarkAfterMeeting) location = null;
+        UpdatePetButton(UIManager.PetButton);
     }
 
     private void TryMarkLocation()
@@ -58,6 +63,7 @@ public class Escapist : Impostor
         if (canMarkCooldown.NotReady()) return;
         location = MyPlayer.GetTruePosition();
         canEscapeCooldown.Start();
+        UpdatePetButton(UIManager.PetButton);
     }
 
     private void TryEscape()
@@ -66,7 +72,18 @@ public class Escapist : Impostor
         Utils.Teleport(MyPlayer.NetTransform, location.Value);
         location = null;
         canMarkCooldown.Start();
+        UpdatePetButton(UIManager.PetButton);
     }
+
+    private RoleButton UpdatePetButton(IRoleButtonEditor editor) => location == null
+        ? editor
+            .SetText(Translations.MarkButtonText)
+            .BindCooldown(canMarkCooldown)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/escapist_teleport.png", 130, true))
+        : editor
+            .SetText(Translations.EscapeButtonText)
+            .BindCooldown(canEscapeCooldown)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/escapist_teleport.png", 130, true));
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -82,7 +99,7 @@ public class Escapist : Impostor
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Clear Mark After Meeting", Translations.Options.ClearAfterMeeting)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => clearMarkAfterMeeting = b)
                 .Build());
 
@@ -93,6 +110,9 @@ public class Escapist : Impostor
     [Localized(nameof(Escapist))]
     public static class Translations
     {
+        [Localized(nameof(MarkButtonText))] public static string MarkButtonText = "Mark";
+        [Localized(nameof(EscapeButtonText))] public static string EscapeButtonText = "Escape";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {
