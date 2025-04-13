@@ -35,9 +35,19 @@ public class LotusAssets
         Texture2D originalTexture = originalSprite.texture;
         Rect rect = originalSprite.rect;
 
+        RenderTexture rt = RenderTexture.GetTemporary((int)rect.width, (int)rect.height, 0, RenderTextureFormat.ARGB32, linear ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB);
+        Graphics.Blit(originalTexture, rt);
+
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = rt;
+
         Texture2D texture = new((int)rect.width, (int)rect.height, TextureFormat.ARGB32, true, linear);
-        texture.SetPixels(originalTexture.GetPixels());
-        texture.Apply(true, false);
+        texture.ReadPixels(new Rect(0, 0, rect.width, rect.height), 0, 0);
+        texture.Apply(true);
+
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(rt);
+
         Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), pixelsPerUnit);
         sprite.texture.requestedMipmapLevel = mipMapLevel;
 
