@@ -55,7 +55,7 @@ class IntroDestroyPatch
             p.RpcResetAbilityCooldown();
             executeSample.Stop();
         });
-        Async.Schedule(() => Players.GetPlayers().ForEach(p => Async.Execute(ReverseEngineeredRPC.UnshfitButtonTrigger(p))), NetUtils.DeriveDelay(2f));
+        // Async.Schedule(() => Players.GetPlayers().ForEach(p => Async.Execute(ReverseEngineeredRPC.UnshiftButtonTrigger(p))), NetUtils.DeriveDelay(2f));
         fullSample.Stop();
         Game.State = GameState.Roaming;
         Game.MatchData.StartTime = DateTime.Now;

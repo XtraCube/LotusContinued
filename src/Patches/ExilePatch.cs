@@ -118,7 +118,7 @@ static class ExileControllerWrapUpPatch
     /// </summary>
     private static void BeginRoundStart()
     {
-        Players.GetAlivePlayers().ForEach(p => Async.Schedule(ReverseEngineeredRPC.UnshfitButtonTrigger(p), NetUtils.DeriveDelay(1f)));
+        // Players.GetAlivePlayers().ForEach(p => Async.Schedule(ReverseEngineeredRPC.UnshiftButtonTrigger(p), NetUtils.DeriveDelay(1f)));
 
         try
         {

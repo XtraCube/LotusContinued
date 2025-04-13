@@ -97,12 +97,12 @@ public class FireWorks : Shapeshifter
                 .Build())
             .SubOption(sub => sub.KeyName("Detonate Only When Last Impostor", TranslationUtil.Colorize(Translations.Options.AbleToDetonateEarly, RoleColor))
                 .BindBool(b => detonateWhenLastImp = b)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build());
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
-            .RoleAbilityFlags(RoleAbilityFlag.UsesPet | RoleAbilityFlag.UsesUnshiftTrigger);
+            .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
 
     [Localized(nameof(FireWorks))]
     private static class Translations

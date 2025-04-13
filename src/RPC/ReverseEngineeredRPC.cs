@@ -48,9 +48,9 @@ public static class ReverseEngineeredRPC
         if (sendToClients) massRpc.Send(targetClientId);
     }
 
-    public static IEnumerator UnshfitButtonTrigger(PlayerControl p)
+    public static IEnumerator UnshiftButtonTrigger(PlayerControl p)
     {
-        if (!p.PrimaryRole().RoleAbilityFlags.HasFlag(Roles.RoleAbilityFlag.UsesUnshiftTrigger)) yield break;
+        // if (!p.PrimaryRole().RoleAbilityFlags.HasFlag(Roles.RoleAbilityFlag.UsesUnshiftTrigger)) yield break;
         PlayerControl target = Players.GetAlivePlayers().Where(t => t.PlayerId != p.PlayerId).ToList().GetRandom();
         p.RpcRejectShapeshift();
         // if (p.IsHost()) p.Shapeshift(target, false);

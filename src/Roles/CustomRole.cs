@@ -85,6 +85,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         cloned.MyPlayer = player;
 
         CreateInstanceBasedVariables();
+        cloned.UIManager.SetBaseRole(cloned);
 
         cloned.Setup(player);
         cloned.SetupUI2(player.NameModel());
@@ -148,10 +149,6 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
 
         IEnumerable<GameOptionOverride>? overrides = newOverrides;
         if (!parameterOverridesAreAbsolute || overrides == null) overrides = GetRoleOverrides(newOverrides);
-        if (this.RoleAbilityFlags.HasFlag(RoleAbilityFlag.UsesUnshiftTrigger))
-        {
-            overrides.Where(o => o.CanApply() && o.Option is Override.ShapeshiftDuration).ForEach(o => o.ForceValue = 0f);
-        }
 
         IGameOptions modifiedOptions = DesyncOptions.GetModifiedOptions(overrides);
         if (official) RpcV3.Immediate(PlayerControl.LocalPlayer.NetId, RpcCalls.SyncSettings).Write(modifiedOptions).Send(MyPlayer.GetClientId());

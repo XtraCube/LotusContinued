@@ -71,8 +71,6 @@ public static class ShapeshiftPatch
         RoleOperations.Current.Trigger(shapeshifting ? LotusActionType.Shapeshift : LotusActionType.Unshapeshift, __instance, handle, target);
         shapeshifter.SyncAll(); // sync new cooldowns and durations
 
-        bool unshiftTrigger = shapeshifter.PrimaryRole().RoleAbilityFlags.HasFlag(RoleAbilityFlag.UsesUnshiftTrigger);
-
         if (handle.IsCanceled)
         {
             shapeshifter.RpcRejectShapeshift();
@@ -86,11 +84,11 @@ public static class ShapeshiftPatch
             return false;
         }
 
-        if (unshiftTrigger)
-        {
-            Async.Execute(ReverseEngineeredRPC.UnshfitButtonTrigger(shapeshifter));
-            return false;
-        }
+        // if (unshiftTrigger)
+        // {
+        //     Async.Execute(ReverseEngineeredRPC.UnshfitButtonTrigger(shapeshifter));
+        //     return false;
+        // }
         Hooks.PlayerHooks.PlayerShapeshiftHook.Propagate(new PlayerShapeshiftHookEvent(__instance, target.Data, !shapeshifting));
         shapeshifter.RpcShapeshift(target, shouldAnimate);
         return false;
