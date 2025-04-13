@@ -5,6 +5,7 @@ using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.API.Vanilla.Meetings;
+using Lotus.API.Vanilla.Sabotages;
 using Lotus.Chat;
 using Lotus.Extensions;
 using Lotus.Factions;
@@ -12,6 +13,7 @@ using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name.Holders;
+using Lotus.Patches.Systems;
 using Lotus.Roles.Events;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
@@ -231,6 +233,8 @@ public class Jailor: Crewmate, IRoleUI
     protected override RoleModifier Modify(RoleModifier roleModifier) => base.Modify(roleModifier)
         .RoleColor(new Color(.65f, .65f, .65f))
         .DesyncRole(useKillButton ? RoleTypes.Impostor : RoleTypes.Crewmate)
+        .OptionOverride(Override.ImpostorLightMod, () => AUSettings.CrewLightMod(), () => useKillButton)
+        .OptionOverride(Override.ImpostorLightMod, () => AUSettings.CrewLightMod() / 5, () => useKillButton && SabotagePatch.CurrentSabotage != null && SabotagePatch.CurrentSabotage.SabotageType() is SabotageType.Lights)
         .IntroSound(RoleTypes.Crewmate)
         .RoleAbilityFlags(!useKillButton ? (RoleAbilityFlags & RoleAbilityFlag.UsesPet) : RoleAbilityFlags, true)
         .OptionOverride(new IndirectKillCooldown(jailCooldown.Duration));
