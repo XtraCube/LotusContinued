@@ -19,7 +19,7 @@ using Lotus.Roles.Internals;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class FireWorks : Shapeshifter
+public class FireWorks : Phantom
 {
     [NewOnSetup] private List<Vector2> fireWorkLocations = null!;
     private int maxFireworks;
@@ -35,11 +35,11 @@ public class FireWorks : Shapeshifter
     public string FireworkCounter() => totalFireworks >= 0 ? RoleUtils.Counter(totalFireworks, maxFireworks, ModConstants.Palette.MadmateColor) : RoleUtils.Counter(plantedFireworks, color: ModConstants.Palette.MadmateColor);
 
     [UIComponent(UI.Text)]
-    public string DetonateText() => detonateWhenLastImp && impostorCount == 1 && plantedFireworks != 0 ? Translations.AbleToDetonateText : "";
+    public string DetonateText() => detonateWhenLastImp && impostorCount == 1 && plantedFireworks != 0 ? FireworksTranslations.AbleToDetonateText : "";
 
     protected override void PostSetup()
     {
-        ShapeshiftDuration = 5f;
+        VanishDuration = 5f;
         maxFireworks = totalFireworks;
     }
 
@@ -53,10 +53,10 @@ public class FireWorks : Shapeshifter
         impostorCount = GetAliveImpostors();
     }
 
-    [RoleAction(LotusActionType.Unshapeshift)]
+    [RoleAction(LotusActionType.Vanish)]
     public void DoFireworkAbility(ActionHandle handle)
     {
-        // handle.Cancel();
+        handle.Cancel();
         if (impostorCount == 1 && plantedFireworks != 0 && detonateWhenLastImp) DetonateFireworks();
         else if (totalFireworks is -1 or >= 1)
         {
@@ -86,16 +86,16 @@ public class FireWorks : Shapeshifter
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
-            .SubOption(sub => sub.KeyName("Plant Firework Cooldown", Translations.Options.PlantFireworkCooldown)
+            .SubOption(sub => sub.KeyName("Plant Firework Cooldown", FireworksTranslations.Options.PlantFireworkCooldown)
                 .AddFloatRange(2.5f, 120f, 2.5f, 19, GeneralOptionTranslations.SecondsSuffix)
-                .BindFloat(f => ShapeshiftCooldown = f)
+                .BindFloat(f => VanishCooldown = f)
                 .Build())
-            .SubOption(sub => sub.KeyName("Total Firework Charges", Translations.Options.TotalFireworks)
+            .SubOption(sub => sub.KeyName("Total Firework Charges", FireworksTranslations.Options.TotalFireworks)
                 .Value(v => v.Text(ModConstants.Infinity).Color(ModConstants.Palette.InfinityColor).Value(-1).Build())
                 .AddIntRange(1, 20, 1, 0)
                 .BindInt(i => totalFireworks = i)
                 .Build())
-            .SubOption(sub => sub.KeyName("Detonate Only When Last Impostor", TranslationUtil.Colorize(Translations.Options.AbleToDetonateEarly, RoleColor))
+            .SubOption(sub => sub.KeyName("Detonate Only When Last Impostor", TranslationUtil.Colorize(FireworksTranslations.Options.AbleToDetonateEarly, RoleColor))
                 .BindBool(b => detonateWhenLastImp = b)
                 .AddBoolean()
                 .Build());
@@ -105,7 +105,7 @@ public class FireWorks : Shapeshifter
             .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
 
     [Localized(nameof(FireWorks))]
-    private static class Translations
+    public static class FireworksTranslations
     {
         [Localized(nameof(AbleToDetonateText))]
         public static string AbleToDetonateText = "Detonations Ready!";
