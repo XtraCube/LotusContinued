@@ -1,3 +1,10 @@
+using System.Collections.Generic;
+using Lotus.API.Odyssey;
+using Lotus.API.Player;
+using Lotus.API.Vanilla.Meetings;
+using Lotus.Utilities;
+using VentLib.Utilities.Optionals;
+
 namespace Lotus.Roles.Internals.Enums;
 
 public enum LotusActionType
@@ -88,18 +95,23 @@ public enum LotusActionType
     /// <param name="task"><see cref="Optional"/> an optional of <see cref="PlayerTask"/>, containing the task that was done</param>
     /// <param name="taskLength"><see cref="NormalPlayerTask.TaskLength"/> the length of the completed task</param>
     TaskComplete,
+    /// <summary>
+    /// Fires for every player in the FixedUpdate of PlayerControl.
+    /// Called every 0.02 seconds, or 50 times per second.<br/>
+    /// Use with <see cref="FixedUpdateLock"/> to limit how often your function runs.
+    /// </summary>
     FixedUpdate,
     /// <summary>
     /// Triggers when my player votes for someone (or skips)
     /// </summary>
     /// <param name="voter"><b>(GLOBAL ONLY)</b> <see cref="PlayerControl"/> the player voting</param>
-    /// <param name="voted"><see cref="Optional"/> an optional of <see cref="PlayerControl"/> the player voted for, or null if skipped</param>
+    /// <param name="voted">An <see cref="Optional{T}"/> of <see cref="PlayerControl"/> the player voted for, or null if skipped</param>
     /// <param name="delegate"><see cref="MeetingDelegate"/> the meeting delegate for the current meeting</param>
     Vote,
     /// <summary>
     /// Triggers whenever another player interacts with THIS role. (Use GlobalDetector for any interaction)
     /// </summary>
-    /// <param name="target"><b>(GLOBAL ONLY)</b><see cref="PlayerControl"/> the player being interacted with</param>
+    /// <param name="target"><b>(GLOBAL ONLY)</b> <see cref="PlayerControl"/> the player being interacted with</param>
     /// <param name="interactor"><see cref="PlayerControl"/> the player starting the interaction</param>
     /// <param name="interaction"><see cref="Interaction"/> the interaction</param>
     Interaction,
@@ -121,7 +133,7 @@ public enum LotusActionType
     /// <b>IMPORTANT</b><br/>
     /// You CAN modify the meeting delegate at this time to change the results of the meeting. HOWEVER,
     /// modifying the votes will only change what is displayed during the meeting. You MUST also update the exiled player to change
-    /// the exiled player, as the votes WILL NOT be recalculated automatically at this point. <see cref="MeetingDelegate.CalculateExiledPlayer"/>
+    /// the exiled player, as the votes WILL NOT be recalculated automatically at this point.
     /// </summary>
     /// <param name="meetingDelegate"><see cref="MeetingDelegate"/> the meeting delegate for the current meeting</param>
     VotingComplete,
@@ -132,7 +144,7 @@ public enum LotusActionType
     /// <param name="isTie"><see cref="bool"/> a boolean representing if the meeting tied</param>
     /// <param name="player vote counts"><see cref="Dictionary{TKey,TValue}"/> a dictionary containing (byte, int) representing the amount of votes a player got</param>
     /// <param name="playerVoteStatus"><see cref="Dictionary{TKey,TValue}"/> a dictionary containing (byte, List[Optional[byte]] containing the voting statuses of all players)</param>
-    /// <param name="isForceEnd"><see cref="bool"/> a boolean representing whether or not the meeting forceEnded </param>
+    /// <param name="isForceEnd"><see cref="bool"/> a boolean representing whether the meeting ended naturally. </param>
     MeetingEnd,
     /// <summary>
     /// Triggers when the player tries to Vanish as Phantom.
@@ -149,6 +161,6 @@ public enum LotusActionType
     /// </summary>
     /// <param name="player"><b>(GLOBAL ONLY)</b><see cref="PlayerControl"/> the player who used the zipline</param>
     /// <param name="ziplineBehaviour"><see cref="ZiplineBehaviour"/>The zipline the player is using.</param>
-    /// <param name="fromTop">A boolean representing whether or not the player is coming from the top.</param>
+    /// <param name="fromTop">A boolean representing whether the player is coming from the top.</param>
     Zipline
 }
