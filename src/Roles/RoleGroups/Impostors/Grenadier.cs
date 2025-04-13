@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using Lotus.API.Odyssey;
 using Lotus.Factions;
 using Lotus.GUI;
 using Lotus.GUI.Name;
@@ -15,6 +16,7 @@ using Lotus.Roles.Internals;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Localization.Attributes;
+using VentLib.Utilities.Collections;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -22,12 +24,17 @@ public class Grenadier : Vanilla.Impostor, IRoleUI
 {
     [UIComponent(UI.Cooldown)]
     private Cooldown blindCooldown;
-    private float blindDuration;
+    [UIComponent(UI.Cooldown)]
+    private Cooldown blindDuration;
+
     private float blindDistance;
     private bool canVent;
     private bool canBlindAllies;
     private int grenadeAmount;
     private int grenadesLeft;
+
+    [NewOnSetup] private List<PlayerControl> affectedPlayers;
+    [NewOnSetup] private List<Remote<GameOptionOverride>> grenadesOverride;
 
     public RoleButton PetButton(IRoleButtonEditor petButton) =>
         petButton
@@ -38,29 +45,49 @@ public class Grenadier : Vanilla.Impostor, IRoleUI
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target) => base.TryKill(target);
 
+    [RoleAction(LotusActionType.RoundStart)]
+    private void ResetCooldown(bool gameStart)
+    {
+        if (gameStart) grenadesLeft = grenadeAmount;
+        if (blindDuration.NotReady())
+        {
+            EndGrenade();
+            blindDuration.Finish(true);
+        }
+        UIManager.PetButton.BindCooldown(blindCooldown);
+        blindCooldown.Start(gameStart ? 10 : float.MinValue);
+    }
+
     [RoleAction(LotusActionType.OnPet)]
     private void GrenadierBlind()
     {
-        if (blindCooldown.NotReady() || grenadesLeft <= 0) return;
+        if (blindCooldown.NotReady() || blindDuration.NotReady() || grenadesLeft <= 0) return;
 
         GameOptionOverride[] overrides = [ new(Override.CrewLightMod, 0f), new(Override.ImpostorLightMod, 0f) ];
-        List<PlayerControl> playersInDistance = blindDistance > 0
+        affectedPlayers = blindDistance > 0
             ? RoleUtils.GetPlayersWithinDistance(MyPlayer, blindDistance).ToList()
             : MyPlayer.GetPlayersInAbilityRangeSorted();
 
-        playersInDistance.Where(p => canBlindAllies || p.Relationship(MyPlayer) is not Relation.FullAllies)
-            .Do(p =>
-            {
-                p.PrimaryRole().SyncOptions(overrides);
-                Async.Schedule(() => p.PrimaryRole().SyncOptions(), blindDuration);
-            });
+        affectedPlayers
+            .Where(p => canBlindAllies || p.Relationship(MyPlayer) is not Relation.FullAllies)
+            .Do(p => grenadesOverride.AddRange(overrides.Select(o => Game.MatchData.Roles.AddOverride(p.PlayerId, o))));
 
-        blindCooldown.Start();
+        UIManager.PetButton.BindCooldown(blindDuration);
+        blindDuration.StartThenRun(() =>
+        {
+            EndGrenade();
+            blindCooldown.Start();
+            UIManager.PetButton.BindCooldown(blindCooldown);
+        });
         grenadesLeft--;
     }
 
-    [RoleAction(LotusActionType.RoundStart)]
-    private void SetGrenadeAmount() => grenadesLeft = grenadeAmount;
+    private void EndGrenade()
+    {
+        grenadesOverride.Do(g => g.Delete());
+        affectedPlayers.Do(p => p.PrimaryRole().SyncOptions());
+        affectedPlayers.Clear();
+    }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -71,28 +98,28 @@ public class Grenadier : Vanilla.Impostor, IRoleUI
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Blind Cooldown", Translations.Options.BlindCooldown)
-                .Bind(v => blindCooldown.Duration = (float)v)
+                .BindFloat(blindCooldown.SetDuration)
                 .AddFloatRange(5f, 120f, 2.5f, 10, GeneralOptionTranslations.SecondsSuffix)
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Blind Duration", Translations.Options.BlindDuration)
-                .Bind(v => blindDuration = (float)v)
+                .BindFloat(blindDuration.SetDuration)
                 .AddFloatRange(5f, 60f, 2.5f, 4, GeneralOptionTranslations.SecondsSuffix)
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Blind Effect Radius", Translations.Options.BlindRadius)
-                .Bind(v => blindDistance = (float)v)
+                .BindFloat(f => blindDistance = f)
                 .Value(v => v.Text("Kill Distance").Value(-1f).Build())
                 .AddFloatRange(1.5f, 3f, 0.1f, 4)
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Can Blind Allies", Translations.Options.CanBlindAllies)
-                .Bind(v => canBlindAllies = (bool)v)
+                .BindBool(b => canBlindAllies = b)
                 .AddBoolean(false)
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Can Vent", RoleTranslations.CanVent)
-                .Bind(v => canVent = (bool)v)
+                .BindBool(b => canVent = b)
                 .AddBoolean()
                 .Build());
 
@@ -104,6 +131,7 @@ public class Grenadier : Vanilla.Impostor, IRoleUI
     [Localized(nameof(Grenadier))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
         public static string ButtonText = "Grenade";
 
         [Localized(ModConstants.Options)]
