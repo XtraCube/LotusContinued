@@ -44,6 +44,8 @@ public interface IGameMode
 
     BlockableGameAction BlockedActions();
 
+    GameModeFlags GameFlags();
+
     Remote<GameOptionOverride> AddOverride(byte playerId, GameOptionOverride optionOverride) => MatchData.Roles.AddOverride(playerId, optionOverride);
 
     internal void InternalActivate()

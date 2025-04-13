@@ -8,7 +8,5 @@ public enum ModCalls : uint
     Debug,
     SetKillCooldown,
     ShowPlayerVersion,
-
-
-    SetChatName = 93
+    ShowChat
 }

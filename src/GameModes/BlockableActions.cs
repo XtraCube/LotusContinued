@@ -6,10 +6,10 @@ namespace Lotus.GameModes;
 public enum BlockableGameAction
 {
     Nothing = 0,
-    ReportBody = 1,
-    CallMeeting = 2,
-    KillPlayers = 4,
-    CallSabotage = 8,
-    CloseDoors = 16,
-    EnterVent = 32
+    ReportBody = 1 << 0,
+    CallMeeting = 1 << 1,
+    KillPlayers = 1 << 2,
+    CallSabotage = 1 << 3,
+    CloseDoors = 1 << 4,
+    EnterVent = 1 << 5
 }

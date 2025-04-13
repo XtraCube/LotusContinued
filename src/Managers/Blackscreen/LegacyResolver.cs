@@ -174,9 +174,9 @@ internal class LegacyResolver : IBlackscreenResolver
     private static HashSet<byte> SendPatchedData(byte exiledPlayer)
     {
         DevLogger.GameInfo();
-        HostRpc.RpcDebug("Game Data BEFORE Patch");
+        GeneralModRpc.RpcDebug("Game Data BEFORE Patch");
         HashSet<byte> unpatchable = AntiBlackoutLogic.PatchedDataLegacy(exiledPlayer);
-        HostRpc.RpcDebug("Game Data AFTER Patch");
+        GeneralModRpc.RpcDebug("Game Data AFTER Patch");
         return unpatchable;
     }
 

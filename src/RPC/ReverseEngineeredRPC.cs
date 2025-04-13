@@ -9,6 +9,7 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using VentLib;
 using VentLib.Networking.RPC;
 using VentLib.Networking.RPC.Interfaces;
 using VentLib.Utilities;
@@ -46,6 +47,58 @@ public static class ReverseEngineeredRPC
         if (sendToClients) massRpc.Start(player.NetId, RpcCalls.SetNamePlateStr).Write(newOutift.NamePlateId).Write(player.GetNextRpcSequenceId(RpcCalls.SetNamePlateStr)).End();
 
         if (sendToClients) massRpc.Send(targetClientId);
+    }
+
+    public static void EnableChatForPlayer(PlayerControl player)
+    {
+        if (player.AmOwner)
+        {
+            DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
+            DestroyableSingleton<HudManager>.Instance.Chat.HideBanButton();
+            return;
+        }
+        if (player.IsModded())
+        {
+            Vents.FindRPC((uint)ModCalls.ShowChat)?.Send([player.OwnerId]);
+            return;
+        }
+        bool isDead = player.Data.IsDead;
+        MessageWriter messageWriter = MessageWriter.Get(SendOption.Reliable);
+        messageWriter.StartMessage(6);
+        messageWriter.Write(AmongUsClient.Instance.GameId);
+        messageWriter.WritePacked(player.OwnerId);
+        messageWriter.StartMessage(4);
+        messageWriter.WritePacked(DestroyableSingleton<HudManager>.Instance.MeetingPrefab.SpawnId);
+        messageWriter.WritePacked(-2);
+        messageWriter.Write(0);
+        messageWriter.WritePacked(1);
+        uint netIdCnt = AmongUsClient.Instance.NetIdCnt;
+        AmongUsClient.Instance.NetIdCnt = netIdCnt + 1U;
+        messageWriter.WritePacked(netIdCnt);
+        messageWriter.StartMessage(1);
+        messageWriter.WritePacked(0);
+        messageWriter.EndMessage();
+        messageWriter.EndMessage();
+        player.Data.IsDead = true;
+        messageWriter.StartMessage(1);
+        messageWriter.WritePacked(player.Data.NetId);
+        player.Data.Serialize(messageWriter, true);
+        messageWriter.EndMessage();
+        messageWriter.StartMessage(2);
+        messageWriter.WritePacked(netIdCnt);
+        messageWriter.Write(22);
+        messageWriter.EndMessage();
+        player.Data.IsDead = isDead;
+        messageWriter.StartMessage(1);
+        messageWriter.WritePacked(player.Data.NetId);
+        player.Data.Serialize(messageWriter, true);
+        messageWriter.EndMessage();
+        messageWriter.StartMessage(5);
+        messageWriter.WritePacked(netIdCnt);
+        messageWriter.EndMessage();
+        messageWriter.EndMessage();
+        AmongUsClient.Instance.SendOrDisconnect(messageWriter);
+        messageWriter.Recycle();
     }
 
     public static IEnumerator UnshiftButtonTrigger(PlayerControl p)

@@ -10,9 +10,9 @@ using VentLib.Utilities.Collections;
 
 namespace Lotus.RPC;
 
-public static class HostRpc
+public static class GeneralModRpc
 {
-    private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(HostRpc));
+    private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(GeneralModRpc));
 
     [ModRPC((uint)ModCalls.Debug, RpcActors.Host, RpcActors.NonHosts)]
     public static void RpcDebug(string message)
@@ -25,5 +25,12 @@ public static class HostRpc
     public static void RpcSetKillCooldown(float time)
     {
         PlayerControl.LocalPlayer.SetKillCooldown(time);
+    }
+
+    [ModRPC((uint)ModCalls.ShowChat, RpcActors.Host, RpcActors.NonHosts)]
+    public static void ShowChat()
+    {
+        DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
+        DestroyableSingleton<HudManager>.Instance.Chat.HideBanButton();
     }
 }

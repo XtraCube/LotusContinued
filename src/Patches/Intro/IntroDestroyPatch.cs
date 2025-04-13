@@ -25,6 +25,7 @@ using VentLib.Networking.RPC;
 using Lotus.GameModes.Standard;
 using System.Collections.Generic;
 using System;
+using Lotus.GameModes;
 
 namespace Lotus.Patches.Intro;
 
@@ -111,11 +112,11 @@ class IntroDestroyPatch
         if (!hasPet) player.CRpcShapeshift(player, false);
 
         INameModel nameModel = player.NameModel();
-        if (SelectRolesPatch.desyncedIntroText.TryGetValue(player.PlayerId, out VentLib.Utilities.Collections.Remote<GUI.Name.Components.TextComponent>? value) && value != null)
-        {
+        if (SelectRolesPatch.desyncedIntroText.TryGetValue(player.PlayerId, out VentLib.Utilities.Collections.Remote<GUI.Name.Components.TextComponent>? value))
             value.Delete();
-        }
+
         Players.GetPlayers().ForEach(p => nameModel.RenderFor(p, GameState.Roaming, force: true));
         player.SyncAll();
+        if (Game.CurrentGameMode.GameFlags().HasFlag(GameModeFlags.AllowChatDuringGame)) ReverseEngineeredRPC.EnableChatForPlayer(player);
     }
 }

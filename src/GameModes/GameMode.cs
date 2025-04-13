@@ -54,6 +54,8 @@ public abstract class GameMode : IGameMode
 
     public virtual BlockableGameAction BlockedActions() => BlockableGameAction.Nothing;
 
+    public virtual GameModeFlags GameFlags() => GameModeFlags.None;
+
     public abstract void Setup();
 
     public abstract void Assign(PlayerControl player, CustomRole role, bool addAsMainRole = true, bool sendToClient = false);

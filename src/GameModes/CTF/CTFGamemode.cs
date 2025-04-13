@@ -30,7 +30,7 @@ public class CTFGamemode : GameMode
     public CTFRoleAssignment RoleAssignment { get; }
 
     public override BlockableGameAction BlockedActions() => BlockableGameAction.CallSabotage | BlockableGameAction.CallMeeting | BlockableGameAction.CloseDoors;
-
+    public override GameModeFlags GameFlags() => GameModeFlags.AllowChatDuringGame;
 
     // Red Team // Blue Team
     public static Vector2[] SpawnLocations = [new(-20.625f, -5.5f), new(16.425f, -4.8f)];
