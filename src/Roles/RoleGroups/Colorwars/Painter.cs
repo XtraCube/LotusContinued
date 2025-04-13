@@ -19,7 +19,7 @@ public class Painter : NeutralKillingBase
 {
     private Cooldown gracePeriod = null!;
 
-    [UIComponent(GUI.Name.UI.Text)]
+    [UIComponent(Lotus.GUI.Name.UI.Text)]
     public string GracePeriodText() => gracePeriod.IsReady() ? "" : Color.gray.Colorize(Translations.GracePeriodText).Formatted(gracePeriod + "s");
 
     protected override void PostSetup()
