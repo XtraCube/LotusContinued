@@ -30,7 +30,7 @@ public class Duplicator : Crewmate
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Duplicator));
 
-    [UIComponent(GUI.Name.UI.Cooldown)]
+    [UIComponent(Lotus.GUI.Name.UI.Cooldown)]
     private Cooldown duplicateCooldown = null!;
     private Cooldown duplicateDuration = null!;
 
@@ -57,7 +57,7 @@ public class Duplicator : Crewmate
     [RoleAction(LotusActionType.RoundStart)]
     private void OnRoundStart(bool gameStart)
     {
-        duplicateDuration.Finish();
+        duplicateDuration.Finish(true);
         duplicateCooldown.Start(gameStart ? 10 : float.MinValue);
     }
 
@@ -74,7 +74,7 @@ public class Duplicator : Crewmate
         if (duplicateCooldown.NotReady() || duplicateDuration.NotReady()) return;
 
         Vector2 endPosition = spawnsRandomly ? randomSpawn.GetRandomLocation() : MyPlayer.GetTruePosition();
-        if (RoleUtils.GetPlayersWithinDistance(endPosition, killRadius).Where(p => p.PlayerId != MyPlayer.PlayerId).Count() > 0)
+        if (RoleUtils.GetPlayersWithinDistance(endPosition, killRadius).Any(p => p.PlayerId != MyPlayer.PlayerId))
         {
             log.Debug("Can't spawn clone while near people!");
             return;

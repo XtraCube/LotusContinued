@@ -84,7 +84,7 @@ public class Archangel : CustomRole
     private void Restart(bool gameStart)
     {
         protectCooldown.Start(gameStart ? 10f : float.MinValue);
-        protectDuration.Finish();
+        protectDuration.Finish(true);
     }
 
     [RoleAction(LotusActionType.OnPet)]

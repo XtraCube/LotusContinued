@@ -16,6 +16,7 @@ public class Cooldown : ICloneOnSetup<Cooldown>
     private float remaining;
     private DateTime lastTick = DateTime.Now;
     private Action? action;
+    private bool skipNextCall;
 
     public Cooldown() { }
 
@@ -39,8 +40,9 @@ public class Cooldown : ICloneOnSetup<Cooldown>
         if (IsCoroutine) CooldownManager.SubmitCooldown(this);
     }
 
-    public void Finish()
+    public void Finish(bool skipAction = false)
     {
+        skipNextCall = skipAction;
         remaining = 0.01f;
     }
 
@@ -61,7 +63,8 @@ public class Cooldown : ICloneOnSetup<Cooldown>
         if (remaining > 0 || action == null) return remaining;
         Action tempAction = action;
         action = null;
-        tempAction();
+        if (!skipNextCall) tempAction();
+        skipNextCall = false;
         return remaining;
     }
 
