@@ -48,7 +48,7 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
             {
                 b.usesRemainingSprite = Object.Instantiate(HudManager.Instance.AbilityButton.usesRemainingSprite, b.gameObject.transform);
                 b.usesRemainingSprite.transform.localPosition += new Vector3(0, 0, -34f);
-                b.usesRemainingText = b.usesRemainingSprite.gameObject.FindChildOrEmpty<TextMeshPro>("Text_TMP").OrElseGet(() =>
+                b.usesRemainingText = b.usesRemainingSprite.gameObject.FindChildOrEmpty<TextMeshPro>("Text_TMP", true).OrElseGet(() =>
                     Object.Instantiate(HudManager.Instance.AbilityButton.usesRemainingText,
                         b.usesRemainingSprite.gameObject.transform));
                 b.usesRemainingSprite.gameObject.SetActive(false);
