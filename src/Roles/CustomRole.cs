@@ -60,7 +60,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
 
     public virtual Relation Relationship(CustomRole role)
     {
-        if (this.Faction is Neutral && role.Faction is Neutral)
+        if (this.Faction is INeutralFaction && role.Faction is INeutralFaction)
             return Options.RoleOptions.NeutralOptions.NeutralTeamingMode switch
             {
                 NeutralTeaming.All => Relation.FullAllies,

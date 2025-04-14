@@ -54,7 +54,7 @@ public class BasicCommands : CommandTranslations
         string FactionName(CustomRole role)
         {
             if (role is Subrole) return "Modifiers";
-            if (role.Faction is not Neutral) return role.Faction.Name();
+            if (role.Faction is not INeutralFaction) return role.Faction.Name();
 
             SpecialType specialType = role.Metadata.GetOrDefault(LotusKeys.AuxiliaryRoleType, SpecialType.None);
 

@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Lotus.API;
+using Lotus.Factions;
 using Lotus.Factions.Neutrals;
 using Lotus.Roles;
 using Lotus.Roles.Builtins;
 using Lotus.Roles.Debugger;
+using Lotus.Roles.Interfaces;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Managers.Interfaces;
 using Lotus.Roles.Properties;
@@ -17,7 +19,7 @@ namespace Lotus.Managers.Templates.Models.Backing;
 // ReSharper disable once InconsistentNaming
 internal class TUAllRoles
 {
-    public static string GetAllRoles(bool allowSubroles, bool onlyModifiers = false)
+    public static string GetAllRoles(RoleSearchType searchType = RoleSearchType.AllRolesAndModifiers)
     {
         string? factionName = null;
 
@@ -25,21 +27,21 @@ internal class TUAllRoles
 
         string FactionName(CustomRole roleDefinition)
         {
-            if (roleDefinition.Metadata.GetOrEmpty(RoleProperties.Key).Compare(r => r.HasProperty(RoleProperty.IsModifier))) return "Modifiers";
-            if (roleDefinition.Faction is not Neutral) return roleDefinition.Faction.Name();
+            if (roleDefinition.Metadata.GetOrEmpty(RoleProperties.Key).Compare(r => r.HasProperty(RoleProperty.IsModifier)))
+                return FactionTranslations.Modifiers.Name;
+            if (roleDefinition.Faction is not Neutral)
+                return roleDefinition.Faction.Name();
 
             SpecialType specialType = roleDefinition.Metadata.GetOrDefault(LotusKeys.AuxiliaryRoleType, SpecialType.None);
 
-            return specialType is SpecialType.NeutralKilling ? "Neutral Killers" : "Neutral";
+            return specialType is SpecialType.NeutralKilling ? FactionTranslations.NeutralKillers.Name : FactionTranslations.Neutral.Name;
         }
 
         bool Condition(CustomRole role)
         {
-            if (role is EmptyRole) return false;
-            if (onlyModifiers && role is Subrole) return true;
-            if (onlyModifiers) return false;
-            if (allowSubroles) return true;
-            return role is not Subrole;
+            if (role.GetType() == IRoleManager.Current.FallbackRole().GetType()) return false;
+            if (searchType is RoleSearchType.OnlyModifiers) return role is ISubrole;
+            return searchType is RoleSearchType.AllRolesAndModifiers || role is not ISubrole;
         }
 
 
@@ -67,4 +69,11 @@ internal class TUAllRoles
 
         return text.TrimStart('\n');
     }
+}
+
+public enum RoleSearchType
+{
+    AllRolesAndModifiers,
+    OnlyModifiers,
+    OnlyRoles
 }
