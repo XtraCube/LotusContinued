@@ -79,6 +79,7 @@ public class Ninja : Vanilla.Impostor, IRoleUI
     {
         if (activationType is not ActivationType.Shapeshift) return;
         NinjaHuntAbility();
+        Mode = NinjaMode.Killing;
         UpdateKillButton();
     }
 
