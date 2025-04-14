@@ -63,7 +63,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
     public const string PatchVersion = "4";
     public const string BuildNumber = "0263";
 
-    public static string PluginVersion = typeof(ProjectLotus).Assembly.GetName().Version!.ToString();
+    public static readonly string PluginVersion = typeof(ProjectLotus).Assembly.GetName().Version!.ToString();
 
     public readonly GitVersion CurrentVersion = new(typeof(ProjectLotus).Assembly);
 
