@@ -1,11 +1,12 @@
 ﻿using Lotus.Factions;
 using Lotus.Factions.Interfaces;
+using Lotus.Factions.Neutrals;
 using Lotus.Roles.RoleGroups.NeutralKilling;
 using UnityEngine;
 
 namespace Lotus.Roles.Factions;
 
-public class JackalFaction: Faction<JackalFaction>
+public class JackalFaction: Faction<JackalFaction>, INeutralFaction<JackalFaction>
 {
     public static JackalFaction Instance { get; } = new();
 
