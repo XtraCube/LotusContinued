@@ -35,6 +35,7 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
     private Sprite _sprite = null!;
     private LazySprite? lazySprite;
     private string localizedText;
+    private bool changedSprite;
 
     public RoleButton(Func<ActionButton> buttonSupplier)
     {
@@ -108,6 +109,7 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
     {
         lazySprite = sprite;
         Sprite = lazySprite.Get();
+        changedSprite = true;
         return this;
     }
 
@@ -119,7 +121,7 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
 
     public RoleButton RevertSprite()
     {
-        if (originalSprite != null) GetButton().graphic.sprite = originalSprite;
+        if (originalSprite != null) this.SetSprite(() => originalSprite);
         return this;
     }
 
@@ -177,7 +179,12 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
             button.usesRemainingText.gameObject.SetActive(false);
         }
 
-        button.graphic.sprite = _sprite;
+        if (changedSprite)
+        {
+            changedSprite = false;
+            button.graphic.sprite = Sprite;
+            button.graphic.SetCooldownNormalizedUvs();
+        }
         button.buttonLabelText.text = localizedText;
         if (material != null) button.buttonLabelText.fontSharedMaterial = material;
         if (boundCooldown == null) return;
