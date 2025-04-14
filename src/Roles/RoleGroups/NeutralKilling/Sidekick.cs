@@ -1,5 +1,6 @@
 using Lotus.API;
 using Lotus.Roles.Factions;
+using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Overrides;
 using UnityEngine;
@@ -14,7 +15,8 @@ public class Sidekick : NeutralKillingBase
     public bool CanVentOverride;
     public bool CanSabotageOverride;
 
-    public override bool CanSabotage() => CanSabotageOverride;
+    [RoleAction(LotusActionType.Attack)]
+    public override bool TryKill(PlayerControl target) => base.TryKill(target);
 
     public void SetParentJackal(Jackal jackal)
     {
@@ -22,9 +24,9 @@ public class Sidekick : NeutralKillingBase
     }
 
     public override void HandleDisconnect() => parentJackal.OnSidekickDisconnect();
+    public override bool CanSabotage() => CanSabotageOverride;
 
     protected override RoleType GetRoleType() => RoleType.DontShow;
-
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
             .RoleColor(Jackal.JackalColor)
