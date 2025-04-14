@@ -10,7 +10,7 @@ public class JackalFaction: Faction<JackalFaction>, INeutralFaction<JackalFactio
 {
     public static JackalFaction Instance { get; } = new();
 
-    public override string Name() => FactionTranslations.Neutral.Name;
+    public override string Name() => FactionTranslations.NeutralKillers.Name;
 
     public override Relation Relationship(JackalFaction sameFaction) => Relation.FullAllies;
 
