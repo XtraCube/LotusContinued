@@ -7,6 +7,7 @@ public enum ModCalls : uint
     AddSubrole,
     Debug,
     SetKillCooldown,
+    SetGameState,
     ShowPlayerVersion,
     ShowChat,
     UpdateExConvict,

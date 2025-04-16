@@ -1,4 +1,5 @@
 using System.Linq;
+using Lotus.API.Odyssey;
 using Lotus.Options;
 using Lotus.Extensions;
 using Lotus.Utilities;
@@ -32,5 +33,11 @@ public static class GeneralModRpc
     {
         DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
         DestroyableSingleton<HudManager>.Instance.Chat.HideBanButton();
+    }
+
+    [ModRPC((uint)ModCalls.SetGameState, RpcActors.Host, RpcActors.NonHosts)]
+    public static void SetGameState(int state)
+    {
+        Game.State = (GameState)state;
     }
 }
