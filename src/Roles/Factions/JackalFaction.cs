@@ -1,6 +1,9 @@
 ﻿using Lotus.Factions;
+using Lotus.Factions.Crew;
+using Lotus.Factions.Impostors;
 using Lotus.Factions.Interfaces;
 using Lotus.Factions.Neutrals;
+using Lotus.Factions.Undead;
 using Lotus.Roles.RoleGroups.NeutralKilling;
 using UnityEngine;
 
@@ -18,5 +21,15 @@ public class JackalFaction: Faction<JackalFaction>, INeutralFaction<JackalFactio
 
     public override Color Color => Jackal.JackalColor;
 
-    public override Relation RelationshipOther(IFaction other) => Relation.None;
+    public override Relation RelationshipOther(IFaction other)
+    {
+        return other switch
+        {
+            TheUndead => Relation.None,
+            Crewmates => Relation.None,
+            ImpostorFaction => Relation.None,
+            Neutral when other.GetType() == typeof(Neutral) => Relation.None,
+            _ => other.Relationship(this)
+        };
+    }
 }
