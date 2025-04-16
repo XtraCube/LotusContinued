@@ -28,7 +28,11 @@ using VentLib.Localization.Attributes;
 using System.Numerics;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
 using Lotus.Utilities;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -55,7 +59,8 @@ public class Swooper : Impostor, IRoleUI
     [RoleAction(LotusActionType.RoundStart)]
     private void OnRoundStart(bool gameStart)
     {
-        UIManager.VentButton.BindCooldown(swooperCooldown);
+        if (MyPlayer.AmOwner) UIManager.VentButton.BindCooldown(swooperCooldown);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateSwooper)?.Send([MyPlayer.OwnerId], true, gameStart);
         swooperCooldown.Start(gameStart ? 10 : float.MinValue);
     }
 
@@ -90,7 +95,8 @@ public class Swooper : Impostor, IRoleUI
         List<PlayerControl> unaffected = GetUnaffected();
         initialVent = Optional<Vent>.Of(vent);
 
-        UIManager.VentButton.BindCooldown(swoopingDuration);
+        if (MyPlayer.AmOwner) UIManager.VentButton.BindCooldown(swoopingDuration);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateSwooper)?.Send([MyPlayer.OwnerId], false, false);
         swoopingDuration.StartThenRun(EndSwooping);
         Game.MatchData.GameHistory.AddEvent(new GenericAbilityEvent(MyPlayer, $"{MyPlayer.name} began swooping."));
         Async.Schedule(() => KickFromVent(vent, unaffected), NetUtils.DeriveDelay(0.4f));
@@ -118,7 +124,8 @@ public class Swooper : Impostor, IRoleUI
                 Async.Schedule(() => Utils.Teleport(MyPlayer.NetTransform, currentLocation), NetUtils.DeriveDelay(0.8f));
                 break;
         }
-        UIManager.VentButton.BindCooldown(swooperCooldown);
+        if (MyPlayer.AmOwner) UIManager.VentButton.BindCooldown(swooperCooldown);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateSwooper)?.Send([MyPlayer.OwnerId], true, false);
         swooperCooldown.Start();
     }
 
@@ -127,6 +134,17 @@ public class Swooper : Impostor, IRoleUI
     {
         swooperCooldown.Finish();
         swoopingDuration.Finish(true);
+    }
+
+    [ModRPC((uint)ModCalls.UpdateSwooper, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateSwooper(bool useCooldown, bool gameStart)
+    {
+        Swooper? swooper = PlayerControl.LocalPlayer.PrimaryRole<Swooper>();
+        if (swooper == null) return;
+        swooper.UIManager.VentButton.BindCooldown(useCooldown ? swooper.swooperCooldown : swooper.swoopingDuration);
+        float targetDur = gameStart ? 10 : float.MinValue;
+        if (useCooldown) swooper.swooperCooldown.Start(targetDur);
+        else swooper.swoopingDuration.Start(targetDur);
     }
 
     private List<PlayerControl> GetUnaffected() => Players.GetAllPlayers().Where(p => !p.IsAlive() || canBeSeenByAllied && p.Relationship(MyPlayer) is Relation.FullAllies).AddItem(MyPlayer).ToList();

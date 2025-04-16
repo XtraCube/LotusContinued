@@ -21,6 +21,9 @@ using VentLib.Utilities.Optionals;
 using Lotus.API.Vanilla.Meetings;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
@@ -53,12 +56,24 @@ public class Tracker : Vanilla.Tracker, IRoleUI
     {
         if (canTrackBodies is not TrackBodyValue.OnPet) return;
         if (trackBodyCooldown.NotReady() || trackBodyDuration.NotReady()) return;
-        UIManager.PetButton.BindCooldown(trackBodyDuration);
+        if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(trackBodyDuration);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateTracker)?.Send([MyPlayer.OwnerId], false);
         trackBodyDuration.StartThenRun(() =>
         {
-            UIManager.PetButton.BindCooldown(trackBodyCooldown);
+            if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(trackBodyCooldown);
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateTracker)?.Send([MyPlayer.OwnerId], true);
             trackBodyCooldown.Start();
         });
+    }
+
+    [ModRPC((uint)ModCalls.UpdateTracker, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateTracker(bool useCooldown)
+    {
+        Tracker? tracker = PlayerControl.LocalPlayer.PrimaryRole<Tracker>();
+        if (tracker == null) return;
+        tracker.UIManager.PetButton.BindCooldown(useCooldown ? tracker.trackBodyCooldown : tracker.trackBodyDuration);
+        if (useCooldown) tracker.trackBodyCooldown.Start();
+        else tracker.trackBodyDuration.Start();
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>

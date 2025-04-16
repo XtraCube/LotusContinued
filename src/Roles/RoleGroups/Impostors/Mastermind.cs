@@ -187,7 +187,8 @@ public class Mastermind : Impostor, IRoleUI
         expirationTimers.GetValueOrDefault(player.PlayerId)?.Finish(true);
         expirationTimers.Remove(player.PlayerId);
         remotes.Remove(player.PlayerId);
-        UpdateKillButton(UIManager.KillButton);
+        if (MyPlayer.AmOwner) UpdateKillButton(UIManager.KillButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateMastermind)?.Send([MyPlayer.OwnerId], CanManipulate);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>

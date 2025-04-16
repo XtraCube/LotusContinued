@@ -20,5 +20,8 @@ public enum ModCalls : uint
     UpdateGrenadier,
     UpdateVulture,
     UpdateWerewolf,
-    UpdateWitch
+    UpdateWitch,
+    UpdateSurvivor,
+    UpdateSwooper,
+    UpdateTracker
 }
