@@ -73,7 +73,7 @@ public abstract class Subrole : CustomRole, ISubrole
     {
         return builder.SubOption(sub => sub.Name($"Restricted to {FactionInstances.Crewmates.Color.Colorize(FactionInstances.Crewmates.Name())}")
             .Key("Restricted to Crew")
-            .AddOnOffValues(defaultOn)
+            .AddBoolean(defaultOn)
             .BindBool(b =>
             {
                 if (b) FactionRestrictions.Add(FactionInstances.Crewmates);

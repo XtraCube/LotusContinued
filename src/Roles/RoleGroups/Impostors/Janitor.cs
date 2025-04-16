@@ -88,7 +88,7 @@ public class Janitor : Impostor
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Clean On Kill", Translations.Options.CleanOnKill)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => cleanOnKill = b)
                 .ShowSubOptionPredicate(b => (bool)b)
                 .SubOption(sub2 => sub2
