@@ -26,6 +26,9 @@ using Lotus.GameModes.Standard;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.RoleGroups.Impostors;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
@@ -63,12 +66,23 @@ public class Occultist : NeutralKillingBase, IRoleUI
     {
         if (!isCursingMode)
         {
-            if (switchModesAfterAttack) isCursingMode = !isCursingMode;
+            if (switchModesAfterAttack)
+            {
+                isCursingMode = !isCursingMode;
+                if (MyPlayer.AmOwner) UpdateKillButton();
+                else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateOccultist)?.Send([MyPlayer.OwnerId], isCursingMode);
+            }
             return base.TryKill(target);
         }
 
         MyPlayer.RpcMark(target);
-        if (switchModesAfterAttack) isCursingMode = !isCursingMode;
+        if (switchModesAfterAttack)
+        {
+            isCursingMode = !isCursingMode;
+
+            if (MyPlayer.AmOwner) UpdateKillButton();
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateOccultist)?.Send([MyPlayer.OwnerId], isCursingMode);
+        }
         if (MyPlayer.InteractWith(target, LotusInteraction.HostileInteraction.Create(this)) is InteractionResult.Halt) return false;
         if (cursedPlayers.ContainsKey(target.PlayerId)) return false;
 
@@ -85,8 +99,12 @@ public class Occultist : NeutralKillingBase, IRoleUI
     [RoleAction(LotusActionType.OnPet)]
     public void SwitchWitchMode()
     {
-        if (freelySwitchModes) isCursingMode = !isCursingMode;
-        UpdateKillButton();
+        if (freelySwitchModes)
+        {
+            isCursingMode = !isCursingMode;
+            if (MyPlayer.AmOwner) UpdateKillButton();
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateOccultist)?.Send([MyPlayer.OwnerId], isCursingMode);
+        }
     }
 
     [RoleAction(LotusActionType.MeetingEnd)]
@@ -112,6 +130,15 @@ public class Occultist : NeutralKillingBase, IRoleUI
     }
 
     public override void HandleDisconnect() => ClearCursedPlayers();
+
+    [ModRPC((uint)ModCalls.UpdateOccultist, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateKillButton(bool curseMode)
+    {
+        Occultist? occultist = PlayerControl.LocalPlayer.PrimaryRole<Occultist>();
+        if (occultist == null) return;
+        occultist.isCursingMode = curseMode;
+        occultist.UpdateKillButton();
+    }
 
     private void UpdateKillButton()
     {

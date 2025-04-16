@@ -22,6 +22,10 @@ using static Lotus.Roles.RoleGroups.Crew.Mayor.Translations;
 using Lotus.API.Player;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
@@ -46,7 +50,11 @@ public class Mayor : Crewmate, IRoleUI
     protected override void Setup(PlayerControl player)
     {
         base.Setup(player);
-        if (!hasPocketMeeting) this.UIManager.DisableUI();
+        if (!hasPocketMeeting)
+        {
+            if (player.AmOwner) this.UIManager.DisableUI();
+            else if (player.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateMayor)?.Send([MyPlayer.OwnerId], false, 0);
+        }
     }
 
     public RoleButton PetButton(IRoleButtonEditor editor) => editor
@@ -68,6 +76,7 @@ public class Mayor : Crewmate, IRoleUI
         if (SabotagePatch.CurrentSabotage != null) return;
         if (!hasPocketMeeting || remainingVotes <= 0) return;
         remainingVotes--;
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateMayor)?.Send([MyPlayer.OwnerId], true, remainingVotes);
         MyPlayer.CmdReportDeadBody(null);
         MeetingApi.StartMeeting(creator => creator.QuickCall(MyPlayer));
     }
@@ -94,6 +103,17 @@ public class Mayor : Crewmate, IRoleUI
     {
         if (revealToVote && !revealed)
             ChatHandler.Of(RevealMessage).Title(t => t.Color(RoleColor).Text(MayorRevealTitle).Build()).Send(MyPlayer);
+    }
+
+    [ModRPC((uint)ModCalls.UpdateMayor, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateMayor(bool isEnabled, int amountRemaining)
+    {
+        Async.WaitUntil(() => PlayerControl.LocalPlayer.PrimaryRole<Mayor>(), mayor =>
+        {
+            if (mayor == null) return;
+            if (isEnabled) mayor.remainingVotes = amountRemaining;
+            else mayor.UIManager.DisableUI();
+        }, .1f, 30);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>

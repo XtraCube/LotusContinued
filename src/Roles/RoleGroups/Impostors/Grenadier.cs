@@ -13,10 +13,14 @@ using Lotus.Options;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Internals;
+using Lotus.RPC;
+using VentLib;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Utilities.Collections;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -54,7 +58,8 @@ public class Grenadier : Vanilla.Impostor, IRoleUI
             EndGrenade();
             blindDuration.Finish(true);
         }
-        UIManager.PetButton.BindCooldown(blindCooldown);
+        if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(blindCooldown);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateGrenadier)?.Send([MyPlayer.OwnerId], grenadesLeft, true, true);
         blindCooldown.Start(gameStart ? 10 : float.MinValue);
     }
 
@@ -72,12 +77,16 @@ public class Grenadier : Vanilla.Impostor, IRoleUI
             .Where(p => canBlindAllies || p.Relationship(MyPlayer) is not Relation.FullAllies)
             .Do(p => grenadesOverride.AddRange(overrides.Select(o => Game.MatchData.Roles.AddOverride(p.PlayerId, o))));
 
-        UIManager.PetButton.BindCooldown(blindDuration);
+
+        if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(blindDuration);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateGrenadier)?.Send([MyPlayer.OwnerId], grenadesLeft, false, false);
         blindDuration.StartThenRun(() =>
         {
             EndGrenade();
             blindCooldown.Start();
-            UIManager.PetButton.BindCooldown(blindCooldown);
+
+            if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(blindCooldown);
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateGrenadier)?.Send([MyPlayer.OwnerId], grenadesLeft, true, false);
         });
         grenadesLeft--;
     }
@@ -87,6 +96,18 @@ public class Grenadier : Vanilla.Impostor, IRoleUI
         grenadesOverride.Do(g => g.Delete());
         affectedPlayers.Do(p => p.PrimaryRole().SyncOptions());
         affectedPlayers.Clear();
+    }
+
+    [ModRPC((uint)ModCalls.UpdateGrenadier, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateGrenadier(bool useCooldown, int grenadesLeft, bool gameStart)
+    {
+        Grenadier? grenadier = PlayerControl.LocalPlayer.PrimaryRole<Grenadier>();
+        if (grenadier == null) return;
+        grenadier.grenadesLeft = grenadesLeft;
+        grenadier.UIManager.PetButton.BindCooldown(useCooldown ? grenadier.blindCooldown : grenadier.blindDuration);
+        float targetDur = gameStart ? 10 : float.MinValue;
+        if (useCooldown) grenadier.blindCooldown.Start(targetDur);
+        else grenadier.blindDuration.Start(targetDur);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>

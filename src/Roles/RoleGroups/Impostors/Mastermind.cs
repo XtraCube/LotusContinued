@@ -20,9 +20,12 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using Lotus.Roles.RoleGroups.Vanilla;
+using Lotus.RPC;
 using Lotus.Utilities;
 using UnityEngine;
+using VentLib;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Collections;
@@ -66,7 +69,8 @@ public class Mastermind : Impostor, IRoleUI
 
         Async.Schedule(() => BeginSuicideCountdown(target), 5f);
         RefreshKillCooldown(target);
-        UpdateKillButton(UIManager.KillButton);
+        if (MyPlayer.AmOwner) UpdateKillButton(UIManager.KillButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateMastermind)?.Send([MyPlayer.OwnerId], CanManipulate);
         return false;
     }
 
@@ -140,6 +144,18 @@ public class Mastermind : Impostor, IRoleUI
     private void ExecuteSuicide(PlayerControl target)
     {
         target.InteractWith(target, new UnblockedInteraction(new FatalIntent(false, () => new ManipulatedPlayerDeathEvent(target, target)), this));
+    }
+
+    [ModRPC((uint)ModCalls.UpdateMastermind, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateKillButton(bool canManipulate)
+    {
+        Mastermind? mastermind = PlayerControl.LocalPlayer.PrimaryRole<Mastermind>();
+        if (mastermind == null) return;
+        IRoleButtonEditor killButton = mastermind.UIManager.KillButton;
+        if (canManipulate)
+            killButton.SetText(ManipulateButtonText).SetSprite(() =>
+                LotusAssets.LoadSprite("Buttons/Imp/mastermind_manipulate.png", 130, true));
+        else killButton.SetText(Witch.Translations.KillButtonText).RevertSprite();
     }
 
     private RoleButton UpdateKillButton(IRoleButtonEditor killButton) => CanManipulate

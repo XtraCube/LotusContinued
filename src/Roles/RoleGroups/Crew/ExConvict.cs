@@ -12,10 +12,14 @@ using Lotus.Options;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.RoleGroups.Impostors;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
@@ -25,14 +29,14 @@ public class ExConvict : Crewmate, IRoleUI
     private bool clearMarkAfterMeeting;
 
 
-    [UIComponent(UI.Cooldown)]
-    private Cooldown canEscapeCooldown;
+    [UIComponent(UI.Cooldown)] private Cooldown canEscapeCooldown;
 
-    [UIComponent(UI.Cooldown)]
-    private Cooldown canMarkCooldown;
+    [UIComponent(UI.Cooldown)] private Cooldown canMarkCooldown;
 
     [UIComponent(UI.Text)]
-    private string TpIndicator() => canEscapeCooldown.IsReady() && location != null ? Color.cyan.Colorize("Press Pet to Escape") : "";
+    private string TpIndicator() => canEscapeCooldown.IsReady() && location != null
+        ? Color.cyan.Colorize("Press Pet to Escape")
+        : "";
 
     public RoleButton PetButton(IRoleButtonEditor editor) => UpdatePetButton(editor);
 
@@ -53,7 +57,8 @@ public class ExConvict : Crewmate, IRoleUI
     private void ClearMark()
     {
         if (clearMarkAfterMeeting) location = null;
-        UpdatePetButton(UIManager.PetButton);
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateExConvict)?.Send([MyPlayer.OwnerId], false);
     }
 
     private void TryMarkLocation()
@@ -61,7 +66,8 @@ public class ExConvict : Crewmate, IRoleUI
         if (canMarkCooldown.NotReady()) return;
         location = MyPlayer.GetTruePosition();
         canEscapeCooldown.Start();
-        UpdatePetButton(UIManager.PetButton);
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateExConvict)?.Send([MyPlayer.OwnerId], true);
     }
 
     private void TryEscape()
@@ -70,8 +76,20 @@ public class ExConvict : Crewmate, IRoleUI
         Utils.Teleport(MyPlayer.NetTransform, location.Value);
         location = null;
         canMarkCooldown.Start();
-        UpdatePetButton(UIManager.PetButton);
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateExConvict)?.Send([MyPlayer.OwnerId], false);
     }
+
+    [ModRPC((uint)ModCalls.UpdateExConvict, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcSendUpdateButton(bool hasLocation)
+    {
+        ExConvict? exConvict = PlayerControl.LocalPlayer.PrimaryRole<ExConvict>();
+        if (exConvict == null) return; // Should never be null but just in case.
+        exConvict.SetLocation(hasLocation ? Vector2.zero : null); // Doesn't really matter about what we set as this value isn't ever read by the client.
+        exConvict.UpdatePetButton(exConvict.UIManager.PetButton);
+    }
+
+    private void SetLocation(Vector2? location) => this.location = location;
 
     private RoleButton UpdatePetButton(IRoleButtonEditor editor) => location == null
         ? editor

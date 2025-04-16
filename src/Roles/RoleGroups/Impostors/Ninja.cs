@@ -16,7 +16,11 @@ using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Options;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -71,7 +75,8 @@ public class Ninja : Vanilla.Impostor, IRoleUI
     {
         if (activationType is not ActivationType.Shapeshift) return;
         Mode = NinjaMode.Hunting;
-        UpdateKillButton();
+        if (MyPlayer.AmOwner) UpdateKillButton();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
     [RoleAction(LotusActionType.Unshapeshift)]
@@ -80,14 +85,16 @@ public class Ninja : Vanilla.Impostor, IRoleUI
         if (activationType is not ActivationType.Shapeshift) return;
         NinjaHuntAbility();
         Mode = NinjaMode.Killing;
-        UpdateKillButton();
+        if (MyPlayer.AmOwner) UpdateKillButton();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
     [RoleAction(LotusActionType.RoundStart)]
     private void EnterKillMode()
     {
         Mode = NinjaMode.Killing;
-        UpdateKillButton();
+        if (MyPlayer.AmOwner) UpdateKillButton();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
     [RoleAction(LotusActionType.RoundEnd)]
@@ -101,7 +108,8 @@ public class Ninja : Vanilla.Impostor, IRoleUI
         if (Mode is NinjaMode.Hunting) NinjaHuntAbility();
 
         Mode = Mode is NinjaMode.Killing ? NinjaMode.Hunting : NinjaMode.Killing;
-        UpdateKillButton();
+        if (MyPlayer.AmOwner) UpdateKillButton();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
     private void NinjaHuntAbility()
@@ -119,6 +127,15 @@ public class Ninja : Vanilla.Impostor, IRoleUI
         }
 
         playerList.Clear();
+    }
+
+    [ModRPC((uint)ModCalls.UpdateNinja, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateNinja(int modeEnum)
+    {
+        Ninja? ninja = PlayerControl.LocalPlayer.PrimaryRole<Ninja>();
+        if (ninja is null) return;
+        ninja.Mode = (NinjaMode)modeEnum;
+        ninja.UpdateKillButton();
     }
 
     private RoleButton UpdateKillButton() => Mode is NinjaMode.Killing

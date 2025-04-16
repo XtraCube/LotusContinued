@@ -17,8 +17,11 @@ using Lotus.Extensions;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Subroles;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
@@ -70,7 +73,17 @@ public class Vulture : CustomRole, IRoleUI
     {
         if (!canSwitchMode) return;
         isEatMode = !isEatMode;
-        UpdateReportButton(UIManager.ReportButton);
+        if (MyPlayer.AmOwner) UpdateReportButton(UIManager.ReportButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateVulture)?.Send([MyPlayer.OwnerId], isEatMode);
+    }
+
+    [ModRPC((uint)ModCalls.UpdateVulture, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateReport(bool hostEatMode)
+    {
+        Vulture? vulture = PlayerControl.LocalPlayer.PrimaryRole<Vulture>();
+        if (vulture == null) return;
+        vulture.isEatMode = hostEatMode;
+        vulture.UpdateReportButton(vulture.UIManager.ReportButton);
     }
 
     private RoleButton UpdateReportButton(IRoleButtonEditor reportButton) => isEatMode

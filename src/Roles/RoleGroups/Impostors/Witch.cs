@@ -26,6 +26,9 @@ using VentLib.Utilities.Optionals;
 using Lotus.GameModes.Standard;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -64,14 +67,22 @@ public class Witch : Vanilla.Impostor, IRoleUI
     {
         if (!isCursingMode)
         {
-            if (switchModesAfterAttack) isCursingMode = !isCursingMode;
-            UpdateKillButton();
+            if (switchModesAfterAttack)
+            {
+                isCursingMode = !isCursingMode;
+                if (MyPlayer.AmOwner) UpdateKillButton();
+                else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWitch)?.Send([MyPlayer.OwnerId], isCursingMode);
+            }
             return base.TryKill(target);
         }
 
         MyPlayer.RpcMark(target);
-        if (switchModesAfterAttack) isCursingMode = !isCursingMode;
-        UpdateKillButton();
+        if (switchModesAfterAttack)
+        {
+            isCursingMode = !isCursingMode;
+            if (MyPlayer.AmOwner) UpdateKillButton();
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWitch)?.Send([MyPlayer.OwnerId], isCursingMode);
+        }
         if (MyPlayer.InteractWith(target, LotusInteraction.HostileInteraction.Create(this)) is InteractionResult.Halt) return false;
         if (cursedPlayers.ContainsKey(target.PlayerId)) return false;
 
@@ -88,8 +99,12 @@ public class Witch : Vanilla.Impostor, IRoleUI
     [RoleAction(LotusActionType.OnPet)]
     public void SwitchWitchMode()
     {
-        if (freelySwitchModes) isCursingMode = !isCursingMode;
-        UpdateKillButton();
+        if (freelySwitchModes)
+        {
+            isCursingMode = !isCursingMode;
+            if (MyPlayer.AmOwner) UpdateKillButton();
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWitch)?.Send([MyPlayer.OwnerId], isCursingMode);
+        }
     }
 
     [RoleAction(LotusActionType.MeetingEnd, ActionFlag.WorksAfterDeath)]
@@ -113,6 +128,15 @@ public class Witch : Vanilla.Impostor, IRoleUI
         indicators.ForEach(i => i.Value.Delete());
         cursedPlayers.Clear();
         indicators.Clear();
+    }
+
+    [ModRPC((uint)ModCalls.UpdateWitch, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateKillButton(bool curseMode)
+    {
+        Witch? occultist = PlayerControl.LocalPlayer.PrimaryRole<Witch>();
+        if (occultist == null) return;
+        occultist.isCursingMode = curseMode;
+        occultist.UpdateKillButton();
     }
 
     private void UpdateKillButton()

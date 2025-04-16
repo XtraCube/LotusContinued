@@ -12,6 +12,9 @@ using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using Lotus.Roles.Internals.Enums;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
@@ -62,8 +65,11 @@ public class Werewolf : NeutralKillingBase, IRoleUI
     {
         if (rampageDuration.NotReady() || rampageCooldown.NotReady()) return;
         log.Trace($"{MyPlayer.GetNameWithRole()} Starting Rampage");
-        UIManager.KillButton.BindUses(() => -1);
-        UIManager.PetButton.BindCooldown(rampageDuration);
+        if (MyPlayer.AmOwner)
+        {
+            UIManager.KillButton.BindUses(() => -1);
+            UIManager.PetButton.BindCooldown(rampageDuration);
+        } else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWerewolf)?.Send([MyPlayer.OwnerId], true);
         rampaging = true;
         rampageDuration.Start();
         Async.Schedule(ExitRampage, rampageDuration.Duration);
@@ -73,8 +79,11 @@ public class Werewolf : NeutralKillingBase, IRoleUI
     private void ExitRampage()
     {
         log.Trace($"{MyPlayer.GetNameWithRole()} Ending Rampage");
-        UIManager.KillButton.BindUses(() => 0);
-        UIManager.PetButton.BindCooldown(rampageCooldown);
+        if (MyPlayer.AmOwner)
+        {
+            UIManager.KillButton.BindUses(() => 0);
+            UIManager.PetButton.BindCooldown(rampageCooldown);
+        } else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWerewolf)?.Send([MyPlayer.OwnerId], false);
         rampaging = false;
         rampageCooldown.Start();
         if (!canVentNormally && MyPlayer.walkingToVent | MyPlayer.inVent) ExitCurrentVent();
@@ -94,6 +103,27 @@ public class Werewolf : NeutralKillingBase, IRoleUI
         else ventId = Object.FindObjectsOfType<Vent>().ToList().GetRandom().Id;
 
         MyPlayer.MyPhysics.RpcBootFromVent(ventId);
+    }
+
+    [ModRPC((uint)ModCalls.UpdateWerewolf, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateWerewolf(bool isInRampage)
+    {
+        Werewolf? werewolf = PlayerControl.LocalPlayer.PrimaryRole<Werewolf>();
+        if (werewolf == null) return;
+        werewolf.rampaging = isInRampage;
+        if (isInRampage)
+        {
+            werewolf.UIManager.KillButton.BindUses(() => -1);
+            werewolf.UIManager.PetButton.BindCooldown(werewolf.rampageDuration);
+            werewolf.rampageDuration.Start();
+        }
+        else
+        {
+
+            werewolf.UIManager.KillButton.BindUses(() => 0);
+            werewolf.UIManager.PetButton.BindCooldown(werewolf.rampageCooldown);
+            werewolf.rampageCooldown.Start();
+        }
     }
 
     public override bool CanVent() => canVentNormally || rampaging && canVentDuringRampage;

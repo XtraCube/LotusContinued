@@ -11,10 +11,14 @@ using Lotus.Extensions;
 using Lotus.Options;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -55,7 +59,8 @@ public class Escapist : Impostor, IRoleUI
     private void ClearMark()
     {
         if (clearMarkAfterMeeting) location = null;
-        UpdatePetButton(UIManager.PetButton);
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateExConvict)?.Send([MyPlayer.OwnerId], false);
     }
 
     private void TryMarkLocation()
@@ -63,7 +68,8 @@ public class Escapist : Impostor, IRoleUI
         if (canMarkCooldown.NotReady()) return;
         location = MyPlayer.GetTruePosition();
         canEscapeCooldown.Start();
-        UpdatePetButton(UIManager.PetButton);
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateExConvict)?.Send([MyPlayer.OwnerId], true);
     }
 
     private void TryEscape()
@@ -72,8 +78,20 @@ public class Escapist : Impostor, IRoleUI
         Utils.Teleport(MyPlayer.NetTransform, location.Value);
         location = null;
         canMarkCooldown.Start();
-        UpdatePetButton(UIManager.PetButton);
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateExConvict)?.Send([MyPlayer.OwnerId], false);
     }
+
+    [ModRPC((uint)ModCalls.UpdateEscapist, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcSendUpdateButton(bool hasLocation)
+    {
+        Escapist? exConvict = PlayerControl.LocalPlayer.PrimaryRole<Escapist>();
+        if (exConvict == null) return; // Should never be null but just in case.
+        exConvict.SetLocation(hasLocation ? Vector2.zero : null); // Doesn't really matter about what we set as this value isn't ever read by the client.
+        exConvict.UpdatePetButton(exConvict.UIManager.PetButton);
+    }
+
+    private void SetLocation(Vector2? location) => this.location = location;
 
     private RoleButton UpdatePetButton(IRoleButtonEditor editor) => location == null
         ? editor

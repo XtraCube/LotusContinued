@@ -24,6 +24,9 @@ using Lotus.API.Player;
 using Lotus.GUI;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -120,11 +123,8 @@ public class Blackmailer : Shapeshifter, IRoleUI
     {
         if (usesShapeshifter) return;
         inBlackmailingMode = !inBlackmailingMode;
-        RoleButton killButton = UIManager.KillButton;
-        if (inBlackmailingMode)
-            killButton.SetText(BlackmailButtonText).SetSprite(() =>
-                LotusAssets.LoadSprite("Buttons/Imp/blackmailer_blackmail.png", 130, true));
-        else killButton.RevertSprite().SetText(Witch.Translations.KillButtonText);
+        if (MyPlayer.AmOwner) UpdateKillButton(inBlackmailingMode);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateBlackmailer)?.Send([MyPlayer.OwnerId], inBlackmailingMode);
     }
 
     [RoleAction(LotusActionType.Chat, ActionFlag.GlobalDetector | ActionFlag.WorksAfterDeath)]
@@ -149,7 +149,24 @@ public class Blackmailer : Shapeshifter, IRoleUI
         ClearBlackmail();
     }
 
+    private static void RpcUpdateBlackmailer(bool inBlackmailMode)
+    {
+        Blackmailer? blackmailer = PlayerControl.LocalPlayer.PrimaryRole<Blackmailer>();
+        if (blackmailer == null) return;
+        blackmailer.UpdateKillButton(inBlackmailMode);
+    }
+
     public override void HandleDisconnect() => ClearBlackmail();
+
+    public void UpdateKillButton(bool inBlackmailMode)
+    {
+        inBlackmailingMode = inBlackmailMode;
+        RoleButton killButton = UIManager.KillButton;
+        if (inBlackmailingMode)
+            killButton.SetText(BlackmailButtonText).SetSprite(() =>
+                LotusAssets.LoadSprite("Buttons/Imp/blackmailer_blackmail.png", 130, true));
+        else killButton.RevertSprite().SetText(Witch.Translations.KillButtonText);
+    }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)

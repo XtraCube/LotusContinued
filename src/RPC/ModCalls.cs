@@ -8,5 +8,16 @@ public enum ModCalls : uint
     Debug,
     SetKillCooldown,
     ShowPlayerVersion,
-    ShowChat
+    ShowChat,
+    UpdateExConvict,
+    UpdateBlackmailer,
+    UpdateEscapist,
+    UpdateMastermind,
+    UpdateMayor,
+    UpdateNinja,
+    UpdateOccultist,
+    UpdateGrenadier,
+    UpdateVulture,
+    UpdateWerewolf,
+    UpdateWitch
 }
