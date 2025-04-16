@@ -20,10 +20,8 @@ public class SetAbilitySettingsPatch
         bool anyOverride = customRoles.Any(cr =>
         {
             RoleUIManager provider = cr.UIManager;
-            DevLogger.Log($"{provider.Initialized} | {provider.AbilityButton.IsOverriding}");
             return provider is { Initialized: true, AbilityButton.IsOverriding: true };
         });
-        DevLogger.Log($"Any override ability: {anyOverride}.");
         return !anyOverride;
     }
 }
