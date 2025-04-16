@@ -20,7 +20,7 @@ public class SoloPassiveWinCondition : IWinCondition
 
         PlayerControl lastPlayer = allPlayers[0];
         winners = new List<PlayerControl> { lastPlayer };
-        return lastPlayer.PrimaryRole().Faction is Neutral;
+        return lastPlayer.PrimaryRole().Faction is INeutralFaction;
     }
 
     public WinReason GetWinReason() => new(ReasonType.FactionLastStanding);
