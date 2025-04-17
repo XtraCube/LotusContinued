@@ -23,9 +23,12 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Overrides;
 using Lotus.Roles.RoleGroups.Vanilla;
+using Lotus.RPC;
 using Lotus.Utilities;
 using UnityEngine;
+using VentLib;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Collections;
@@ -78,7 +81,11 @@ public class Jailor: Crewmate, IRoleUI
     {
         jailedPlayer = byte.MaxValue;
         jailedText?.Delete();
-        if (!useKillButton) jailCooldown.Start(isRoundOne ? 10 : float.MinValue);
+        if (!useKillButton)
+        {
+            jailCooldown.Start(isRoundOne ? 10 : float.MinValue);
+            if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateJailor)?.Send([MyPlayer.OwnerId], isRoundOne);
+        }
     }
 
     [RoleAction(LotusActionType.OnPet)]
@@ -89,6 +96,7 @@ public class Jailor: Crewmate, IRoleUI
         if (closestPlayers.Count == 0) return;
         if (jailCooldown.NotReady()) return;
         jailCooldown.Start();
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateJailor)?.Send([MyPlayer.OwnerId], false);
         TryKill(closestPlayers[0]);
     }
 
@@ -192,6 +200,14 @@ public class Jailor: Crewmate, IRoleUI
 
         ChatHandler.Of(Translations.JailorMessage, RoleColor.Colorize(RoleName)).Send(MyPlayer);
         jailed.IfPresent(p => ChatHandler.Of(Translations.JailedMessage, RoleColor.Colorize(RoleName)).Send(p));
+    }
+
+    [ModRPC((uint)ModCalls.UpdateJailor, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateJailor(bool isRoundOne)
+    {
+        Jailor? jailor = PlayerControl.LocalPlayer.PrimaryRole<Jailor>();
+        if (jailor == null) return;
+        jailor.jailCooldown.Start(isRoundOne ? 10 : float.MinValue);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) => base.RegisterOptions(optionStream)

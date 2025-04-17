@@ -238,7 +238,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         else MyPlayer.StartCoroutine(MyPlayer.CoSetRole(PlayerControl.LocalPlayer.GetVanillaRole().IsImpostor() ? RoleTypes.Crewmate : RoleTypes.Impostor, ProjectLotus.AdvancedRoleAssignment));
 
         SyncOptions([new GameOptionOverride(Override.KillCooldown, 0.1f)], true);
-        HudManager.Instance.SetHudActive(true);
+        if (MyPlayer.AmOwner) HudManager.Instance.SetHudActive(true);
     }
 
     public virtual void RefreshKillCooldown(PlayerControl? target = null, IEnumerable<GameOptionOverride>? overrides = null)

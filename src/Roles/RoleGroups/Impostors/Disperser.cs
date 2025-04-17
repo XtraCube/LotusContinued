@@ -18,6 +18,9 @@ using VentLib.Utilities.Extensions;
 using Lotus.API.Player;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -42,6 +45,7 @@ public class Disperser : Impostor, IRoleUI
     {
         if (abilityCooldown.NotReady()) return;
         abilityCooldown.Start();
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateDisperser)?.Send([MyPlayer.OwnerId]);
         List<Vent> vents = Object.FindObjectsOfType<Vent>().ToList();
         if (vents.Count == 0) return;
         Players.GetAlivePlayers()
@@ -51,6 +55,14 @@ public class Disperser : Impostor, IRoleUI
                 Vector2 ventPosition = vents.GetRandom().transform.position;
                 Utils.Teleport(p.NetTransform, new Vector2(ventPosition.x, ventPosition.y + 0.3636f));
             });
+    }
+
+    [ModRPC((uint)ModCalls.UpdateDisperser, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateDisperser()
+    {
+        Disperser? disperser = PlayerControl.LocalPlayer.PrimaryRole<Disperser>();
+        if (disperser == null) return;
+        disperser.abilityCooldown.Start();
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>

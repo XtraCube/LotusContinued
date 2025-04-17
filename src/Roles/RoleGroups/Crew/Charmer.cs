@@ -39,6 +39,9 @@ using VentLib.Utilities.Optionals;
 using Lotus.GameModes.Standard;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
@@ -117,6 +120,7 @@ public class Charmer : Crewmate, IRoleUI
         }
 
         taskAbilityCount = 0;
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateCharmer)?.Send([MyPlayer.OwnerId], taskAbilityCount, false);
         MyPlayer.RpcMark(player);
         if (MyPlayer.InteractWith(player, LotusInteraction.HostileInteraction.Create(this)) is InteractionResult.Halt) return true;
 
@@ -140,7 +144,11 @@ public class Charmer : Crewmate, IRoleUI
         PlayerControl? closestPlayer = MyPlayer.GetPlayersInAbilityRangeSorted().FirstOrDefault();
         if (closestPlayer == null) return;
         if (charmedPlayers.ContainsKey(closestPlayer.PlayerId)) return;
-        if (CharmPlayer(closestPlayer)) charmingCooldown.Start();
+        if (CharmPlayer(closestPlayer))
+        {
+            charmingCooldown.Start();
+            if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateCharmer)?.Send([MyPlayer.OwnerId], taskAbilityCount, true);
+        }
     }
 
     [RoleAction(LotusActionType.Interaction, ActionFlag.WorksAfterDeath | ActionFlag.GlobalDetector)]
@@ -170,8 +178,20 @@ public class Charmer : Crewmate, IRoleUI
         player.PrimaryRole().Faction = tuple.Item3;
     }
 
+    protected override void OnTaskComplete(Optional<NormalPlayerTask> _)
+    {
+        taskAbilityCount = Mathf.Clamp(++taskAbilityCount, 0, TasksPerUsage);
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateCharmer)?.Send([MyPlayer.OwnerId], taskAbilityCount, false);
+    }
 
-    protected override void OnTaskComplete(Optional<NormalPlayerTask> _) => taskAbilityCount = Mathf.Clamp(++taskAbilityCount, 0, TasksPerUsage);
+    [ModRPC((uint)ModCalls.UpdateCharmer, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateCharmer(int taskAbilityCount, bool startCooldown)
+    {
+        Charmer? charmer = PlayerControl.LocalPlayer.PrimaryRole<Charmer>();
+        if (charmer == null) return;
+        charmer.taskAbilityCount = taskAbilityCount;
+        if (startCooldown) charmer.charmingCooldown.Start();
+    }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)

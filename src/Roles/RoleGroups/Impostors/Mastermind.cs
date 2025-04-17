@@ -137,7 +137,7 @@ public class Mastermind : Impostor, IRoleUI
         LiveString killIndicator = new(_ => KillImploredText.Formatted(Color.white.Colorize(playerCooldown + "s")), RoleColor);
 
         TextComponent textComponent = new(killIndicator, GameState.Roaming, viewers: target);
-        remotes.GetOrCompute(target.PlayerId, () => [ (Remote<TextComponent>?)null, null ])[1] = target.NameModel().GCH<TextHolder>().Add(textComponent);
+        remotes.GetOrCompute(target.PlayerId, () => [ null, null ])[1] = target.NameModel().GCH<TextHolder>().Add(textComponent);
         playerCooldown.StartThenRun(() => ExecuteSuicide(target));
     }
 
@@ -170,8 +170,9 @@ public class Mastermind : Impostor, IRoleUI
         {
             FatalIntent fatalIntent = new(false, () => new ManipulatedPlayerDeathEvent(p, p));
             p.InteractWith(p, new ManipulatedInteraction(fatalIntent, p.PrimaryRole(), MyPlayer));
-            ClearManipulated(p);
+            ClearManipulated(p, false);
         });
+        manipulatedPlayers.Clear();
     }
 
     [RoleAction(LotusActionType.PlayerDeath, ActionFlag.GlobalDetector | ActionFlag.WorksAfterDeath)] // EVERY OTHER PERSON'S DEATH
@@ -180,10 +181,10 @@ public class Mastermind : Impostor, IRoleUI
         ClearManipulated(deadPlayer);
     }
 
-    private void ClearManipulated(PlayerControl player)
+    private void ClearManipulated(PlayerControl player, bool removeFromList = true)
     {
         remotes.GetValueOrDefault(player.PlayerId)?.ForEach(r => r?.Delete());
-        manipulatedPlayers.Remove(player.PlayerId);
+        if (removeFromList) manipulatedPlayers.Remove(player.PlayerId);
         expirationTimers.GetValueOrDefault(player.PlayerId)?.Finish(true);
         expirationTimers.Remove(player.PlayerId);
         remotes.Remove(player.PlayerId);

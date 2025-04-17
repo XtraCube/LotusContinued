@@ -76,6 +76,7 @@ public class Grenadier : Vanilla.Impostor, IRoleUI
         affectedPlayers
             .Where(p => canBlindAllies || p.Relationship(MyPlayer) is not Relation.FullAllies)
             .Do(p => grenadesOverride.AddRange(overrides.Select(o => Game.MatchData.Roles.AddOverride(p.PlayerId, o))));
+        affectedPlayers.Do(p => p.PrimaryRole().SyncOptions());
 
 
         if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(blindDuration);
@@ -99,7 +100,7 @@ public class Grenadier : Vanilla.Impostor, IRoleUI
     }
 
     [ModRPC((uint)ModCalls.UpdateGrenadier, RpcActors.Host, RpcActors.NonHosts)]
-    private static void RpcUpdateGrenadier(bool useCooldown, int grenadesLeft, bool gameStart)
+    private static void RpcUpdateGrenadier(int grenadesLeft, bool useCooldown, bool gameStart)
     {
         Grenadier? grenadier = PlayerControl.LocalPlayer.PrimaryRole<Grenadier>();
         if (grenadier == null) return;

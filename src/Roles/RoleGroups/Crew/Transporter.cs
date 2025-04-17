@@ -20,12 +20,15 @@ using Lotus.Utilities;
 using Lotus.Extensions;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Logging;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
@@ -68,8 +71,9 @@ public class Transporter : Crewmate, IRoleUI
         if (target1.PlayerId == target2.PlayerId) return;
 
         transportCooldown.Start();
-
         this.transportsRemaining--;
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateTransporter)?.Send([MyPlayer.OwnerId], transportsRemaining);
+
         if (target1.inVent) target1.MyPhysics.ExitAllVents();
         if (target2.inVent) target2.MyPhysics.ExitAllVents();
 
@@ -115,6 +119,14 @@ public class Transporter : Crewmate, IRoleUI
             .RoleColor("#00EEFF")
             .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
 
+    [ModRPC((uint)ModCalls.UpdateTransporter, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateTransporter(int transportsRemaining)
+    {
+        Transporter? transporter = PlayerControl.LocalPlayer.PrimaryRole<Transporter>();
+        if (transporter == null) return;
+        transporter.transportsRemaining = transportsRemaining;
+        transporter.transportCooldown.Start();
+    }
 
     private class TransportedEvent : AbilityEvent, IMultiTargetEvent
     {

@@ -14,10 +14,14 @@ using Lotus.GUI;
 using Lotus.Options;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Options.UI;
 using VentLib.Options.IO;
 using VentLib.Utilities.Collections;
+using VentLib.Utilities.Extensions;
 using static Lotus.Roles.RoleGroups.Crew.Bastion.BastionTranslations.BastionOptionTranslations;
 
 namespace Lotus.Roles.RoleGroups.Crew;
@@ -44,6 +48,7 @@ public class Bastion : Engineer, IRoleUI
         CounterHolder counterHolder = MyPlayer.NameModel().GetComponentHolder<CounterHolder>();
         LiveString ls = new(() => RoleUtils.Counter(currentBombs, bombsPerRounds, ModConstants.Palette.GeneralColor2));
         counterRemote = counterHolder.Add(new CounterComponent(ls, [GameState.Roaming], ViewMode.Additive, MyPlayer));
+        currentBombs = bombsPerRounds;
     }
 
     [RoleAction(LotusActionType.VentEntered, ActionFlag.GlobalDetector)]
@@ -57,6 +62,7 @@ public class Bastion : Engineer, IRoleUI
             handle.Cancel();
             if (currentBombs == 0) return;
             currentBombs--;
+            if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateBastion)?.Send([MyPlayer.OwnerId], currentBombs);
             bombedVents.Add(vent.Id);
         }
     }
@@ -66,6 +72,7 @@ public class Bastion : Engineer, IRoleUI
     {
         currentBombs = bombsPerRounds;
         bombedVents.Clear();
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateBastion)?.Send([MyPlayer.OwnerId], currentBombs);
     }
 
     [RoleAction(LotusActionType.PlayerDeath)]
@@ -74,6 +81,14 @@ public class Bastion : Engineer, IRoleUI
     private IndirectInteraction CreateInteraction(PlayerControl deadPlayer)
     {
         return new IndirectInteraction(new FatalIntent(true, () => new BombedEvent(deadPlayer, MyPlayer)), this);
+    }
+
+    [ModRPC((uint)ModCalls.UpdateBastion, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateBastion(int bombsLeft)
+    {
+        Bastion? bastion = PlayerControl.LocalPlayer.PrimaryRole<Bastion>();
+        if (bastion == null) return;
+        bastion.currentBombs = bombsLeft;
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>

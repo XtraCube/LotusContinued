@@ -38,8 +38,9 @@ public class Vampire : Impostor, IVariableRole
 
         Async.Schedule(() =>
         {
+            if (!bitten.Remove(target.PlayerId)) return;
+            if (!target.IsAlive()) return;
             MyPlayer.InteractWith(target, CreateInteraction(target));
-            bitten.Remove(target.PlayerId);
         }, killDelay);
 
         return false;
@@ -48,8 +49,12 @@ public class Vampire : Impostor, IVariableRole
     [RoleAction(LotusActionType.RoundStart)]
     public void ResetBitten() => bitten.Clear();
 
-    [RoleAction(LotusActionType.ReportBody, priority: API.Priority.Low)]
-    public void KillBitten() => bitten.Filter(Players.PlayerById).Where(p => p.IsAlive()).ForEach(p => MyPlayer.InteractWith(p, CreateInteraction(p)));
+    [RoleAction(LotusActionType.RoundEnd)]
+    private void KillBitten()
+    {
+        bitten.Filter(Players.PlayerById).Where(p => p.IsAlive()).ForEach(p => MyPlayer.InteractWith(p, CreateInteraction(p)));
+        bitten.Clear();
+    }
 
     private DelayedInteraction CreateInteraction(PlayerControl target)
     {

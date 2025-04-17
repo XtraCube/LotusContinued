@@ -26,6 +26,7 @@ using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
 using Lotus.RPC;
 using VentLib;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
@@ -149,6 +150,7 @@ public class Blackmailer : Shapeshifter, IRoleUI
         ClearBlackmail();
     }
 
+    [ModRPC((uint)ModCalls.UpdateBlackmailer, RpcActors.Host, RpcActors.NonHosts)]
     private static void RpcUpdateBlackmailer(bool inBlackmailMode)
     {
         Blackmailer? blackmailer = PlayerControl.LocalPlayer.PrimaryRole<Blackmailer>();

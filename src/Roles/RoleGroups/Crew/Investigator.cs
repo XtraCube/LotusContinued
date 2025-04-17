@@ -28,6 +28,9 @@ using Lotus.Logging;
 using Lotus.GameModes.Standard;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
@@ -81,6 +84,7 @@ public class Investigator : Crewmate, IRoleUI
         if (players.Count == 0) return;
 
         abilityCooldown.Start();
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateInvestigator)?.Send([MyPlayer.OwnerId]);
         PlayerControl player = players[0];
         if (MyPlayer.InteractWith(player, LotusInteraction.NeutralInteraction.Create(this)) is InteractionResult.Halt) return;
 
@@ -109,6 +113,14 @@ public class Investigator : Crewmate, IRoleUI
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier).RoleColor(new Color(1f, 0.79f, 0.51f)).RoleAbilityFlags(RoleAbilityFlag.UsesPet);
+
+    [ModRPC((uint)ModCalls.UpdateInvestigator, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateInvestigator()
+    {
+        Investigator? investigator = PlayerControl.LocalPlayer.PrimaryRole<Investigator>();
+        if (investigator == null) return;
+        investigator.abilityCooldown.Start();
+    }
 
     private void PopulateInvestigatorOptions()
     {

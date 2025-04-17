@@ -12,6 +12,10 @@ using VentLib.Localization.Attributes;
 using Lotus.Extensions;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -43,12 +47,20 @@ public class Miner : Impostor, IRoleUI
     {
         if (minerAbilityCooldown.NotReady()) return;
         minerAbilityCooldown.Start();
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateMiner)?.Send([MyPlayer.OwnerId]);
 
         if (lastEnteredVentLocation == Vector2.zero) return;
         log.Trace($"{MyPlayer.Data.PlayerName}:{lastEnteredVentLocation}", "MinerTeleport");
         Utils.Teleport(MyPlayer.NetTransform, new Vector2(lastEnteredVentLocation.x, lastEnteredVentLocation.y + 0.3636f));
     }
 
+    [ModRPC((uint)ModCalls.UpdateMiner, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateMiner()
+    {
+        Miner? miner = PlayerControl.LocalPlayer.PrimaryRole<Miner>();
+        if (miner == null) return;
+        miner.minerAbilityCooldown.Start();
+    }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream).SubOption(sub =>

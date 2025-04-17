@@ -23,5 +23,12 @@ public enum ModCalls : uint
     UpdateWitch,
     UpdateSurvivor,
     UpdateSwooper,
-    UpdateTracker
+    UpdateTracker,
+    UpdateBastion,
+    UpdateCharmer,
+    UpdateInvestigator,
+    UpdateJailor,
+    UpdateTransporter,
+    UpdateDisperser,
+    UpdateMiner
 }
