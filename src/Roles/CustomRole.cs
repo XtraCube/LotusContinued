@@ -205,7 +205,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
 
         RpcV3.Immediate(MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RealRole).Write(ProjectLotus.AdvancedRoleAssignment).SendInclusive(alliedPlayerClientIds);
         if (isStartOfGame) alliedPlayers.ForEach(p => p.GetTeamInfo().AddPlayer(MyPlayer.PlayerId, RealRole.IsImpostor()));
-        if (!isStartOfGame) alliedPlayers.ForEach(ap => RpcV3.Immediate(ap.NetId, RpcCalls.SetRole).Write((ushort)ap.GetTeamInfo().MyRole).Write(ProjectLotus.AdvancedRoleAssignment).Send(MyPlayer.GetClientId()));
+        else alliedPlayers.ForEach(ap => RpcV3.Immediate(ap.NetId, RpcCalls.SetRole).Write(ap.IsAlive() ? (ushort)ap.GetTeamInfo().MyRole : (ushort)ap.GetTeamInfo().MyRole.GhostEquivelant()).Write(ProjectLotus.AdvancedRoleAssignment).Send(MyPlayer.GetClientId()));
 
         RpcV3.Immediate(MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RoleTypes.Crewmate).Write(ProjectLotus.AdvancedRoleAssignment).SendInclusive(nonAlliedImpostorClientIds);
         if (isStartOfGame) nonAlliedImpostors.ForEach(p => p.GetTeamInfo().AddVanillaCrewmate(MyPlayer.PlayerId));
@@ -213,7 +213,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         {
             // Make non-allied impostors crewmate for us.
             MassRpc massRpc = RpcV3.Mass(SendOption.Reliable);
-            nonAlliedImpostors.ForEach(p => massRpc.Start(p.NetId, RpcCalls.SetRole).Write((ushort)RoleTypes.Crewmate).Write(ProjectLotus.AdvancedRoleAssignment).End());
+            nonAlliedImpostors.ForEach(p => massRpc.Start(p.NetId, RpcCalls.SetRole).Write(!p.IsAlive() ? (ushort)RoleTypes.CrewmateGhost : (ushort)RoleTypes.Crewmate).Write(ProjectLotus.AdvancedRoleAssignment).End());
             massRpc.Send(MyPlayer.GetClientId());
         }
 
