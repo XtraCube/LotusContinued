@@ -53,12 +53,12 @@ public class BasicCommands : CommandTranslations
 
         string FactionName(CustomRole role)
         {
-            if (role is Subrole) return "Modifiers";
+            if (role is Subrole) return FactionTranslations.Modifiers.Name;
             if (role.Faction is not INeutralFaction) return role.Faction.Name();
 
             SpecialType specialType = role.Metadata.GetOrDefault(LotusKeys.AuxiliaryRoleType, SpecialType.None);
 
-            return specialType is SpecialType.NeutralKilling ? "Neutral Killers" : "Neutral";
+            return specialType is SpecialType.NeutralKilling ? FactionTranslations.NeutralKillers.Name : FactionTranslations.Neutral.Name;
         }
 
         IRoleManager.Current.AllCustomRoles().ForEach(r => defsByFactions.GetOrCompute(FactionName(r), () => new List<CustomRole>()).Add(r));
@@ -71,7 +71,7 @@ public class BasicCommands : CommandTranslations
             string fName = FactionName(r);
             if (factionName != fName)
             {
-                if (factionName == "Modifiers") text += $"\n★ {factionName}\n";
+                if (factionName == FactionTranslations.Modifiers.Name) text += $"\n★ {factionName}\n";
                 else text += $"\n{HostOptionTranslations.RoleCategory.Formatted(fName)}\n";
                 factionName = fName;
             }
