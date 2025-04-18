@@ -93,6 +93,7 @@ public class Necromancer : UndeadRole
         StandardGameMode.Instance.Assign(player, this);
         Necromancer necromancer = player.PrimaryRole<Necromancer>()!;
         necromancer.isFirstConvert = false;
+        necromancer.Assign();
         Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(player, necromancer));
         disableWinCheck = true;
     }

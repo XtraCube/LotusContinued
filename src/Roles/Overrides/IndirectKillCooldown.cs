@@ -1,6 +1,7 @@
 using System;
 using Lotus.API.Odyssey;
 using Lotus.API.Reactive;
+using VentLib.Utilities;
 
 namespace Lotus.Roles.Overrides;
 
@@ -30,7 +31,11 @@ public class IndirectKillCooldown: GameOptionOverride
     {
         hookKey = $"{nameof(IndirectKillCooldown)}~{Game.NextMatchID()}";
         cooldownSupplier = expectedCooldown;
-        Hooks.GameStateHooks.RoundStartHook.Bind(hookKey, _ => doubled = true, true);
+        Hooks.GameStateHooks.RoundStartHook.Bind(hookKey, _ =>
+        {
+            doubled = false;
+            Async.Schedule(() => doubled = false, .5f);
+        }, true);
         Hooks.GameStateHooks.RoundEndHook.Bind(hookKey, _ => doubled = false, true);
     }
 

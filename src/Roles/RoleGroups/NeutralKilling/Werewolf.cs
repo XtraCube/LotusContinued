@@ -46,8 +46,11 @@ public class Werewolf : NeutralKillingBase, IRoleUI
     [RoleAction(LotusActionType.RoundStart)]
     private void OnRoundStart(bool gameStart)
     {
-        UIManager.KillButton.BindUses(() => 0);
-        UIManager.PetButton.BindCooldown(rampageCooldown);
+        if (MyPlayer.AmOwner)
+        {
+            UIManager.KillButton.BindUses(() => 0);
+            UIManager.PetButton.BindCooldown(rampageCooldown);
+        } else Vents.FindRPC((uint)ModCalls.UpdateWerewolf)?.Send([MyPlayer.OwnerId], false, gameStart);
         rampageCooldown.Start(gameStart ? 10 : float.MinValue);
     }
 
@@ -69,7 +72,7 @@ public class Werewolf : NeutralKillingBase, IRoleUI
         {
             UIManager.KillButton.BindUses(() => -1);
             UIManager.PetButton.BindCooldown(rampageDuration);
-        } else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWerewolf)?.Send([MyPlayer.OwnerId], true);
+        } else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWerewolf)?.Send([MyPlayer.OwnerId], true, false);
         rampaging = true;
         rampageDuration.Start();
         Async.Schedule(ExitRampage, rampageDuration.Duration);
@@ -83,7 +86,7 @@ public class Werewolf : NeutralKillingBase, IRoleUI
         {
             UIManager.KillButton.BindUses(() => 0);
             UIManager.PetButton.BindCooldown(rampageCooldown);
-        } else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWerewolf)?.Send([MyPlayer.OwnerId], false);
+        } else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWerewolf)?.Send([MyPlayer.OwnerId], false, false);
         rampaging = false;
         rampageCooldown.Start();
         if (!canVentNormally && MyPlayer.walkingToVent | MyPlayer.inVent) ExitCurrentVent();
@@ -106,7 +109,7 @@ public class Werewolf : NeutralKillingBase, IRoleUI
     }
 
     [ModRPC((uint)ModCalls.UpdateWerewolf, RpcActors.Host, RpcActors.NonHosts)]
-    private static void RpcUpdateWerewolf(bool isInRampage)
+    private static void RpcUpdateWerewolf(bool isInRampage, bool isRoundOne)
     {
         Werewolf? werewolf = PlayerControl.LocalPlayer.PrimaryRole<Werewolf>();
         if (werewolf == null) return;
@@ -122,7 +125,7 @@ public class Werewolf : NeutralKillingBase, IRoleUI
 
             werewolf.UIManager.KillButton.BindUses(() => 0);
             werewolf.UIManager.PetButton.BindCooldown(werewolf.rampageCooldown);
-            werewolf.rampageCooldown.Start();
+            werewolf.rampageCooldown.Start(isRoundOne ? 10 : float.MinValue);
         }
     }
 

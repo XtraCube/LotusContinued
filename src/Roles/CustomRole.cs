@@ -212,9 +212,13 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         else
         {
             // Make non-allied impostors crewmate for us.
-            MassRpc massRpc = RpcV3.Mass(SendOption.Reliable);
-            nonAlliedImpostors.ForEach(p => massRpc.Start(p.NetId, RpcCalls.SetRole).Write(!p.IsAlive() ? (ushort)RoleTypes.CrewmateGhost : (ushort)RoleTypes.Crewmate).Write(ProjectLotus.AdvancedRoleAssignment).End());
-            massRpc.Send(MyPlayer.GetClientId());
+            if (MyPlayer.AmOwner) nonAlliedImpostors.ForEach(p => p.StartCoroutine(p.CoSetRole(!p.IsAlive() ? RoleTypes.CrewmateGhost : RoleTypes.Crewmate, ProjectLotus.AdvancedRoleAssignment)));
+            else
+            {
+                MassRpc massRpc = RpcV3.Mass(SendOption.Reliable);
+                nonAlliedImpostors.ForEach(p => massRpc.Start(p.NetId, RpcCalls.SetRole).Write(!p.IsAlive() ? (ushort)RoleTypes.CrewmateGhost : (ushort)RoleTypes.Crewmate).Write(ProjectLotus.AdvancedRoleAssignment).End());
+                massRpc.Send(MyPlayer.GetClientId());
+            }
         }
 
         // This code exists to hopefully better split up the roles to cause less blackscreens
