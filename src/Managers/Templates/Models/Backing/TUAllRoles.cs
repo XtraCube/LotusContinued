@@ -27,10 +27,8 @@ internal class TUAllRoles
 
         string FactionName(CustomRole roleDefinition)
         {
-            if (roleDefinition.Metadata.GetOrEmpty(RoleProperties.Key).Compare(r => r.HasProperty(RoleProperty.IsModifier)))
-                return FactionTranslations.Modifiers.Name;
-            if (roleDefinition.Faction is not Neutral)
-                return roleDefinition.Faction.Name();
+            if (roleDefinition.Metadata.GetOrEmpty(RoleProperties.Key).Compare(r => r.HasProperty(RoleProperty.IsModifier))) return FactionTranslations.Modifiers.Name;
+            if (roleDefinition.Faction is not INeutralFaction) return roleDefinition.Faction.Name();
 
             SpecialType specialType = roleDefinition.Metadata.GetOrDefault(LotusKeys.AuxiliaryRoleType, SpecialType.None);
 
@@ -57,7 +55,7 @@ internal class TUAllRoles
             {
                 text += roleNames.Fuse();
                 roleNames = new List<string>();
-                if (factionName == "Modifiers") text += $"\n★ {factionName} ★\n";
+                if (factionName == FactionTranslations.Modifiers.Name) text += $"\n★ {factionName} ★\n";
                 else text += $"\n\n★ {fName} ★\n";
                 factionName = fName;
             }

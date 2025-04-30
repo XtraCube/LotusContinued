@@ -710,10 +710,7 @@ public abstract class AbstractBaseRole
 
         public RoleModifier AddRoleProperty(RoleProperty[] properties, bool replace = false)
         {
-            if (replace)
-            {
-                myRole.Metadata.Set(RoleProperties.Key, new RoleProperties());
-            }
+            if (replace) myRole.Metadata.Set(RoleProperties.Key, new RoleProperties());
             myRole.Metadata.GetOrDefault(RoleProperties.Key, new RoleProperties()).AddAll(properties);
             return this;
         }

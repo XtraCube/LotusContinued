@@ -93,7 +93,15 @@ public class LotusAction
         if (ForcedExecutor == null && Executer == null && role == null)
             throw new InvalidOperationException("Executer is not set and role is not provided.");
 
-        Method.Invoke(ForcedExecutor ?? Executer ?? role, null);
+        try
+        {
+            Method.Invoke(ForcedExecutor ?? Executer ?? role, null);
+        }
+        catch (Exception ex)
+        {
+            log.Exception($"Error invoking method: {ex}");
+            throw;
+        }
     }
 
     public void SetExecuter(object executer)

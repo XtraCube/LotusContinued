@@ -27,7 +27,7 @@ public class RoleUIManager
 
     public void Start(PlayerControl _)
     {
-        if (BaseRole is not IRoleUI roleUI) return;
+        if (BaseRole is not IRoleUI roleUI || !enabled) return;
         try
         {
             BaseRole.MyPlayer.Data.Role.InitializeAbilityButton();

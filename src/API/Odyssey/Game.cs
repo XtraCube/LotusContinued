@@ -39,7 +39,7 @@ public static class Game
         set
         {
             _state = value;
-            if (AmongUsClient.Instance != null && PlayerControl.LocalPlayer != null)
+            if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost && PlayerControl.LocalPlayer != null)
                 Vents.FindRPC((uint)ModCalls.SetGameState)?.Send(null, (int)value);
         }
     }
