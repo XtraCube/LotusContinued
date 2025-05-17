@@ -55,15 +55,16 @@ public class BanManager
         WriteFile(banPlayerFile);
     }
 
-    public void CheckBanPlayer(PlayerControl player, ClientData client)
+    public bool CheckBanPlayer(PlayerControl player, ClientData client)
     {
-        if (!AmongUsClient.Instance.AmHost) return;
-        if (!CheckBanList(client)) return;
+        if (!AmongUsClient.Instance.AmHost) return false;
+        if (!CheckBanList(client)) return false;
 
         string message = string.Format(Localizer.Translate("Messages.BanedByBanList", assembly: Assembly.GetExecutingAssembly()), client.PlayerName);
 
         LogManager.SendInGame(message);
         AmongUsClient.Instance.KickPlayerWithMessage(player, message, true);
+        return true;
     }
 
     public bool CheckBanList(ClientData player)

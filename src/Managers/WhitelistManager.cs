@@ -33,13 +33,14 @@ public class WhitelistManager
                || whitelistedFriendcodes.Contains(player.FriendCode);
     }
 
-    public void CheckWhitelistPlayer(PlayerControl player, ClientData client)
+    public bool CheckWhitelistPlayer(PlayerControl player, ClientData client)
     {
-        if (!AmongUsClient.Instance.AmHost) return;
-        if (CheckWhitelist(client)) return;
+        if (!AmongUsClient.Instance.AmHost) return false;
+        if (CheckWhitelist(client)) return false;
 
         string message = _whitelistBan.Formatted(player.name);
         AmongUsClient.Instance.KickPlayerWithMessage(player, message);
+        return true;
     }
 
     public List<string> Whitelisted() => whitelistedFriendcodes;
