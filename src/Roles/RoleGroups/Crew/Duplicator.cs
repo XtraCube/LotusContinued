@@ -108,6 +108,8 @@ public class Duplicator : Crewmate
         {
             RoleUtils.GetPlayersWithinDistance(fp.Position, killRadius).Where(p => p.PlayerId != MyPlayer.PlayerId).ForEach(p =>
             {
+                if (PhysicsHelpers.AnythingBetween(fp.Position, p.NetTransform.body.position,
+                        Constants.ShipOnlyMask, false)) return;
                 var cod = new CustomDeathEvent(p, MyPlayer, Translations.TrickedCauseOfDeath);
                 MyPlayer.InteractWith(p, new IndirectInteraction(new FatalIntent(true, () => cod), this));
             });
