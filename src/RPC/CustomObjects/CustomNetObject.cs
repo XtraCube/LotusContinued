@@ -6,16 +6,18 @@ using Hazel;
 using InnerNet;
 using Lotus.API.Player;
 using Lotus.Extensions;
+using Lotus.Logging;
 using Lotus.Network;
 using TMPro;
 using UnityEngine;
 using VentLib;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
+using VentLib.Utilities.Optionals;
 using Object = UnityEngine.Object;
 
-// Credit: https://github.com/Gurge44/EndlessHostRoles/blob/main/Modules/CustomNetObject.cs
-// Huge thanks to Gurge44 for letting me use his code!
+// Code from: https://github.com/Gurge44/EndlessHostRoles/blob/main/Modules/CustomNetObject.cs
+// It is sort-of modified however.
 
 // Sidenote:
 // I HATE working with CustomRpcSender.
@@ -27,15 +29,19 @@ namespace Lotus.RPC.CustomObjects;
 public class CustomNetObject
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(CustomNetObject));
-    public static readonly List<CustomNetObject> AllObjects = [];
     private static int MaxId = -1;
-    private readonly HashSet<byte> HiddenList = [];
-    protected int Id;
-    public PlayerControl playerControl;
-    private float PlayerControlTimer;
-    public Vector2 Position;
 
+    public static readonly List<CustomNetObject> AllObjects = [];
+
+    public PlayerControl playerControl;
+    public Vector2 Position;
     public string Sprite;
+
+    protected int Id = -1;
+
+    private float playerControlTimer;
+
+    private readonly HashSet<byte> HiddenList = [];
 
     public virtual bool CanTarget() => false;
 
@@ -55,7 +61,7 @@ public class CustomNetObject
 
         Sprite = sprite;
 
-        Async.Schedule(() =>
+        Async.Execute(() =>
         {
             playerControl.RawSetName(sprite);
             string name = PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].PlayerName;
@@ -64,7 +70,7 @@ public class CustomNetObject
             string skinId = PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].SkinId;
             string petId = PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].PetId;
             string visorId = PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].VisorId;
-            MessageWriter writer = MessageWriter.Get(SendOption.None); // Create Code
+            MessageWriter writer = MessageWriter.Get(SendOption.Reliable); // Create Code
 
             // Start Message
             writer.StartMessage(5);
@@ -110,7 +116,7 @@ public class CustomNetObject
 
             AmongUsClient.Instance.SendOrDisconnect(writer);
             writer.Recycle();
-        }, 0f);
+        });
     }
 
     public void SnapTo(Vector2 position)
@@ -166,7 +172,13 @@ public class CustomNetObject
 
     protected virtual void OnFixedUpdate()
     {
-        if (!AmongUsClient.Instance.AmHost) return;
+        // need to respawn every 20 seconds because server will disconnect everyone on the 30th second.
+        playerControlTimer += Time.fixedDeltaTime;
+        if (playerControlTimer > 20f)
+        {
+            playerControlTimer = 0f;
+            Async.Execute(RecreateNetObject);
+        }
 
         CustomNetworkTransform nt = playerControl.NetTransform;
         if (nt == null) return;
@@ -191,12 +203,14 @@ public class CustomNetObject
 
     protected void CreateNetObject(string sprite, Vector2 position)
     {
+        if (!AmongUsClient.Instance.AmHost) return;
         log.Info($"Create Custom Net Object {GetType().Name} (ID {MaxId + 1}) at {position}");
         playerControl = Object.Instantiate(AmongUsClient.Instance.PlayerPrefab, Vector2.zero, Quaternion.identity);
-        playerControl.PlayerId = 255;
+        playerControl.PlayerId = 254;
         playerControl.isNew = false;
         playerControl.notRealPlayer = true;
         AmongUsClient.Instance.NetIdCnt += 1U;
+
         MessageWriter msg = MessageWriter.Get();
         msg.StartMessage(5);
         msg.Write(AmongUsClient.Instance.GameId);
@@ -240,7 +254,7 @@ public class CustomNetObject
             string skinId = PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].SkinId;
             string petId = PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].PetId;
             string visorId = PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].VisorId;
-            MessageWriter writer = MessageWriter.Get(SendOption.None); // Create Code
+            MessageWriter writer = MessageWriter.Get(SendOption.Reliable); // Create Code
 
             // Start Message
             writer.StartMessage(5);
@@ -288,15 +302,15 @@ public class CustomNetObject
         }, 0.2f);
 
         Position = position;
-        PlayerControlTimer = 0f;
-        //playerControl.cosmetics.currentBodySprite.BodySprite.color = Color.clear;
-        // playerControl.cosmetics.colorBlindText.color = Color.clear;
         Sprite = sprite;
-        ++MaxId;
-        Id = MaxId;
-        if (MaxId == int.MaxValue) MaxId = int.MinValue;
 
-        AllObjects.Add(this);
+        if (Id == -1)
+        {
+            if (MaxId != int.MaxValue) ++MaxId;
+            Id = MaxId;
+
+            AllObjects.Add(this);
+        }
 
         foreach (PlayerControl pc in Players.GetAllPlayers())
         {
@@ -304,7 +318,7 @@ public class CustomNetObject
 
             Async.Schedule(() =>
             {
-                MessageWriter writer = MessageWriter.Get(SendOption.None); // Create Code
+                MessageWriter writer = MessageWriter.Get(SendOption.Reliable); // Create Code
 
                 // StartMessage
                 writer.StartMessage(6);
@@ -333,11 +347,10 @@ public class CustomNetObject
 
                 {
                     writer.WritePacked(playerControl.NetId);
-                    writer.Write((byte)255);
+                    writer.Write((byte)254);
                 }
 
                 writer.EndMessage();
-                // 2nd endmessage
                 writer.EndMessage();
 
                 AmongUsClient.Instance.SendOrDisconnect(writer);
@@ -347,21 +360,28 @@ public class CustomNetObject
 
         Async.Schedule(() => playerControl.transform.FindChild("Names").FindChild("NameText_TMP").gameObject.SetActive(true), 0.1f); // Fix for Host
         // Async.Schedule(() => Vents.FindRPC((uint)ModCalls.FixModdedClientCNO).Send([player.GetClientId()], playerControl), 0.4f); // Fix for Non-Host Modded
-        // Async.Schedule(() => Utils.SendRPC(CustomRPC.FixModdedClientCNO, playerControl), 0.4f); // Fix for Non-Host Modded
+        Async.Schedule(() => RpcChangeSprite(sprite), .6f);
+    }
 
+    private void RecreateNetObject()
+    {
+        PlayerControl oldPlayerControl = playerControl;
+        log.Trace("Recreating old net object.");
+        Async.Schedule(() => oldPlayerControl.Despawn(), .3f);
+        CreateNetObject(Sprite, Position);
     }
 
     public static void FixedUpdate()
     {
-        foreach (CustomNetObject cno in AllObjects.ToArray()) cno?.OnFixedUpdate();
+        foreach (CustomNetObject cno in AllObjects) cno?.OnFixedUpdate();
     }
 
-    public static CustomNetObject Get(int id)
+    public static Optional<CustomNetObject> Get(int id)
     {
-        return AllObjects.FirstOrDefault(x => x.Id == id)!;
+        return AllObjects.FirstOrOptional(x => x.Id == id);
     }
 
-    public static CustomNetObject ObjectFromPlayer(PlayerControl control) => AllObjects.FirstOrDefault(x => x.playerControl == control)!;
+    public static Optional<CustomNetObject> ObjectFromPlayer(PlayerControl control) => AllObjects.FirstOrOptional(x => x.playerControl == control);
 
     public static void Reset()
     {

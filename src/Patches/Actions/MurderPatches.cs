@@ -64,17 +64,15 @@ public static class MurderPatches
             log.Trace($"Unable to kill {target.name}. There is currently a meeting.", "CheckMurder");
             return false;
         }
-        if (target.PlayerId == 255 && !target.notRealPlayer)
+        if (target is {PlayerId: 254, notRealPlayer: true})
         {
-            CustomNetObject netObject = CustomNetObject.ObjectFromPlayer(target);
-            if (netObject != null)
-            {
-                if (!netObject.CanTarget())
+            Optional<CustomNetObject> netObject = CustomNetObject.ObjectFromPlayer(target);
+            if (netObject.Exists())
+                if (!netObject.Get().CanTarget())
                 {
                     log.Trace($"Unable to kill a NetObject.");
                     return false;
                 }
-            }
         }
 
         if (__instance.PlayerId == target.PlayerId) return false;
