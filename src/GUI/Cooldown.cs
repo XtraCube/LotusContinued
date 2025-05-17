@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using Lotus.Logging;
 using Lotus.Managers;
 using Lotus.Roles.Internals.Interfaces;
 using Lotus.Roles.Attributes;
@@ -35,14 +36,14 @@ public class Cooldown : ICloneOnSetup<Cooldown>
     public bool IsReady() => TimeRemaining() <= 0;
     public void Start(float duration = float.MinValue)
     {
-        remaining = duration == float.MinValue ? Duration : duration;
+        remaining = duration < 0 ? Duration : duration;
         lastTick = DateTime.Now;
         if (IsCoroutine) CooldownManager.SubmitCooldown(this);
     }
 
     public void Finish(bool skipAction = false)
     {
-        skipNextCall = skipAction;
+        skipNextCall = skipAction && action != null;
         remaining = 0.01f;
     }
 
@@ -63,8 +64,8 @@ public class Cooldown : ICloneOnSetup<Cooldown>
         if (remaining > 0 || action == null) return remaining;
         Action tempAction = action;
         action = null;
-        if (!skipNextCall) tempAction();
-        skipNextCall = false;
+        if (skipNextCall) skipNextCall = false;
+        else tempAction();
         return remaining;
     }
 
