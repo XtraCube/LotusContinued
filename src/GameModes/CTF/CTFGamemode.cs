@@ -10,6 +10,8 @@ using Lotus.GameModes.CTF.Conditions;
 using Lotus.GameModes.CTF.Distributions;
 using Lotus.Options;
 using Lotus.Roles;
+using Lotus.RPC.CustomObjects.Builtin;
+using Lotus.Utilities;
 using Lotus.Victory;
 using UnityEngine;
 using VentLib.Options.UI.Tabs;
@@ -40,6 +42,12 @@ public class CTFGamemode : GameMode
 
     public static byte Team0FlagCarrier = byte.MaxValue;
     public static byte Team1FlagCarrier = byte.MaxValue;
+
+    public static RedFlag RedFlag = null!;
+    public static BlueFlag BlueFlag = null!;
+
+    private bool hasReturnedRed;
+    private bool hasReturnedBlue;
 
     public CTFGamemode()
     {
@@ -74,6 +82,9 @@ public class CTFGamemode : GameMode
         Team0FlagCarrier = byte.MaxValue;
         Team1FlagCarrier = byte.MaxValue;
 
+        hasReturnedRed = true;
+        hasReturnedBlue = true;
+
         SpawnLocations = null!;
     }
     public override void SetupWinConditions(WinDelegate winDelegate) => winDelegate.AddWinCondition(new PointWinCondition());
@@ -87,6 +98,31 @@ public class CTFGamemode : GameMode
     {
         RoleAssignment.AssignRoles(players);
         base.AssignRoles(players);
+    }
+
+    public override void FixedUpdate()
+    {
+        if (Team0FlagCarrier != byte.MaxValue)
+        {
+            hasReturnedRed = false;
+            PlayerControl? carrier = Utils.GetPlayerById(Team0FlagCarrier);
+            if (carrier != null) RedFlag.SnapTo(carrier.NetTransform.body.position);
+        } else if (!hasReturnedRed)
+        {
+            hasReturnedRed = true;
+            RedFlag.Return();
+        }
+
+        if (Team1FlagCarrier != byte.MaxValue)
+        {
+            hasReturnedBlue = false;
+            PlayerControl? carrier = Utils.GetPlayerById(Team1FlagCarrier);
+            if (carrier != null) BlueFlag.SnapTo(carrier.NetTransform.body.position);
+        } else if (!hasReturnedBlue)
+        {
+            hasReturnedBlue = true;
+            BlueFlag.Return();
+        }
     }
 
     public static void ShowInformationToGhost(PlayerDeathHookEvent hookEvent)

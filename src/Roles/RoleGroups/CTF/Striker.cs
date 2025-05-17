@@ -76,10 +76,10 @@ public class Striker : NeutralKillingBase
                 ShipStatus.MapType.Ship => [RandomSpawn.SkeldLocations["Reactor"], RandomSpawn.SkeldLocations["Navigation"]],
                 ShipStatus.MapType.Hq => [RandomSpawn.MiraLocations["Launchpad"], RandomSpawn.MiraLocations["Cafeteria"]],
                 ShipStatus.MapType.Pb => [RandomSpawn.PolusLocations["BoilerRoom"], RandomSpawn.PolusLocations["Laboratory"]],
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new ArgumentOutOfRangeException(ShipStatus.Instance.Type.ToString())
             };
-            _ = new RedFlag(CTFGamemode.SpawnLocations[0]);
-            _ = new BlueFlag(CTFGamemode.SpawnLocations[1]);
+            CTFGamemode.RedFlag = new RedFlag(CTFGamemode.SpawnLocations[0]);
+            CTFGamemode.BlueFlag = new BlueFlag(CTFGamemode.SpawnLocations[1]);
         }
 
         Utils.Teleport(MyPlayer.NetTransform, CTFGamemode.SpawnLocations[MyPlayer.cosmetics.bodyMatProperties.ColorId]);
