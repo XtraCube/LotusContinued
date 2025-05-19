@@ -50,8 +50,8 @@ public class Striker : NeutralKillingBase
     public string FlagGrabNotice() => noticeTimer.IsReady() ? "" : Color.yellow.Colorize(Translations.GrabbedFlag) + "\n";
 
     [NewOnSetup] private List<Remote<IndicatorComponent>> arrowComponents = null!;
-    private Remote<Overrides.GameOptionOverride> speedOverride;
-    private Remote<IndicatorComponent> warningIndicator;
+    private Remote<Overrides.GameOptionOverride>? speedOverride;
+    private Remote<IndicatorComponent>? warningIndicator;
 
 
     protected override void PostSetup()
