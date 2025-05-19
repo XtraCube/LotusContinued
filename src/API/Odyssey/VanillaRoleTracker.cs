@@ -15,6 +15,11 @@ public class VanillaRoleTracker
         return roleDictionary.GetOrCompute(player, () => new TeamInfo(player));
     }
 
+    public TeamInfo ResetInfo(byte player)
+    {
+        return roleDictionary[player] = new TeamInfo(player);
+    }
+
     public IEnumerable<PlayerControl> GetAllImpostors(byte playerId)
     {
         return GetInfo(playerId).Impostors.Select(i => Utils.PlayerById(i)).Filter();
