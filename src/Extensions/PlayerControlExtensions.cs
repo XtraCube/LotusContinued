@@ -77,16 +77,16 @@ public static class PlayerControlExtensions
         RoleOperations.Current.SyncOptions(player);
     }
 
-    public static void RpcSetRoleDesync(this PlayerControl player, RoleTypes role, int clientId)
+    public static void RpcSetRoleDesync(this PlayerControl player, RoleTypes role, PlayerControl target)
     {
         if (player == null) return;
-        if (AmongUsClient.Instance.ClientId == clientId)
+        if (target.AmOwner)
         {
             player.StartCoroutine(player.CoSetRole(role, ProjectLotus.AdvancedRoleAssignment));
             return;
         }
 
-        RpcV3.Immediate(player.NetId, RpcCalls.SetRole).Write((ushort)role).Write(ProjectLotus.AdvancedRoleAssignment).Send(clientId);
+        RpcV3.Immediate(player.NetId, RpcCalls.SetRole).Write((ushort)role).Write(ProjectLotus.AdvancedRoleAssignment).Send(target.GetClientId());
     }
 
     public static void RpcMark(this PlayerControl killer, PlayerControl? target = null, int colorId = 0)
@@ -217,7 +217,7 @@ public static class PlayerControlExtensions
             {
                 RoleTypes realRole = pc.PrimaryRole().RealRole;
                 bool isDead = pc.Data.IsDead;
-                RpcV3.Immediate(pc.NetId, RpcCalls.SetRole).Write((ushort)(isDead ? realRole.GhostEquivelant() : realRole)).Write(true).Send(pc.GetClientId());
+                RpcV3.Immediate(pc.NetId, RpcCalls.SetRole).Write((ushort)(isDead ? realRole.GhostEquivalent() : realRole)).Write(true).Send(pc.GetClientId());
                 // Async.Schedule(() => RpcV3.Immediate(p.NetId, RpcCalls.SetRole).Write((ushort)(isDead ? realRole.GhostEquivelant() : realRole)).Write(true).Send(p.GetClientId()), NetUtils.DeriveDelay(0.3f));
             }
         }, 0.4f + delay);
@@ -325,4 +325,6 @@ public static class PlayerControlExtensions
             AmongUsClient.Instance.FinishRpcImmediately(writer);
         }
     }
+
+    public static void SetRole(this PlayerControl player, RoleTypes role, bool canOverride) => player.StartCoroutine(player.CoSetRole(role, canOverride));
 }
