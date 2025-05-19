@@ -40,6 +40,12 @@ public class Tracker : Vanilla.Tracker, IRoleUI
         .SetText(Translations.ButtonText)
         .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/tracker_track_bodies.png", 130, true));
 
+    protected override void Setup(PlayerControl player)
+    {
+        base.Setup(player);
+        if (canTrackBodies is not TrackBodyValue.OnPet) UIManager.DisableUI(); // Setup is called by modded clients, so we can just call this to disable for them.
+    }
+
     [UIComponent(UI.Indicator)]
     public string DisplayDeadBodies()
     {
