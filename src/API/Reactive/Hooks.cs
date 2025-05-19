@@ -50,6 +50,8 @@ public class Hooks
         public static readonly Hook<PlayerMurderHookEvent> PlayerMurderHook = new SimpleHook<PlayerMurderHookEvent>();
         public static readonly Hook<PlayerDeathHookEvent> PlayerDeathHook = new SimpleHook<PlayerDeathHookEvent>();
         public static readonly Hook<PlayerShapeshiftHookEvent> PlayerShapeshiftHook = new SimpleHook<PlayerShapeshiftHookEvent>();
+        public static readonly Hook<PlayerPhantomHookEvent> PlayerPhantomHook =  new SimpleHook<PlayerPhantomHookEvent>();
+        public static readonly Hook<PlayerHookEvent> PlayerRevivedHook = new SimpleHook<PlayerHookEvent>();
 
         public static readonly Hook<PlayerHookEvent> PlayerExiledHook = new SimpleHook<PlayerHookEvent>();
         public static readonly Hook<PlayerTeleportedHookEvent> PlayerTeleportedHook = new SimpleHook<PlayerTeleportedHookEvent>();

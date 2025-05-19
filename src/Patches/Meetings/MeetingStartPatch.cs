@@ -75,7 +75,6 @@ public class MeetingStartPatch
         // });
 
         Hooks.MeetingHooks.MeetingCalledHook.Propagate(new MeetingHookEvent(reporter, MeetingPrep.Reported, meetingDelegate));
-        Hooks.GameStateHooks.RoundEndHook.Propagate(new GameStateHookEvent(Game.MatchData, ProjectLotus.GameModeManager.CurrentGameMode));
         Game.MatchData.MeetingsCalled++;
 
         Game.SyncAll(); // This syncs up all the cooldowns to fix doubling after meeting
