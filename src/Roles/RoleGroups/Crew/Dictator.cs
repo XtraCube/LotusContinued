@@ -110,11 +110,11 @@ public class Dictator : Crewmate
                 .SubOption(sub2 => sub2
                     .KeyName("Show Dictate at End of Meeting", ShowDictatorVoteAtMeetingEnd)
                     .BindBool(b => showDictatorVoteAtEnd = b)
-                    .AddOnOffValues()
+                    .AddBoolean()
                     .Build())
                 .Build())
             .SubOption(sub => sub.KeyName("Suicide if Crewmate Executed", TranslationUtil.Colorize(SuicideIfVoteCrewmate, ModConstants.Palette.CrewmateColor))
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .BindBool(b => suicideIfVoteCrewmate = b)
                 .Build());
 
