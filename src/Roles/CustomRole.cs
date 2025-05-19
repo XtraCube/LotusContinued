@@ -172,12 +172,10 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         HashSet<byte> alliedPlayerIds = alliedPlayers.Where(Faction.CanSeeRole).Select(p => p.PlayerId).ToHashSet();
         log.Debug($"CustomRole.Assign({isStartOfGame}) for {MyPlayer.name}. {EnglishRoleName} - {RealRole}");
 
-        DevLogger.Log($"CustomRole.Assign({isStartOfGame}) for {MyPlayer.name} {ProjectLotus.AdvancedRoleAssignment}");
-        // we can assign crewmate without worries as they should be crew for EVERYONE
-        if (RealRole.IsCrewmate())
-        {
-            DevLogger.Log($"Real Role: {RealRole}");
-            MyPlayer.RpcSetRole(RealRole, ProjectLotus.AdvancedRoleAssignment);
+        var teamInfo = Game.MatchData.VanillaRoleTracker.ResetInfo(MyPlayer.PlayerId);
+        PlayerControl myListPlayer = players.First(p => p.PlayerId == MyPlayer.PlayerId);
+        players.Remove(myListPlayer);
+        teamInfo.MyRole = RealRole;
 
 
         var writer = RpcV3.Mass(SendOption.Reliable);
