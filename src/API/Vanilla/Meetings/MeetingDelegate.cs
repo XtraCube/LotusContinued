@@ -32,6 +32,7 @@ public class MeetingDelegate
     public static MeetingDelegate Instance = null!;
     public NetworkedPlayerInfo? ExiledPlayer { get; set; }
     public HashSet<byte> TiedPlayers = new();
+    public bool AlreadyCompleted;
 
     public bool IsTie { get; set; }
     internal IBlackscreenResolver BlackscreenResolver { get; }
