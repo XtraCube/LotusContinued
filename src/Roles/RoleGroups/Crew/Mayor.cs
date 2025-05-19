@@ -50,11 +50,7 @@ public class Mayor : Crewmate, IRoleUI
     protected override void Setup(PlayerControl player)
     {
         base.Setup(player);
-        if (!hasPocketMeeting)
-        {
-            if (player.AmOwner) this.UIManager.DisableUI();
-            else if (player.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateMayor)?.Send([MyPlayer.OwnerId], false, 0);
-        }
+        if (!hasPocketMeeting) this.UIManager.DisableUI(); // Setup is called by modded clients, so we can just call this to disable for them.
     }
 
     public RoleButton PetButton(IRoleButtonEditor editor) => editor
