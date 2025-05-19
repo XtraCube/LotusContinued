@@ -148,11 +148,7 @@ public class Archangel : CustomRole
 
         target = null;
         if (newRole == this) return;
-        Game.AssignRole(MyPlayer, newRole);
-
-        CustomRole assignedRole = MyPlayer.PrimaryRole();
-        if (ProjectLotus.AdvancedRoleAssignment) assignedRole.Assign();
-        Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(MyPlayer, assignedRole, this));
+        this.ChangeRoleTo(newRole);
     }
 
     private void SendProtection()
@@ -193,12 +189,12 @@ public class Archangel : CustomRole
             .SubOption(sub => sub
                 .KeyName("Target Knows They have an Archangel", TargetKnowsArchAngelExists)
                 .Bind(v => TargetKnowsArchangelExists = (bool)v)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Archangel Knows Target Role", ArchAngelKnowsTargetRole)
                 .Bind(v => ArchangelKnowsTargetRole = (bool)v)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Role Change When Target Dies", RoleChangeWhenTargetDies)

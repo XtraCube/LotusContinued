@@ -84,11 +84,7 @@ public class Executioner : CustomRole
 
         target = null;
         if (newRole == this) return;
-        Game.AssignRole(MyPlayer, newRole);
-
-        CustomRole assignedRole = MyPlayer.PrimaryRole();
-        if (ProjectLotus.AdvancedRoleAssignment) assignedRole.Assign();
-        Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(MyPlayer, assignedRole, this));
+        this.ChangeRoleTo(newRole);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
@@ -97,11 +93,11 @@ public class Executioner : CustomRole
             .SubOption(sub => sub
                 .KeyName("Can Target Impostors", Translations.Options.TargetImpostors)
                 .Bind(v => canTargetImpostors = (bool)v)
-                .AddOnOffValues(false).Build())
+                .AddBoolean(false).Build())
             .SubOption(sub => sub
                 .KeyName("Can Target Neutrals", Translations.Options.TargetNeutrals)
                 .Bind(v => canTargetNeutrals = (bool)v)
-                .AddOnOffValues(false).Build())
+                .AddBoolean(false).Build())
             .SubOption(sub => sub
                 .KeyName("Role Change When Target Dies", Translations.Options.RoleChange)
                 .Bind(v => roleChangeWhenTargetDies = (int)v)

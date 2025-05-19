@@ -33,9 +33,14 @@ using Lotus.API;
 using VentLib.Networking;
 using Lotus.Managers;
 using System.Text.RegularExpressions;
+using Lotus.API.Reactive;
+using Lotus.API.Reactive.HookEvents;
+using Lotus.Managers.History.Events;
+using Lotus.Roles.Managers.Interfaces;
 using Lotus.Utilities;
 using Lotus.Roles.RoleGroups.Crew;
 using VentLib.Networking.RPC.Interfaces;
+using VentLib.Utilities.Optionals;
 
 namespace Lotus.Roles;
 
@@ -157,13 +162,15 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         DesyncOptions.SyncToPlayer(modifiedOptions, MyPlayer);
     }
 
-    public void Assign()
+    public Optional<LastPlayerInfo> Assign(bool sendAllPlayers = false)
     {
-        if (!AmongUsClient.Instance.AmHost) return;
-
+        if (!AmongUsClient.Instance.AmHost) return Optional<LastPlayerInfo>.Null();
         bool isStartOfGame = Game.State is GameState.InIntro or GameState.InLobby;
+        List<PlayerControl> players = Players.GetAllPlayers().ToList();
 
-        PlayerControl[] alliedPlayers = Players.GetPlayers().Where(p => Relationship(p) is Relation.FullAllies).ToArray();
+        PlayerControl[] alliedPlayers = players.Where(p => Relationship(p) is Relation.FullAllies).ToArray();
+        HashSet<byte> alliedPlayerIds = alliedPlayers.Where(Faction.CanSeeRole).Select(p => p.PlayerId).ToHashSet();
+        log.Debug($"CustomRole.Assign({isStartOfGame}) for {MyPlayer.name}. {EnglishRoleName} - {RealRole}");
 
         DevLogger.Log($"CustomRole.Assign({isStartOfGame}) for {MyPlayer.name} {ProjectLotus.AdvancedRoleAssignment}");
         // we can assign crewmate without worries as they should be crew for EVERYONE
@@ -172,77 +179,140 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
             DevLogger.Log($"Real Role: {RealRole}");
             MyPlayer.RpcSetRole(RealRole, ProjectLotus.AdvancedRoleAssignment);
 
-            if (!isStartOfGame) goto finishAssignment;
 
-            Players.GetPlayers().ForEach(p => p.GetTeamInfo().AddPlayer(MyPlayer.PlayerId, MyPlayer.GetVanillaRole().IsImpostor()));
+        var writer = RpcV3.Mass(SendOption.Reliable);
+        bool shouldSendRpc = !MyPlayer.AmOwner;
 
-            goto finishAssignment;
-        }
-
-        MyPlayer.GetTeamInfo().MyRole = RealRole;
-
-        // as impostor, its get a bit tricky.
-        // we need to be wary of Noisemaker and Phantom since those cause issues if not replicated properly
-        log.Trace($"Setting {MyPlayer.name} Role => {RealRole} | IsStartGame = {isStartOfGame}", "CustomRole::Assign");
-        if (MyPlayer.IsHost()) MyPlayer.StartCoroutine(MyPlayer.CoSetRole(RealRole, ProjectLotus.AdvancedRoleAssignment));
-        else RpcV3.Immediate(MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RealRole).Write(ProjectLotus.AdvancedRoleAssignment).Send(MyPlayer.GetClientId());
-
-        log.Debug($"Player {MyPlayer.GetNameWithRole()} Allies: [{alliedPlayers.Select(p => p.name).Fuse()}]");
-        HashSet<byte> alliedPlayerIds = alliedPlayers.Where(Faction.CanSeeRole).Select(p => p.PlayerId).ToHashSet();
-        int[] alliedPlayerClientIds = alliedPlayers.Where(Faction.CanSeeRole).Select(p => p.GetClientId()).ToArray();
-
-        PlayerControl[] crewmates = Players.GetPlayers().Where(p =>
+        PlayerControl? lastPlayer = null;
+        if (!sendAllPlayers)
         {
-            DevLogger.Log($"Checking: {p.name} ({p.GetVanillaRole()})");
-            return p != MyPlayer && p.GetVanillaRole().IsCrewmate();
-        }).ToArray();
-        int[] crewmateClientIds = crewmates.Select(p => p.GetClientId()).ToArray();
-        log.Trace($"Current Crewmates: [{crewmates.Select(p => p.name).Fuse()}]");
-
-        PlayerControl[] nonAlliedImpostors = Players.GetPlayers().Where(p => p.GetVanillaRole().IsImpostor()).Where(p => !alliedPlayerIds.Contains(p.PlayerId) && p.PlayerId != MyPlayer.PlayerId).ToArray();
-        int[] nonAlliedImpostorClientIds = nonAlliedImpostors.Select(p => p.GetClientId()).ToArray();
-        log.Trace($"Non Allied Impostors: [{nonAlliedImpostors.Select(p => p.name).Fuse()}]");
-
-        RpcV3.Immediate(MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RealRole).Write(ProjectLotus.AdvancedRoleAssignment).SendInclusive(alliedPlayerClientIds);
-        if (isStartOfGame) alliedPlayers.ForEach(p => p.GetTeamInfo().AddPlayer(MyPlayer.PlayerId, RealRole.IsImpostor()));
-        else alliedPlayers.ForEach(ap => RpcV3.Immediate(ap.NetId, RpcCalls.SetRole).Write(ap.IsAlive() ? (ushort)ap.GetTeamInfo().MyRole : (ushort)ap.GetTeamInfo().MyRole.GhostEquivelant()).Write(ProjectLotus.AdvancedRoleAssignment).Send(MyPlayer.GetClientId()));
-
-        RpcV3.Immediate(MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RoleTypes.Crewmate).Write(ProjectLotus.AdvancedRoleAssignment).SendInclusive(nonAlliedImpostorClientIds);
-        if (isStartOfGame) nonAlliedImpostors.ForEach(p => p.GetTeamInfo().AddVanillaCrewmate(MyPlayer.PlayerId));
-        else
-        {
-            // Make non-allied impostors crewmate for us.
-            if (MyPlayer.AmOwner) nonAlliedImpostors.ForEach(p => p.StartCoroutine(p.CoSetRole(!p.IsAlive() ? RoleTypes.CrewmateGhost : RoleTypes.Crewmate, ProjectLotus.AdvancedRoleAssignment)));
+            if (!players.Any())
+            {
+                lastPlayer = MyPlayer;
+                shouldSendRpc = false;
+            }
             else
             {
-                MassRpc massRpc = RpcV3.Mass(SendOption.Reliable);
-                nonAlliedImpostors.ForEach(p => massRpc.Start(p.NetId, RpcCalls.SetRole).Write(!p.IsAlive() ? (ushort)RoleTypes.CrewmateGhost : (ushort)RoleTypes.Crewmate).Write(ProjectLotus.AdvancedRoleAssignment).End());
-                massRpc.Send(MyPlayer.GetClientId());
+                lastPlayer = players.Last();
+                players.Remove(lastPlayer);
             }
         }
 
-        // This code exists to hopefully better split up the roles to cause less blackscreens
-        RoleTypes splitRole = Faction is ImpostorFaction ? RealRole : RoleTypes.Crewmate;
-        RpcV3.Immediate(MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)splitRole).Write(ProjectLotus.AdvancedRoleAssignment).SendInclusive(crewmateClientIds);
-        if (isStartOfGame) crewmates.ForEach(p =>
+        RoleTypes sentRole = RealRole;
+        if (!MyPlayer.IsAlive()) sentRole = sentRole.GhostEquivalent();
+
+        if (MyPlayer.AmOwner) MyPlayer.SetRole(sentRole, ProjectLotus.AdvancedRoleAssignment);
+        else
+            writer
+                .Start(MyPlayer.NetId, RpcCalls.SetRole)
+                .Write((ushort)sentRole)
+                .Write(ProjectLotus.AdvancedRoleAssignment)
+                .End();
+
+        foreach (PlayerControl player in players)
         {
-            if (splitRole.IsImpostor()) p.GetTeamInfo().AddVanillaImpostor(MyPlayer.PlayerId);
-            else p.GetTeamInfo().AddVanillaCrewmate(MyPlayer.PlayerId);
-        });
+            RoleTypes targetRoleForMyPlayer = GetRoleTypeForMyPlayer(player);
+            // log.Debug($"Assigning {targetRoleForMyPlayer} for {player.name}.");
+            if (MyPlayer.AmOwner) player.SetRole(targetRoleForMyPlayer, ProjectLotus.AdvancedRoleAssignment);
+            else writer
+                    .Start(player.NetId, RpcCalls.SetRole)
+                    .Write((ushort)targetRoleForMyPlayer)
+                    .Write(ProjectLotus.AdvancedRoleAssignment)
+                    .End();
+            teamInfo.AddPlayer(player.PlayerId, targetRoleForMyPlayer.IsImpostor());
+        }
 
-        finishAssignment:
-
+        if (shouldSendRpc) writer.Send(MyPlayer.GetClientId());
         ShowRoleToTeammates(alliedPlayers);
 
-        // DevLogger.Log($"(HostCheck) Should See as Imp: {Relationship(PlayerControl.LocalPlayer) is Relation.FullAllies && Faction.CanSeeRole(PlayerControl.LocalPlayer)}");
+        return sendAllPlayers
+            ? Optional<LastPlayerInfo>.Null()
+            : Optional<LastPlayerInfo>.NonNull(new LastPlayerInfo(MyPlayer, lastPlayer!, GetRoleTypeForMyPlayer(lastPlayer!)));
 
-        // This is for host. Should also fix player being set as impostor as host.
-        if (RealRole.IsCrewmate()) MyPlayer.StartCoroutine(MyPlayer.CoSetRole(RealRole, ProjectLotus.AdvancedRoleAssignment));
-        else if (Relationship(PlayerControl.LocalPlayer) is Relation.FullAllies && Faction.CanSeeRole(PlayerControl.LocalPlayer) || MyPlayer.IsHost()) MyPlayer.StartCoroutine(MyPlayer.CoSetRole(RealRole, ProjectLotus.AdvancedRoleAssignment));
-        else MyPlayer.StartCoroutine(MyPlayer.CoSetRole(PlayerControl.LocalPlayer.GetVanillaRole().IsImpostor() ? RoleTypes.Crewmate : RoleTypes.Impostor, ProjectLotus.AdvancedRoleAssignment));
+        RoleTypes GetRoleTypeForMyPlayer(PlayerControl target)
+        {
+            RoleTypes outputRole;
+            CustomRole targetRole = target.PrimaryRole();
+            if (targetRole.RealRole.IsCrewmate()) outputRole = targetRole.RealRole; // If their role is crewmate, then we can see their real role.
+            else if (alliedPlayerIds.Contains(target.PlayerId)) outputRole = targetRole.RealRole; // If they are an allied impostor, then we can see their real role.
+            else if (targetRole.Faction.GetType() == typeof(ImpostorFaction) && RealRole.IsCrewmate()) outputRole = targetRole.RealRole; // If they are impostor, and we are crewmate, than we can see their real role.
+            else outputRole = RoleTypes.Crewmate; // This must mean they are a desynced impostor and not on our team or we cant see their role. So we should see them as crewmate.
 
-        SyncOptions([new GameOptionOverride(Override.KillCooldown, 0.1f)], true);
-        if (MyPlayer.AmOwner) HudManager.Instance.SetHudActive(true);
+            return target.IsAlive() ? outputRole : outputRole.GhostEquivalent();
+        }
+    }
+
+    public virtual void ChangeRoleTo(CustomRole newRole, bool getCleanRole = true)
+    {
+        log.Debug($"Changing {MyPlayer.name}'s role from {EnglishRoleName} to {newRole.EnglishRoleName}. (a role called this method.)");
+        if (getCleanRole) newRole = IRoleManager.Current.GetCleanRole(newRole);
+
+        HashSet<byte> oldAllies = Players.GetAllPlayers()
+            .Where(p => Relationship(p) is Relation.FullAllies)
+            .Where(Faction.CanSeeRole)
+            .Select(p => p.PlayerId)
+            .ToHashSet();
+
+        Game.CurrentGameMode.Assign(MyPlayer, newRole);
+        newRole = MyPlayer.PrimaryRole();
+        newRole.Assign(true);
+        Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(MyPlayer, newRole, this));
+
+        HashSet<byte> newAllies = Players.GetAllPlayers()
+            .Where(p => newRole.Relationship(p) is Relation.FullAllies)
+            .Where(newRole.Faction.CanSeeRole)
+            .Select(p => p.PlayerId)
+            .ToHashSet();
+
+        RoleTypes crewRole = MyPlayer.IsAlive() ? RoleTypes.Crewmate : RoleTypes.CrewmateGhost;
+        RoleTypes impRole = MyPlayer.IsAlive() ? newRole.RealRole : newRole.RealRole.GhostEquivalent();
+
+        // Now we need to send updated Role RPCs for our old allies, and send new Role RPCs for our new allies.
+        oldAllies.ForEach(id =>
+        {
+            if (newAllies.Contains(id) || id == MyPlayer.PlayerId) return;
+            Game.MatchData.VanillaRoleTracker.GetInfo(id).AddVanillaCrewmate(MyPlayer.PlayerId);
+            PlayerControl? player = Utils.GetPlayerById(id);
+            if (player == null) return;
+            MyPlayer.RpcSetRoleDesync(crewRole, player);
+        });
+        newAllies.ForEach(id =>
+        {
+            if (id == MyPlayer.PlayerId) return;
+            Game.MatchData.VanillaRoleTracker.GetInfo(id).AddVanillaImpostor(MyPlayer.PlayerId);
+            PlayerControl? player = Utils.GetPlayerById(id);
+            if (player == null) return;
+            MyPlayer.RpcSetRoleDesync(impRole, player);
+        });
+        ShowRoleToTeammates(newAllies.Select(Utils.PlayerById).Where(op => op.Exists()).Select(op => op.Get()));
+    }
+
+    public virtual void Revive()
+    {
+        Hooks.PlayerHooks.PlayerRevivedHook.Propagate(new PlayerHookEvent(MyPlayer));
+        log.Debug($"Reviving {MyPlayer.GetNameWithRole()}. (a role called this function.)");
+
+        PlayerControl[] alliedPlayers = Players.GetAllPlayers().Where(p => Relationship(p) is Relation.FullAllies).ToArray();
+        HashSet<byte> alliedPlayerIds = alliedPlayers.Where(Faction.CanSeeRole).Select(p => p.PlayerId).ToHashSet();
+
+        foreach (PlayerControl player in Players.GetAllPlayers())
+        {
+            if (player.Data.Disconnected) continue;
+            RoleTypes outputRole = GetMyRoleForTarget(player);
+            MyPlayer.RpcSetRoleDesync(outputRole, player);
+        }
+
+        return;
+        RoleTypes GetMyRoleForTarget(PlayerControl target)
+        {
+            RoleTypes outputRole;
+            if (MyPlayer.PlayerId == target.PlayerId) outputRole = RealRole; // We can ofc see our role.
+            else if (alliedPlayerIds.Contains(target.PlayerId)) outputRole = RealRole; // If they are an allied impostor, then they can see our role.
+            else if (Faction.GetType() == typeof(ImpostorFaction) && target.PrimaryRole().RealRole.IsCrewmate()) outputRole = RealRole; // If we are impostor, and they are crewmate, than they can see our real role.
+            else outputRole = RoleTypes.Crewmate; // This must mean they are a desynced impostor not on our team. So they should see us as crewmate.
+
+            return outputRole;
+        }
     }
 
     public virtual void RefreshKillCooldown(PlayerControl? target = null, IEnumerable<GameOptionOverride>? overrides = null)
@@ -457,4 +527,14 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         if (obj is not CustomRole role) return false;
         return role.GetType() == this.GetType();
     }
+}
+
+/// <summary>
+/// Information on the last player's role for what the seer should see them as.
+/// </summary>
+public class LastPlayerInfo(PlayerControl seer, PlayerControl target, RoleTypes targetRoleForSeer)
+{
+    public PlayerControl Seer { get; } = seer;
+    public PlayerControl Target { get; } = target;
+    public RoleTypes TargetRoleForSeer { get; } = targetRoleForSeer;
 }

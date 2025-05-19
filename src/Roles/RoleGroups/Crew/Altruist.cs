@@ -80,7 +80,7 @@ public class Altruist : Scientist, IRoleCandidate
             else return false;
         });
         Utils.Teleport(player.NetTransform, position);
-        player.PrimaryRole().Assign(); // resends their role info to all players
+        player.PrimaryRole().Revive(); // custom method to revive the player
         deadPlayers.Remove(player);
         // act like they never died smh
         IDeathEvent? causeofDeath = Game.MatchData.GameHistory.GetCauseOfDeath(player.PlayerId).OrElse(null!);
