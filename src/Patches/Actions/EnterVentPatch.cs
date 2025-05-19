@@ -16,9 +16,12 @@ using Lotus.Patches.Client;
 namespace Lotus.Patches.Actions;
 
 [HarmonyPatch(typeof(Vent), nameof(Vent.EnterVent))]
-class EnterVentPatch
+public static class EnterVentPatch
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(EnterVentPatch));
+    private static Dictionary<byte, int> LastEnteredVent = [];
+
+    public static int GetLastEnteredVent(this PlayerControl player) => LastEnteredVent.GetValueOrDefault(player.PlayerId, -1);
 
     public static void Postfix(Vent __instance, [HarmonyArgument(0)] PlayerControl pc)
     {
@@ -26,12 +29,7 @@ class EnterVentPatch
         log.Trace($"{pc.GetNameWithRole()} Entered Vent (ID: {__instance.Id})", "CoEnterVent");
         CustomRole role = pc.PrimaryRole();
 
-        if (Game.CurrentGameMode.BlockedActions().HasFlag(GameModes.BlockableGameAction.EnterVent))
-        {
-            return;
-        }
-
-        if (!UseVentPatch.CanUseVent(pc, role, __instance))
+        if (Game.CurrentGameMode.BlockedActions().HasFlag(GameModes.BlockableGameAction.EnterVent) || !UseVentPatch.CanUseVent(pc, role, __instance))
         {
             log.Trace($"{pc.GetNameWithRole()} cannot enter vent. Booting.");
             Async.Schedule(() => pc.MyPhysics.RpcBootFromVent(__instance.Id), 0.01f);
@@ -41,7 +39,11 @@ class EnterVentPatch
         ActionHandle vented = ActionHandle.NoInit();
         RoleOperations.Current.Trigger(LotusActionType.VentEntered, pc, vented, __instance);
         if (vented.IsCanceled) Async.Schedule(() => pc.MyPhysics.RpcBootFromVent(__instance.Id), 0.4f);
-        else VanillaStatistics.TimesVented.Update(pc.PlayerId, i => i + 1);
+        else
+        {
+            VanillaStatistics.TimesVented.Update(pc.PlayerId, i => i + 1);
+            LastEnteredVent[pc.PlayerId] = __instance.Id;
+        }
     }
 }
 
