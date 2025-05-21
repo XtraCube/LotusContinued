@@ -50,7 +50,7 @@ internal class RpcSendChatPatch
         if (string.IsNullOrWhiteSpace(chatText)) return false;
         _index = -1;
 
-        if (!EatCommand) RpcV3.Standard(__instance.NetId, RpcCalls.SendChat, SendOption.None).Write(chatText).Send();
+        if (!EatCommand) RpcV3.Immediate(__instance.NetId, RpcCalls.SendChat, SendOption.None).Write(chatText).Send();
 
         OnChatPatch.EatMessage = EatCommand;
         if (AmongUsClient.Instance.AmClient && HudManager.InstanceExists)

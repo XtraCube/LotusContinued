@@ -25,7 +25,7 @@ class GameManagerSerializeFix
             {
                 flag = true;
                 writer.StartMessage((byte)index);
-                logicComponent.Serialize(writer, initialState);
+                logicComponent.Serialize(writer);
                 writer.EndMessage();
                 logicComponent.ClearDirtyFlag();
             }
