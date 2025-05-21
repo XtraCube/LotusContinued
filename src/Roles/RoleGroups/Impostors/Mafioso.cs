@@ -163,9 +163,9 @@ public class Mafioso : Engineer, IInfoResender
             if (p.PlayerId == MyPlayer.PlayerId) HandleSelfVote(handle);
             else
             {
-                handle.Cancel();
                 hasVoted = true;
-                GetChatHandler().Message(CanVoteOtherPlayers).Send(MyPlayer);
+                // handle.Cancel();
+                // GetChatHandler().Message(CanVoteOtherPlayers).Send(MyPlayer);
             }
         }, () => HandleSkip(handle));
     }
@@ -239,6 +239,7 @@ public class Mafioso : Engineer, IInfoResender
         {
             hasVoted = true;
             GetChatHandler().Message(CanVoteOtherPlayersOnSkip).Send(MyPlayer);
+            handle.Cancel();
             return;
         }
         if (selectedShopItem >= currentShopItems.Length)
