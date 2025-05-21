@@ -20,6 +20,7 @@ using Lotus.Patches.Actions;
 using Lotus.Patches.Systems;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Interfaces;
+using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Overrides;
@@ -32,6 +33,7 @@ using VentLib.Options;
 using VentLib.Options.UI;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
+using VentLib.Utilities.Optionals;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
@@ -84,13 +86,11 @@ public class Turncoat: CustomRole, IInfoResender
     {
         if (hasRevealed)
         {
-
             if (learnsAllies && learnsAlliesImmediately != true)
             {
                 learnsAlliesImmediately = true;
                 DisplayAllies();
             }
-
             return;
         }
         if (targetPlayer == byte.MaxValue) return;
@@ -122,14 +122,18 @@ public class Turncoat: CustomRole, IInfoResender
     }
 
     [RoleAction(LotusActionType.Vote, priority: Priority.High)]
-    private void SelfVote()
+    private void SelfVote(Optional<PlayerControl> voted, ActionHandle handle)
     {
+        if (!voted.Exists()) return;
+        if (voted.Get().PlayerId != MyPlayer.PlayerId) return;
         if (targetPlayer == byte.MaxValue)
         {
             CHandler().Message(Translations.NoTarget).Send(MyPlayer);
+            handle.Cancel();
             return;
         }
 
+        handle.Cancel();
         hasRevealed = true;
         myState = TurncoatStateOption.AfterReveal;
         CHandler().Message(Translations.BetrayReveal.Formatted(MyPlayer.name, RoleName)).Send();
@@ -139,6 +143,7 @@ public class Turncoat: CustomRole, IInfoResender
     }
 
     [RoleAction(LotusActionType.PlayerDeath)]
+    [RoleAction(LotusActionType.Exiled)]
     private void MyDeath()
     {
         if (mustBeAliveToWin) canWin = false;
