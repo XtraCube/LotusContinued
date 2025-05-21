@@ -186,7 +186,7 @@ public static class PhantomActionsPatch
                 if (otherPlayer.AmOwner) // host check
                 {
                     _ignoreSetInvisibilityPatch += 1;
-                    phantom.StartCoroutine(phantom.CoSetRole(RoleTypes.Phantom, ProjectLotus.AdvancedRoleAssignment));
+                    phantom.SetRole(RoleTypes.Phantom, ProjectLotus.AdvancedRoleAssignment);
                     phantom.SetRoleInvisibility(true, true, true);
                 }
                 else writer.Send(otherPlayer.OwnerId);
@@ -328,7 +328,7 @@ public static class PhantomActionsPatch
 
             if (otherPlayer.AmOwner)
             {
-                phantom.StartCoroutine(otherPlayer.CoSetRole(RoleTypes.Crewmate, ProjectLotus.AdvancedRoleAssignment));
+                phantom.SetRole(RoleTypes.Crewmate, ProjectLotus.AdvancedRoleAssignment);
                 if (changePet) phantom.SetPet(petId);
             }
             else writer.Send(otherPlayer.OwnerId);
