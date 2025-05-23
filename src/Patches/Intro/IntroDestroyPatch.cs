@@ -112,8 +112,11 @@ class IntroDestroyPatch
         if (!hasPet) player.CRpcShapeshift(player, false);
 
         INameModel nameModel = player.NameModel();
-        if (SelectRolesPatch.desyncedIntroText.TryGetValue(player.PlayerId, out VentLib.Utilities.Collections.Remote<GUI.Name.Components.TextComponent>? value))
-            value.Delete();
+        if (role.desyncedIntroText != null)
+        {
+            role.desyncedIntroText.Delete();
+            role.desyncedIntroText = null;
+        }
 
         Players.GetPlayers().ForEach(p => nameModel.RenderFor(p, GameState.Roaming, force: true));
         player.SyncAll();

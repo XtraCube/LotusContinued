@@ -52,6 +52,8 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
     public string GlobalRoleID => $"${Addon?.UUID ?? 0}~{RoleID}";
     protected HashSet<Type> RelatedRoles = new();
 
+    internal Remote<TextComponent>? desyncedIntroText;
+
     static CustomRole()
     {
         AbstractConstructors.Register(typeof(CustomRole), r => GlobalRoleManager.Instance.GetRoleFromId(r.ReadInt32()));
@@ -381,7 +383,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
 
     private void SetupUI2(INameModel nameModel)
     {
-        GameState[] gameStates = { GameState.InIntro, GameState.Roaming, GameState.InMeeting };
+        GameState[] gameStates = [GameState.InIntro, GameState.Roaming, GameState.InMeeting];
 
         if (this is ISubrole subrole && this.RoleFlags.HasFlag(RoleFlag.IsSubrole))
         {
@@ -389,7 +391,13 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
             // else nameModel.GetComponentHolder<RoleHolder>().Add(new RoleComponent(this, gameStates, ViewMode.Additive, MyPlayer));
             nameModel.GetComponentHolder<SubroleHolder>().Add(new SubroleComponent(subrole, gameStates, viewers: MyPlayer));
         }
-        else nameModel.GetComponentHolder<RoleHolder>().Add(new RoleComponent(this, gameStates, ViewMode.Overriden, MyPlayer));
+        else
+        {
+            nameModel.GetComponentHolder<RoleHolder>()
+                .Add(new RoleComponent(this, gameStates, ViewMode.Overriden, MyPlayer));
+            desyncedIntroText = nameModel.GetComponentHolder<TextHolder>()
+                .Add(new TextComponent(GetRoleIntroString(), [GameState.InIntro], ViewMode.Absolute, MyPlayer));
+        }
         SetupUiFields(nameModel);
         SetupUiMethods(nameModel);
     }
