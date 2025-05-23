@@ -58,7 +58,7 @@ class RpcReporter: IReportProducer
             string recipient = Utils.PlayerByClientId(meta.Recipient).Map(p => p.name).OrElse("Unknown") + $" (Id: {meta.Recipient})";
             string rpc = ((RpcCalls)meta.CallId).Name();
 
-            content += $"[{timestamp}] (Target: {targetName}, Recipient: {recipient}, RPC: {rpc}, Immediate: (always yes), SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()).Fuse()}])\n";
+            content += $"[{timestamp}] (Target: {targetName}, Recipient: {recipient}, RPC: {rpc}, SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()).Fuse()}])\n";
         });
         return content;
     }
@@ -70,7 +70,7 @@ class RpcReporter: IReportProducer
         string target = FindObjectByNetId(massMeta.NetId)?.name ?? "(null target)";
         string recipient = Utils.PlayerByClientId(massMeta.Recipient).Map(p => p.name).OrElse("Unknown") + $" (Id: {massMeta.Recipient})";
 
-        content += $"[{timestamp}] MASS RPC => (Target: {target}, Recipient: {recipient}, Immediate: (always yes), SendOptions: {massMeta.SendOption}, PacketSize: {massMeta.PacketSize})";
+        content += $"[{timestamp}] MASS RPC => (Target: {target}, Recipient: {recipient}, SendOptions: {massMeta.SendOption}, PacketSize: {massMeta.PacketSize})";
         massMeta.ChildMeta.ForEach(meta =>
         {
             // string targ = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(meta.NetId)?.name ?? Players.GetPlayers().FirstOrDefault(p => p.NetId == meta.NetId)?.name ?? "Unknown";
@@ -78,7 +78,7 @@ class RpcReporter: IReportProducer
             string recip = Utils.PlayerByClientId(meta.Recipient).Map(p => p.name).OrElse("Unknown") + $" (Id: {meta.Recipient})";
             string rpc = ((RpcCalls)meta.CallId).Name();
 
-            content += $"- [{timestamp}] (Target: {targ}, Recipient: {recip}, RPC: {rpc}, Immediate: (always yes), SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()).Fuse()}])\n";
+            content += $"\n- [{timestamp}] (Target: {targ}, Recipient: {recip}, RPC: {rpc}, SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()).Fuse()}])";
         });
         return content;
     }

@@ -278,7 +278,7 @@ public class BasicCommands : CommandTranslations
                         disconnected[pc.PlayerId] = pc.Data.Disconnected;
                         pc.Data.Disconnected = true;
                     });
-                    log.Debug("Sending Disconncted Data.");
+                    log.Debug("Sending Disconnected Data.");
                     GeneralRPC.SendGameData(target.GetClientId());
                     players.ForEach(pc => pc.Data.Disconnected = disconnected[pc.PlayerId]);
                     ChatHandler.Of("Step 1 finished.\n(Setup Stage)").Send(source);
