@@ -54,11 +54,7 @@ class RpcReporter: IReportProducer
                 return;
             }
 
-            InnerNetObject? target = FindObjectByNetId(meta.NetId);
-            string targetName = string.Empty;
-            if (target != null) targetName = target.name;
-            else targetName = "(null target)";
-
+            string targetName = FindObjectByNetId(meta.NetId)?.name ?? "(null target)";
             string recipient = Utils.PlayerByClientId(meta.Recipient).Map(p => p.name).OrElse("Unknown") + $" (Id: {meta.Recipient})";
             string rpc = ((RpcCalls)meta.CallId).Name();
 
