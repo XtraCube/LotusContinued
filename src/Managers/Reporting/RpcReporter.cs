@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using InnerNet;
 using Lotus.API.Player;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
@@ -53,11 +54,15 @@ class RpcReporter: IReportProducer
                 return;
             }
 
-            string target = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(meta.NetId)?.name ?? Players.GetPlayers().FirstOrDefault(p => p.NetId == meta.NetId)?.name ?? "Unknown";
+            InnerNetObject? target = FindObjectByNetId(meta.NetId);
+            string targetName = string.Empty;
+            if (target != null) targetName = target.name;
+            else targetName = "(null target)";
+
             string recipient = Utils.PlayerByClientId(meta.Recipient).Map(p => p.name).OrElse("Unknown") + $" (Id: {meta.Recipient})";
             string rpc = ((RpcCalls)meta.CallId).Name();
 
-            content += $"[{timestamp}] (Target: {target}, Recipient: {recipient}, RPC: {rpc}, Immediate: (always yes), SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()).Fuse()}])\n";
+            content += $"[{timestamp}] (Target: {targetName}, Recipient: {recipient}, RPC: {rpc}, Immediate: (always yes), SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()).Fuse()}])\n";
         });
         return content;
     }
@@ -78,5 +83,13 @@ class RpcReporter: IReportProducer
             content += $"- [{timestamp}] (Target: {targ}, Recipient: {recip}, RPC: {rpc}, Immediate: (always yes), SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()).Fuse()}])\n";
         });
         return content;
+    }
+
+    private InnerNetObject? FindObjectByNetId(uint netId)
+    {
+        InnerNetObjectCollection allObjects = AmongUsClient.Instance.allObjects;
+        lock (allObjects)
+            if (allObjects.allObjectsFast.TryGetValue(netId, out InnerNetObject innerNetObject)) return innerNetObject;
+        return null;
     }
 }
