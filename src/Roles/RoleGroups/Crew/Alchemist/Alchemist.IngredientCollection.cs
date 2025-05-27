@@ -4,11 +4,13 @@ using System.Linq;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Crew.Ingredients;
+using Lotus.Utilities;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
 public partial class Alchemist
 {
+    private FixedUpdateLock fixedUpdateLock = new(AlchemistFixedUpdate);
     private IAlchemyIngredient? collectableIngredient;
 
     [NewOnSetup] private Dictionary<IngredientInfo, int> heldIngredients;
@@ -16,8 +18,7 @@ public partial class Alchemist
     [RoleAction(LotusActionType.FixedUpdate)]
     private void CheckForIngredient()
     {
-        if (DateTime.Now.Subtract(lastRun).TotalSeconds < AlchemistFixedUpdate) return;
-        lastRun = DateTime.Now;
+        if (!fixedUpdateLock.AcquireLock()) return;
 
         GlobalIngredients.RemoveWhere(i => i.IsExpired());
         LocalIngredients.RemoveWhere(i => i.IsExpired());

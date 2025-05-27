@@ -32,8 +32,6 @@ public partial class Alchemist : Crewmate
     public static HashSet<IAlchemyIngredient> GlobalIngredients = new();
     [NewOnSetup] public HashSet<IAlchemyIngredient> LocalIngredients;
 
-    private DateTime lastRun = DateTime.Now;
-
     public bool IsProtected;
     public float VisionMod;
     public int ExtraVotes;
