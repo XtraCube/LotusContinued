@@ -69,6 +69,7 @@ public class Turncoat: CustomRole, IInfoResender
         {
             isImpostor = false;
             VirtualRole = canVent is TurncoatStateOption.Always or TurncoatStateOption.AfterReveal ? RoleTypes.Engineer : RoleTypes.Crewmate;
+            if (canVent is TurncoatStateOption.Always or TurncoatStateOption.AfterReveal) BaseCanVent = true;
             DesyncRole = null;
             Assign(true);
         }
@@ -284,6 +285,7 @@ public class Turncoat: CustomRole, IInfoResender
         .IntroSound(RoleTypes.Shapeshifter)
         .RoleFlags(RoleFlag.CannotWinAlone)
         .SpecialType(SpecialType.Neutral)
+        .CanVent(canVent is TurncoatStateOption.BeforeReveal or TurncoatStateOption.Always)
         .OptionOverride(Override.EngVentCooldown, () => 0f, () => !isImpostor && canVent is TurncoatStateOption.AfterReveal or TurncoatStateOption.Always)
         .OptionOverride(Override.EngVentDuration, () => 0f, () => !isImpostor && canVent is TurncoatStateOption.AfterReveal or TurncoatStateOption.Always)
         .OptionOverride(Override.ImpostorLightMod, () => AUSettings.CrewLightMod(),
