@@ -229,12 +229,13 @@ public static class PhantomActionsPatch
             {
                 DestroyableSingleton<HudManager>.Instance.AbilityButton.SetFromSettings(phantom.Data.Role.Ability);
                 phantom.Data.Role.SetCooldown();
+                phantom.PrimaryRole().UIManager.ForceUpdate();
                 return false;
             }
 
             RpcV3.Immediate(phantom.NetId, RpcCalls.SetRole).Write((ushort)RoleTypes.Phantom).Write(true).Send(phantom.GetClientId());
             Async.Schedule(() => phantom.RpcResetAbilityCooldown(), NetUtils.DeriveDelay(0.2f));
-            Async.Schedule(() => phantom.SetKillCooldown(phantom.PrimaryRole().GetOverride(Override.KillCooldown)?.GetValue() as float? ?? AUSettings.KillCooldown()), NetUtils.DeriveDelay(0.2f));
+            // Async.Schedule(() => phantom.SetKillCooldown(phantom.PrimaryRole().GetOverride(Override.KillCooldown)?.GetValue() as float? ?? AUSettings.KillCooldown()), NetUtils.DeriveDelay(0.2f));
 
             return false;
         }
