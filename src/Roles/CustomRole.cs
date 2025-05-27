@@ -172,13 +172,12 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
 
         PlayerControl[] alliedPlayers = players.Where(p => Relationship(p) is Relation.FullAllies).ToArray();
         HashSet<byte> alliedPlayerIds = alliedPlayers.Where(Faction.CanSeeRole).Select(p => p.PlayerId).ToHashSet();
-        log.Debug($"CustomRole.Assign({isStartOfGame}) for {MyPlayer.name}. {EnglishRoleName} - {RealRole}");
+        log.Debug($"CustomRole.Assign({sendAllPlayers}, {isStartOfGame}) for {MyPlayer.name}. {EnglishRoleName} - {RealRole}");
 
         var teamInfo = Game.MatchData.VanillaRoleTracker.ResetInfo(MyPlayer.PlayerId);
         PlayerControl myListPlayer = players.First(p => p.PlayerId == MyPlayer.PlayerId);
         players.Remove(myListPlayer);
         teamInfo.MyRole = RealRole;
-
 
         var writer = RpcV3.Mass(SendOption.Reliable);
         bool shouldSendRpc = !MyPlayer.AmOwner;
@@ -186,6 +185,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         PlayerControl? lastPlayer = null;
         if (!sendAllPlayers)
         {
+
             if (!players.Any())
             {
                 lastPlayer = MyPlayer;
@@ -208,6 +208,8 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
                 .Write((ushort)sentRole)
                 .Write(ProjectLotus.AdvancedRoleAssignment)
                 .End();
+
+        if (lastPlayer == MyPlayer) return Optional<LastPlayerInfo>.NonNull(new LastPlayerInfo(MyPlayer, MyPlayer, RealRole));
 
         foreach (PlayerControl player in players)
         {
