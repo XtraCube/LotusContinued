@@ -18,6 +18,8 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Utilities;
 using Lotus.Extensions;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
@@ -27,7 +29,7 @@ using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
-public class Arsonist : NeutralKillingBase
+public class Arsonist : NeutralKillingBase, IRoleUI
 {
     private static IAccumulativeStatistic<int> _dousedPlayers = Statistic<int>.CreateAccumulative($"Roles.{nameof(Arsonist)}.DousedPlayers", () => Translations.DousedPlayerStatistic);
     private static IAccumulativeStatistic<int> _incineratedPlayers = Statistic<int>.CreateAccumulative($"Roles.{nameof(Arsonist)}.IncineratedPlayers", () => Translations.IncineratedPlayerStatistic);
@@ -49,6 +51,10 @@ public class Arsonist : NeutralKillingBase
     [NewOnSetup] private HashSet<byte> dousedPlayers;
     [NewOnSetup] private Dictionary<byte, Remote<IndicatorComponent>> indicators;
     [NewOnSetup] private Dictionary<byte, int> douseProgress;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/arsonist_douse.png", 130, true));
 
     [UIComponent(UI.Counter)]
     private string DouseCounter() => RoleUtils.Counter(dousedPlayers.Count, knownAlivePlayers);
@@ -137,6 +143,9 @@ public class Arsonist : NeutralKillingBase
     [Localized(nameof(Arsonist))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Douse";
+
         [Localized(nameof(IncineratedDeathName))]
         public static string IncineratedDeathName = "Incinerated";
 

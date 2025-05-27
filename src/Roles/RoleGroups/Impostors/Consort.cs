@@ -1,5 +1,7 @@
+extern alias JBAnnotations;
 using System.Collections.Generic;
 using System.Linq;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.API.Odyssey;
 using Lotus.GUI;
 using Lotus.GUI.Name;
@@ -13,15 +15,20 @@ using Lotus.Roles.RoleGroups.Crew;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Consort : Impostor
+public class Consort : Impostor, IRoleUI
 {
     private float roleblockDuration;
     private bool blocking;
@@ -30,6 +37,9 @@ public class Consort : Impostor
 
     [UIComponent(UI.Cooldown)]
     private Cooldown roleblockCooldown;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .Default(false);
 
     [UIComponent(UI.Text)]
     private string BlockingText() => !blocking ? "" : Color.red.Colorize("Blocking");
@@ -58,7 +68,11 @@ public class Consort : Impostor
     [RoleAction(LotusActionType.OnPet)]
     private void ChangeToBlockMode()
     {
-        if (roleblockCooldown.IsReady()) blocking = !blocking;
+        if (roleblockCooldown.IsReady())
+        {
+            blocking = !blocking;
+            UpdateKillButton(UIManager.KillButton);
+        }
     }
 
     [RoleAction(LotusActionType.RoundStart)]
@@ -108,6 +122,33 @@ public class Consort : Impostor
         blockDelegate.UpdateDelegate();
     }
 
+    private RoleButton UpdateKillButton(RoleButton killButton)
+    {
+        if (!MyPlayer.AmOwner)
+        {
+            if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateConsort)?.Send([MyPlayer.OwnerId], blocking);
+            return killButton;
+        }
+
+        return blocking
+            ? killButton
+                .SetText(Translations.ButtonText)
+                .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/consort_roleblock.png", 130, true))
+            : killButton
+                .SetText(Witch.Translations.KillButtonText)
+                .RevertSprite();
+    }
+
+    [UsedImplicitly]
+    [ModRPC((uint)ModCalls.UpdateConsort, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateConsort(bool isBlocking)
+    {
+        Consort? consort = PlayerControl.LocalPlayer.PrimaryRole<Consort>();
+        if (consort == null) return;
+        consort.blocking = isBlocking;
+        consort.UpdateKillButton(consort.UIManager.KillButton);
+    }
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Roleblock Cooldown", Translations.Options.roleblockCooldown)
@@ -130,6 +171,9 @@ public class Consort : Impostor
     [Localized(nameof(Consort))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Roleblock";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

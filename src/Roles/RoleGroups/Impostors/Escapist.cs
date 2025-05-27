@@ -101,7 +101,7 @@ public class Escapist : Impostor, IRoleUI
         ? editor
             .SetText(Translations.MarkButtonText)
             .BindCooldown(canMarkCooldown)
-            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/escapist_teleport.png", 130, true))
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/escapist_mark.png", 130, true))
         : editor
             .SetText(Translations.EscapeButtonText)
             .BindCooldown(canEscapeCooldown)

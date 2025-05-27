@@ -1,3 +1,4 @@
+extern alias JBAnnotations;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Roles.Internals.Enums;
@@ -19,14 +20,20 @@ using Lotus.Utilities;
 
 using static Lotus.Roles.RoleGroups.Impostors.Creeper.CreeperTranslations.Options;
 using System.Linq;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.RPC.CustomObjects;
 using Lotus.Roles.Operations;
 using Lotus.API;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Duplicator : Crewmate
+public class Duplicator : Crewmate, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Duplicator));
 
@@ -41,6 +48,10 @@ public class Duplicator : Crewmate
     private FixedUpdateLock fixedUpdateLock = new();
 
     private bool spawnsRandomly;
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => petButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/duplicator_duplicate.png", 130, true));
 
     protected override void PostSetup()
     {
@@ -59,6 +70,8 @@ public class Duplicator : Crewmate
     {
         duplicateDuration.Finish(true);
         duplicateCooldown.Start(gameStart ? 10 : float.MinValue);
+        if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(duplicateCooldown);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateDuplicator)?.Send([MyPlayer.OwnerId], true, gameStart);
     }
 
     [RoleAction(LotusActionType.RoundEnd)]
@@ -88,7 +101,11 @@ public class Duplicator : Crewmate
             duplicateCooldown.Start();
             log.Debug($"Removing fake player of {MyPlayer.name}");
             if (fakePlayers.Remove(fakePlayer)) fakePlayer.Despawn();
+            if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(duplicateCooldown);
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateDuplicator)?.Send([MyPlayer.OwnerId], true, false);
         });
+        if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(duplicateDuration);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateDuplicator)?.Send([MyPlayer.OwnerId], false, false);
     }
 
     [RoleAction(LotusActionType.RoundEnd)]
@@ -116,6 +133,16 @@ public class Duplicator : Crewmate
         });
     }
 
+    [UsedImplicitly]
+    [ModRPC((uint)ModCalls.UpdateDuplicator, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateDuplicator(bool useCooldown, bool gameStart)
+    {
+        Duplicator? duplicator = PlayerControl.LocalPlayer.PrimaryRole<Duplicator>();
+        if (duplicator == null) return;
+        Cooldown targetCooldown = useCooldown ? duplicator.duplicateCooldown : duplicator.duplicateDuration;
+        targetCooldown.Start(gameStart ? 10 : float.MinValue);
+        duplicator.UIManager.PetButton.BindCooldown(targetCooldown);
+    }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -151,6 +178,7 @@ public class Duplicator : Crewmate
     public static class Translations
     {
         [Localized(nameof(TrickedCauseOfDeath))] public static string TrickedCauseOfDeath = "Tricked";
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Duplicate";
 
         [Localized(ModConstants.Options)]
         public static class Options

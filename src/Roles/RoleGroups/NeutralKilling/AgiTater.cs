@@ -17,6 +17,8 @@ using Lotus.Utilities;
 using Lotus.Extensions;
 using Lotus.Managers.History.Events;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Logging;
@@ -31,7 +33,7 @@ using static Lotus.Roles.RoleGroups.NeutralKilling.AgiTater.AgitaterTranslations
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
 [Localized("Roles")]
-public class AgiTater : NeutralKillingBase
+public class AgiTater : NeutralKillingBase, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(AgiTater));
     private ExplodeCondition Condition;
@@ -47,6 +49,10 @@ public class AgiTater : NeutralKillingBase
 
     [UIComponent(UI.Counter, ViewMode.Additive, GameState.Roaming)]
     private string BombCounter() => bombsPerRound == -1 ? RoleUtils.Counter(currentBombs, color: RoleColor) : RoleUtils.Counter(currentBombs, bombsPerRound, RoleColor);
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/agitater_pass_bomb.png", 130, true));
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
@@ -247,8 +253,11 @@ public class AgiTater : NeutralKillingBase
     }
 
     [Localized(nameof(AgiTater))]
-    internal static class AgitaterTranslations
+    public static class AgitaterTranslations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Pass";
+
         [Localized(nameof(PassTheBombText))]
         public static string PassTheBombText = "Pass The Bomb";
 

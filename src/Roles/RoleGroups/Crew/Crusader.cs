@@ -4,7 +4,6 @@ using Lotus.API.Odyssey;
 using Lotus.Managers.History.Events;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Interactions.Interfaces;
-using Lotus.Roles.Interfaces;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
@@ -14,19 +13,26 @@ using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities.Optionals;
-using static Lotus.Roles.RoleGroups.Crew.Crusader.CrusaderTranslations.CrusaderOptions;
+using static Lotus.Roles.RoleGroups.Crew.Crusader.Translations.CrusaderOptions;
 using Lotus.Roles.Internals.Enums;
 using static Lotus.Utilities.TranslationUtil;
 using Lotus.Patches.Systems;
 using Lotus.API.Vanilla.Sabotages;
+using Lotus.GUI;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Crusader : Crewmate
+public class Crusader : Crewmate, IRoleUI
 {
     private Optional<byte> protectedPlayer = Optional<byte>.Null();
     private bool protectAgainstHelpfulInteraction;
     private bool protectAgainstNeutralInteraction;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/crusader_protect.png", 130, true));
 
     [RoleAction(LotusActionType.Attack)]
     private void SelectTarget(PlayerControl target)
@@ -67,11 +73,11 @@ public class Crusader : Crewmate
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Protect against Beneficial Interactions", Colorize(BeneficialInteractionProtection, ModConstants.Palette.PassiveColor))
                 .BindBool(b => protectAgainstHelpfulInteraction = b)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .Build())
             .SubOption(sub => sub.KeyName("Protect against Neutral Interactions", Colorize(NeutralInteractionProtection, ModConstants.Palette.NeutralColor))
                 .BindBool(b => protectAgainstNeutralInteraction = b)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build());
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
@@ -85,8 +91,11 @@ public class Crusader : Crewmate
             .OptionOverride(Override.ImpostorLightMod, () => AUSettings.CrewLightMod() / 5, () => SabotagePatch.CurrentSabotage != null && SabotagePatch.CurrentSabotage.SabotageType() is SabotageType.Lights);
 
     [Localized(nameof(Crusader))]
-    public static class CrusaderTranslations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Protect";
+
         [Localized(ModConstants.Options)]
         public static class CrusaderOptions
         {

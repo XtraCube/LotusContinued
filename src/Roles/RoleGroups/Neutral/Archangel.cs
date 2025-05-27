@@ -1,6 +1,8 @@
 #nullable enable
+extern alias JBAnnotations;
 using System.Collections.Generic;
 using System.Linq;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.GUI;
@@ -27,14 +29,19 @@ using static Lotus.Roles.RoleGroups.Neutral.Archangel.Translations;
 using static Lotus.Roles.RoleGroups.Neutral.Archangel.Translations.Options;
 using Lotus.Roles.Interactions.Interfaces;
 using Lotus.Roles.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interactions;
+using Lotus.RPC;
 using VentLib.Utilities.Collections;
 using Lotus.Victory;
+using VentLib;
 using VentLib.Localization;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
-public class Archangel : CustomRole
+public class Archangel : CustomRole, IRoleUI
 {
     [UIComponent(UI.Cooldown)]
     private Cooldown protectCooldown = null!;
@@ -51,6 +58,12 @@ public class Archangel : CustomRole
     private Remote<IndicatorComponent> indicatorRemote = null!;
 
     private static string Identifier = "<b>△</b>"; // this is the symbol that shows up next to the target's name when they know there is an Archangel
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => UpdatePetButton(petButton
+        .SetText(ButtonText)
+        .BindCooldown(protectCooldown)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/archangel_protect.png", 130, true))
+    );
 
     [UIComponent(UI.Text)]
     private string TargetDisplay() => target == null ? "" : RoleColor.Colorize("Target: ") + Color.white.Colorize(target.name);
@@ -85,13 +98,19 @@ public class Archangel : CustomRole
     {
         protectCooldown.Start(gameStart ? 10f : float.MinValue);
         protectDuration.Finish(true);
+        UpdatePetButton(UIManager.PetButton, true, false, true);
     }
 
     [RoleAction(LotusActionType.OnPet)]
     private void OnPet()
     {
         if (protectCooldown.NotReady() || target == null || protectDuration.NotReady()) return;
-        protectDuration.StartThenRun(() => protectCooldown.Start());
+        protectDuration.StartThenRun(() =>
+        {
+            protectCooldown.Start();
+            UpdatePetButton(UIManager.PetButton, true);
+        });
+        UpdatePetButton(UIManager.PetButton, true, true);
         SendProtection();
     }
 
@@ -105,7 +124,7 @@ public class Archangel : CustomRole
         switch (interaction.Intent)
         {
             case IHostileIntent when ContainsInteraction(InteractionCancels.Hostile):
-            case NeutralIntent when ContainsInteraction(InteractionCancels.Neutral):
+            case INeutralIntent when ContainsInteraction(InteractionCancels.Neutral):
             case IFatalIntent when ContainsInteraction(InteractionCancels.Fatal):
                 shouldCancel = true;
                 break;
@@ -113,9 +132,9 @@ public class Archangel : CustomRole
 
         switch (interaction)
         {
-            case IndirectInteraction when ContainsInteraction(InteractionCancels.Indirect):
-            case DelayedInteraction when ContainsInteraction(InteractionCancels.Delayed):
-            case RangedInteraction when ContainsInteraction(InteractionCancels.Ranged):
+            case IIndirectInteraction when ContainsInteraction(InteractionCancels.Indirect):
+            case IDelayedInteraction when ContainsInteraction(InteractionCancels.Delayed):
+            case IRangedInteraction when ContainsInteraction(InteractionCancels.Ranged):
                 shouldCancel = true;
                 break;
         }
@@ -171,6 +190,33 @@ public class Archangel : CustomRole
         if (MyPlayer.PrimaryRole() is not Archangel) return;
         if (target == null) return;
         if (winDelegate.GetWinners().Any(p => p.PlayerId == target.PlayerId)) winDelegate.AddAdditionalWinner(MyPlayer);
+    }
+
+    private RoleButton UpdatePetButton(RoleButton petButton, bool editCooldowns = false, bool useDuration = false, bool gameStart = false)
+    {
+        if (!editCooldowns) return petButton;
+        if (!MyPlayer.AmOwner)
+        {
+            if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateArchangel)?.Send([MyPlayer.OwnerId], useDuration, gameStart);
+            return petButton;
+        }
+
+        if (useDuration)
+        {
+            protectDuration.Start(gameStart ? 10f : float.MinValue);
+            return petButton.BindCooldown(protectDuration);
+        }
+        protectCooldown.Start(gameStart ? 10f : float.MinValue);
+        return petButton.BindCooldown(protectCooldown);
+    }
+
+    [UsedImplicitly]
+    [ModRPC((uint)ModCalls.UpdateArchangel, RpcActors.Host, RpcActors.LastSender)]
+    private static void RpcUpdateArchangel(bool useDuration, bool gameStart)
+    {
+        Archangel? archangel = PlayerControl.LocalPlayer.PrimaryRole<Archangel>();
+        if (archangel == null) return;
+        archangel.UpdatePetButton(archangel.UIManager.PetButton, true, useDuration, gameStart);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
@@ -281,6 +327,9 @@ public class Archangel : CustomRole
     [Localized(nameof(Archangel))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Protect";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

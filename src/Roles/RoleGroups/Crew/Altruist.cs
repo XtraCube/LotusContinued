@@ -20,15 +20,18 @@ using System.Collections.Generic;
 using VentLib.Utilities.Extensions;
 using AmongUs.GameOptions;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using Lotus.GUI;
 using VentLib.Utilities.Collections;
 using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Holders;
 using Lotus.Roles.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Altruist : Scientist, IRoleCandidate
+public class Altruist : Scientist, IRoleCandidate, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Altruist));
     public bool ShouldSkip() => !ProjectLotus.AdvancedRoleAssignment; // skip assignment if we don't allow role changes mid-game
@@ -39,7 +42,12 @@ public class Altruist : Scientist, IRoleCandidate
     private bool arrowForRevivedKiller;
 
     private byte reviedPlayerId = 255;
-    private Remote<IndicatorComponent> arrowComponent = null!;
+    private Remote<IndicatorComponent>? arrowComponent;
+
+    public RoleButton ReportButton(IRoleButtonEditor reportButton) => reportButton
+        .SetText(AltruistTranslations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/altruist_revive.png", 130, true));
+
 
     [RoleAction(LotusActionType.ReportBody)]
     private void OnResurect(Optional<NetworkedPlayerInfo> body, ActionHandle handle)
@@ -163,6 +171,9 @@ public class Altruist : Scientist, IRoleCandidate
     [Localized(nameof(Altruist))]
     public static class AltruistTranslations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Revive";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

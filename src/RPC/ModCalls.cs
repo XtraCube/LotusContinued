@@ -30,5 +30,12 @@ public enum ModCalls : uint
     UpdateJailor,
     UpdateTransporter,
     UpdateDisperser,
-    UpdateMiner
+    UpdateMiner,
+    UpdateArchangel,
+    UpdateConsort,
+    UpdateDuplicator,
+    UpdateFireworks,
+    UpdateJanitor,
+    UpdateSheriff,
+    UpdateGlitch
 }

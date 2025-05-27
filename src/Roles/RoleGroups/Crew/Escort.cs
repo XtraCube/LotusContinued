@@ -17,6 +17,9 @@ using Lotus.API;
 using Lotus.API.Vanilla.Sabotages;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.Roles.RoleGroups.Impostors;
 using UnityEngine;
 using VentLib.Options.UI;
 using VentLib.Utilities;
@@ -26,7 +29,7 @@ using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Escort : Crewmate
+public class Escort : Crewmate, IRoleUI
 {
     private float roleblockDuration;
     [NewOnSetup]
@@ -34,6 +37,11 @@ public class Escort : Crewmate
 
     [UIComponent(UI.Cooldown)]
     private Cooldown roleblockCooldown;
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .BindCooldown(roleblockCooldown)
+        .SetText(Consort.Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/escort_roleblock.png", 130, true));
 
     [RoleAction(LotusActionType.OnPet)]
     private void ChangeToBlockMode()
@@ -91,12 +99,12 @@ public class Escort : Crewmate
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub
-                .KeyName("Role-Block Cooldown", EscortTranslations.EscortOptionTranslations.RoleblockCooldown)
+                .KeyName("Role-Block Cooldown", Translations.Options.RoleblockCooldown)
                 .BindFloat(roleblockCooldown.SetDuration)
                 .AddFloatRange(0, 120, 2.5f, 18, GeneralOptionTranslations.SecondsSuffix)
                 .Build())
             .SubOption(sub => sub
-                .Name("Roleblock Duration")
+                .KeyName("Roleblock Duration", Translations.Options.RoleblockDuration)
                 .BindFloat(v => roleblockDuration = v)
                 .Value(v => v.Text("Until Meeting").Value(-1f).Build())
                 .AddFloatRange(5, 120, 5, suffix: GeneralOptionTranslations.SecondsSuffix)
@@ -167,10 +175,10 @@ public class Escort : Crewmate
     }
 
     [Localized(nameof(Escort))]
-    public static class EscortTranslations
+    public static class Translations
     {
         [Localized(ModConstants.Options)]
-        public static class EscortOptionTranslations
+        public static class Options
         {
             [Localized(nameof(RoleblockCooldown))]
             public static string RoleblockCooldown = "Role-Block Cooldown";

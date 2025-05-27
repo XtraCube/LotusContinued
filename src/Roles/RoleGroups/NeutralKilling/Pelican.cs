@@ -10,10 +10,13 @@ using Lotus.API.Reactive.HookEvents;
 using Lotus.API.Stats;
 using Lotus.API.Vanilla.Sabotages;
 using Lotus.Extensions;
+using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name.Holders;
 using Lotus.Managers.History.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Interactions.Interfaces;
 using Lotus.Roles.Internals;
@@ -32,7 +35,7 @@ using Random = UnityEngine.Random;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
-public class Pelican : NeutralKillingBase
+public class Pelican : NeutralKillingBase, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Pelican));
     private static IAccumulativeStatistic<int> _gulpedPlayerStat = Statistic<int>.CreateAccumulative("Roles.Pelican.PlayersGulped", () => Translations.GulpedStatistic);
@@ -44,6 +47,10 @@ public class Pelican : NeutralKillingBase
     private Dictionary<byte, Remote<TextComponent>> gulpedPlayers;
 
     private Vector2 lastLocation;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/pelican_swallow.png", 130, true));
 
     protected override void PostSetup()
     {
@@ -198,6 +205,9 @@ public class Pelican : NeutralKillingBase
     [Localized(nameof(Pelican))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Swallow";
+
         [Localized(nameof(GulpedStatistic))]
         public static string GulpedStatistic = "Players Gulped";
 

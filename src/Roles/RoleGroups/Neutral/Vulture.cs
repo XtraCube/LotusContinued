@@ -44,7 +44,13 @@ public class Vulture : CustomRole, IRoleUI
     private bool canSwitchMode;
     private bool hasArrowsToBodies;
     private bool isEatMode = true;
+
     public RoleButton ReportButton(IRoleButtonEditor reportButton) => UpdateReportButton(reportButton);
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => !canSwitchMode
+        ? petButton.Default(true)
+        : petButton.SetText(RoleTranslations.Switch)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/generic_switch_ability.png", 130, true));
 
     [UIComponent(UI.Counter)]
     private string BodyCounter() => RoleUtils.Counter(bodyCount, bodyAmount, RoleColor);
@@ -64,6 +70,7 @@ public class Vulture : CustomRole, IRoleUI
         Game.MatchData.UnreportableBodies.Add(body.Get().PlayerId);
 
         if (++bodyCount >= bodyAmount) ManualWin.Activate(MyPlayer, ReasonType.RoleSpecificWin, 100);
+        else if (MyPlayer.IsModded() && !MyPlayer.AmOwner) Vents.FindRPC((uint)ModCalls.UpdateVulture)?.Send([MyPlayer.OwnerId], isEatMode, bodyCount);
 
         handle.Cancel();
     }
@@ -74,21 +81,28 @@ public class Vulture : CustomRole, IRoleUI
         if (!canSwitchMode) return;
         isEatMode = !isEatMode;
         if (MyPlayer.AmOwner) UpdateReportButton(UIManager.ReportButton);
-        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateVulture)?.Send([MyPlayer.OwnerId], isEatMode);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateVulture)?.Send([MyPlayer.OwnerId], isEatMode, bodyCount);
     }
 
     [ModRPC((uint)ModCalls.UpdateVulture, RpcActors.Host, RpcActors.NonHosts)]
-    private static void RpcUpdateReport(bool hostEatMode)
+    private static void RpcUpdateReport(bool hostEatMode, int bodyCount)
     {
         Vulture? vulture = PlayerControl.LocalPlayer.PrimaryRole<Vulture>();
         if (vulture == null) return;
+        vulture.bodyCount = bodyCount;
         vulture.isEatMode = hostEatMode;
         vulture.UpdateReportButton(vulture.UIManager.ReportButton);
     }
 
     private RoleButton UpdateReportButton(IRoleButtonEditor reportButton) => isEatMode
-        ? reportButton.SetText(Translations.EatButtonText)
-        : reportButton.SetText(Translations.ReportButtonText);
+        ? reportButton
+            .BindUses(() => bodyAmount - bodyCount)
+            .SetText(Translations.EatButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/vulture_devour.png", 130, true))
+        : reportButton
+            .BindUses(null)
+            .RevertSprite()
+            .SetText(Translations.ReportButtonText);
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)

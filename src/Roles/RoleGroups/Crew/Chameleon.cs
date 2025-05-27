@@ -6,6 +6,8 @@ using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.Options;
 using Lotus.Roles.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Internals.Enums;
@@ -23,7 +25,7 @@ using VentLib.Utilities.Optionals;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Chameleon : Engineer
+public class Chameleon : Engineer, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Chameleon));
     private static IAccumulativeStatistic<int> _timesInvisible = Statistic<int>.CreateAccumulative($"Roles.{nameof(Chameleon)}.TimesInvisible", () => Translations.TimesInvisibleStatistic);
@@ -35,6 +37,10 @@ public class Chameleon : Engineer
     private Cooldown invisibleTimer;
 
     private Optional<Vent> initialVent = null!;
+
+    public RoleButton AbilityButton(IRoleButtonEditor abilityButton) => abilityButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/chameleon_disappear.png", 130, true));
 
     [UIComponent(UI.Text)]
     public string HiddenTimer() => invisibleTimer.Format(TranslationUtil.Colorize(Translations.HiddenText, RoleColor), autoFormat: true);
@@ -68,7 +74,7 @@ public class Chameleon : Engineer
             case ReturnLocation.Current:
                 Vector2 currentLocation = MyPlayer.GetTruePosition();
                 Async.Schedule(() => MyPlayer.MyPhysics.RpcBootFromVent(ventId), 0.4f);
-                Async.Schedule(() => Utils.Teleport(MyPlayer.NetTransform, currentLocation), 0.8f);
+                Async.Schedule(() => Utils.Teleport(MyPlayer.NetTransform, currentLocation), NetUtils.DeriveDelay(0.8f));
                 break;
         }
     }
@@ -98,6 +104,7 @@ public class Chameleon : Engineer
     [Localized(nameof(Chameleon))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Conceal";
         [Localized(nameof(TimesInvisibleStatistic))] public static string TimesInvisibleStatistic = "Times Invisible";
         [Localized(nameof(HiddenText))] public static string HiddenText = "Hidden::0 {0}";
 

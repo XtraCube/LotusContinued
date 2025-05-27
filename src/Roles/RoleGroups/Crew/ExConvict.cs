@@ -99,7 +99,7 @@ public class ExConvict : Crewmate, IRoleUI
         ? editor
             .SetText(Escapist.Translations.MarkButtonText)
             .BindCooldown(canMarkCooldown)
-            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/ex-convict_teleport.png", 130, true))
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/ex-convict_mark.png", 130, true))
         : editor
             .SetText(Escapist.Translations.EscapeButtonText)
             .BindCooldown(canEscapeCooldown)

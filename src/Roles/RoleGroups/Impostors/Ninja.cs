@@ -43,14 +43,14 @@ public class Ninja : Vanilla.Impostor, IRoleUI
     public RoleButton AbilityButton(IRoleButtonEditor abilityButton) => activationType is ActivationType.Shapeshift
         ? abilityButton
             .SetText(RoleTranslations.Switch)
-            .SetSprite(() => LotusAssets.LoadSprite("Buttons/generic_switch_ability.png", 130, true))
+            .SetSprite(() => LotusAssets.LoadSprite(Mode == NinjaMode.Hunting ? "Buttons/Imp/ninja_kill.png" : "Buttons/generic_switch_ability.png", 130, true))
         :  abilityButton.Default(true);
 
 
     public RoleButton PetButton(IRoleButtonEditor abilityButton) => activationType is ActivationType.PetButton
         ? abilityButton
             .SetText(RoleTranslations.Switch)
-            .SetSprite(() => LotusAssets.LoadSprite("Buttons/generic_switch_ability.png", 130, true))
+            .SetSprite(() => LotusAssets.LoadSprite(Mode == NinjaMode.Hunting ? "Buttons/Imp/ninja_kill.png" : "Buttons/generic_switch_ability.png", 130, true))
         : abilityButton.Default(true);
 
     public RoleButton KillButton(IRoleButtonEditor killButton) => killButton.Default(false);
@@ -75,7 +75,7 @@ public class Ninja : Vanilla.Impostor, IRoleUI
     {
         if (activationType is not ActivationType.Shapeshift) return;
         Mode = NinjaMode.Hunting;
-        if (MyPlayer.AmOwner) UpdateKillButton();
+        if (MyPlayer.AmOwner) UpdateAllButtons();
         else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
@@ -85,7 +85,7 @@ public class Ninja : Vanilla.Impostor, IRoleUI
         if (activationType is not ActivationType.Shapeshift) return;
         NinjaHuntAbility();
         Mode = NinjaMode.Killing;
-        if (MyPlayer.AmOwner) UpdateKillButton();
+        if (MyPlayer.AmOwner) UpdateAllButtons();
         else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
@@ -93,7 +93,7 @@ public class Ninja : Vanilla.Impostor, IRoleUI
     private void EnterKillMode()
     {
         Mode = NinjaMode.Killing;
-        if (MyPlayer.AmOwner) UpdateKillButton();
+        if (MyPlayer.AmOwner) UpdateAllButtons();
         else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
@@ -108,7 +108,7 @@ public class Ninja : Vanilla.Impostor, IRoleUI
         if (Mode is NinjaMode.Hunting) NinjaHuntAbility();
 
         Mode = Mode is NinjaMode.Killing ? NinjaMode.Hunting : NinjaMode.Killing;
-        if (MyPlayer.AmOwner) UpdateKillButton();
+        if (MyPlayer.AmOwner) UpdateAllButtons();
         else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
@@ -129,18 +129,25 @@ public class Ninja : Vanilla.Impostor, IRoleUI
         playerList.Clear();
     }
 
+    private void UpdateAllButtons()
+    {
+        UpdateKillButton();
+        if (activationType is ActivationType.Shapeshift) AbilityButton(UIManager.AbilityButton);
+        else PetButton(UIManager.PetButton);
+    }
+
     [ModRPC((uint)ModCalls.UpdateNinja, RpcActors.Host, RpcActors.NonHosts)]
     private static void RpcUpdateNinja(int modeEnum)
     {
         Ninja? ninja = PlayerControl.LocalPlayer.PrimaryRole<Ninja>();
         if (ninja is null) return;
         ninja.Mode = (NinjaMode)modeEnum;
-        ninja.UpdateKillButton();
+        ninja.UpdateAllButtons();
     }
 
     private RoleButton UpdateKillButton() => Mode is NinjaMode.Killing
         ? UIManager.KillButton.RevertSprite().SetText(Witch.Translations.KillButtonText)
-        : UIManager.KillButton.SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/ninja_kill.png", 130, true)).SetText(Translations.HuntButtonText);
+        : UIManager.KillButton.SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/ninja_hunt.png", 130, true)).SetText(Translations.HuntButtonText);
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)

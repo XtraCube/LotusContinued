@@ -1,5 +1,7 @@
+extern alias JBAnnotations;
 using System.Collections.Generic;
 using System.Linq;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.API.Odyssey;
 using Lotus.GUI;
 using Lotus.GUI.Name;
@@ -11,8 +13,14 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Crew;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.Roles.RoleGroups.Impostors;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
@@ -21,7 +29,7 @@ using static Lotus.Roles.RoleGroups.Crew.Escort;
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
 [Localized("Roles.Glitch")]
-public class Glitch : NeutralKillingBase
+public class Glitch : NeutralKillingBase, IRoleUI
 {
     [Localized("ModeKilling")]
     private static string _glitchKillingMode = "Killing";
@@ -35,11 +43,18 @@ public class Glitch : NeutralKillingBase
 
     [NewOnSetup] private Dictionary<byte, Escort.BlockDelegate> blockedPlayers;
 
+    public RoleButton KillButton(IRoleButtonEditor killButton) => UpdateKillButton(killButton);
+
     [UIComponent(UI.Text)]
     private string BlockingText() => textColor.Colorize(hackingMode ? _glitchHackingMode : _glitchKillingMode);
 
     [RoleAction(LotusActionType.OnPet)]
-    private void SwitchModes() => hackingMode = !hackingMode;
+    private void SwitchModes()
+    {
+        hackingMode = !hackingMode;
+        if (MyPlayer.AmOwner) UpdateKillButton(UIManager.KillButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateGlitch)?.Send([MyPlayer.OwnerId], hackingMode);
+    }
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
@@ -92,6 +107,24 @@ public class Glitch : NeutralKillingBase
 
         handle.Cancel();
         blockDelegate.UpdateDelegate();
+    }
+
+    private RoleButton UpdateKillButton(IRoleButtonEditor editor) => hackingMode
+        ? editor
+            .SetText(Consort.Translations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/the_glitch_hack.png", 130, true))
+        : editor
+            .SetText(Witch.Translations.KillButtonText)
+            .RevertSprite();
+
+    [UsedImplicitly]
+    [ModRPC(ModCalls.UpdateGlitch, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateGlitch(bool inHackMode)
+    {
+        Glitch? glitch = PlayerControl.LocalPlayer.PrimaryRole<Glitch>();
+        if (glitch == null) return;
+        glitch.hackingMode = inHackMode;
+        glitch.UpdateKillButton(glitch.UIManager.KillButton);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
