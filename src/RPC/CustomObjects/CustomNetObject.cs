@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AmongUs.InnerNet.GameDataMessages;
 using HarmonyLib;
 using Hazel;
 using InnerNet;
@@ -132,6 +133,18 @@ public class CustomNetObject
         {
             playerControl.Despawn();
             AllObjects.Remove(this);
+            MessageWriter writer = MessageWriter.Get(SendOption.Reliable);
+            writer.StartMessage(5);
+            writer.Write(AmongUsClient.Instance.GameId);
+            writer.StartMessage(5);
+            writer.WritePacked(playerControl.NetId);
+            writer.EndMessage();
+            writer.EndMessage();
+            AmongUsClient.Instance.SendOrDisconnect(writer);
+            writer.Recycle();
+
+            AmongUsClient.Instance.RemoveNetObject(playerControl);
+            Object.Destroy(playerControl.gameObject);
         }
         catch (Exception e)
         {
@@ -196,8 +209,16 @@ public class CustomNetObject
 
         if (nt.HasMoved())
         {
-            nt.sendQueue.Enqueue(nt.body.position);
-            nt.SetDirtyBit(2U);
+            if (PhysicsHelpers.AnythingBetween(nt.lastPosSent, nt.body.position, Constants.ShipOnlyMask, false))
+            {
+                nt.RpcSnapTo(nt.body.position);
+            }
+            else
+            {
+
+                nt.sendQueue.Enqueue(nt.body.position);
+                nt.SetDirtyBit(2U);
+            }
         }
     }
 
@@ -211,37 +232,29 @@ public class CustomNetObject
         playerControl.notRealPlayer = true;
         AmongUsClient.Instance.NetIdCnt += 1U;
 
-        MessageWriter msg = MessageWriter.Get();
+        MessageWriter msg = MessageWriter.Get(SendOption.Reliable);
         msg.StartMessage(5);
         msg.Write(AmongUsClient.Instance.GameId);
-        AmongUsClient.Instance.WriteSpawnMessage(playerControl, -2, SpawnFlags.None, msg);
+        AmongUsClient.Instance.CreateSpawnMessage(playerControl, -2, SpawnFlags.None).SerializeValues(msg);
+
+        if (ConnectionManager.IsVanillaServer)
+            for (uint i = 1; i <= 3; ++i)
+            {
+                msg.StartMessage(4);
+                msg.WritePacked(2U);
+                msg.WritePacked(-2);
+                msg.Write((byte)SpawnFlags.None);
+                msg.WritePacked(1);
+                msg.WritePacked(AmongUsClient.Instance.NetIdCnt - i);
+                msg.StartMessage(1);
+                msg.EndMessage();
+                msg.EndMessage();
+            }
+
+
         msg.EndMessage();
         AmongUsClient.Instance.SendOrDisconnect(msg);
         msg.Recycle();
-
-        if (ConnectionManager.IsVanillaServer)
-        {
-            MessageWriter msg2 = MessageWriter.Get(SendOption.Reliable);
-            msg2.StartMessage(6);
-            msg2.Write(AmongUsClient.Instance.GameId);
-            msg2.WritePacked(int.MaxValue);
-            for (uint i = 1; i <= 3; ++i)
-            {
-                msg2.StartMessage(4);
-                msg2.WritePacked(2U);
-                msg2.WritePacked(-2);
-                msg2.Write((byte)SpawnFlags.None);
-                msg2.WritePacked(1);
-                msg2.WritePacked(AmongUsClient.Instance.NetIdCnt - i);
-                msg2.StartMessage(1);
-                msg2.EndMessage();
-                msg2.EndMessage();
-            }
-            msg2.EndMessage();
-            AmongUsClient.Instance.SendOrDisconnect(msg2);
-            msg2.Recycle();
-        }
-
         if (PlayerControl.AllPlayerControls.Contains(playerControl)) PlayerControl.AllPlayerControls.Remove(playerControl);
 
         Async.Schedule(() =>
