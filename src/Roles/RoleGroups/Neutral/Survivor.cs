@@ -10,14 +10,20 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Victory;
 using Lotus.Victory.Conditions;
 using Lotus.Extensions;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
-public class Survivor : CustomRole
+public class Survivor : CustomRole, IRoleUI
 {
     [UIComponent(UI.Cooldown)]
     private Cooldown vestCooldown;
@@ -32,11 +38,25 @@ public class Survivor : CustomRole
     [UIComponent(UI.Indicator)]
     private string GetVestString() => vestDuration.IsReady() ? "" : RoleColor.Colorize("♣");
 
+    public RoleButton PetButton(IRoleButtonEditor petButton) => petButton
+        .SetText(Translations.ButtonText)
+        .BindUses(() => remainingVests)
+        .BindCooldown(vestCooldown)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/survivor_protect.png", 130, true));
 
     protected override void PostSetup()
     {
         remainingVests = vestUsages;
         Game.GetWinDelegate().AddSubscriber(GameEnd);
+    }
+
+    [RoleAction(LotusActionType.RoundStart)]
+    private void OnRoundStart(bool gameStart)
+    {
+        if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(vestCooldown);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateSurvivor)?.Send([MyPlayer.OwnerId], true, remainingVests, gameStart);
+        vestDuration.Finish(true);
+        vestCooldown.Start(gameStart ? 10 : float.MinValue);
     }
 
     [RoleAction(LotusActionType.Interaction)]
@@ -52,13 +72,32 @@ public class Survivor : CustomRole
     {
         if (remainingVests == 0 || vestDuration.NotReady() || vestCooldown.NotReady()) return;
         remainingVests--;
-        vestDuration.StartThenRun(() => vestCooldown.Start()); ;
+        if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(vestDuration);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateSurvivor)?.Send([MyPlayer.OwnerId], false, remainingVests, false);
+        vestDuration.StartThenRun(() =>
+        {
+            vestCooldown.Start();
+            if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(vestCooldown);
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateSurvivor)?.Send([MyPlayer.OwnerId], true, remainingVests, false);
+        });
     }
 
     private void GameEnd(WinDelegate winDelegate)
     {
         if (!MyPlayer.IsAlive() || winDelegate.GetWinReason().ReasonType is ReasonType.SoloWinner) return;
         winDelegate.AddAdditionalWinner(MyPlayer);
+    }
+
+    [ModRPC((uint)ModCalls.UpdateSurvivor, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateSurvivor(bool useCooldown, int vestsLeft, bool gameStart)
+    {
+        Survivor? survivor = PlayerControl.LocalPlayer.PrimaryRole<Survivor>();
+        if (survivor == null) return;
+        survivor.remainingVests = vestsLeft;
+        survivor.UIManager.PetButton.BindCooldown(useCooldown ? survivor.vestCooldown : survivor.vestDuration);
+        float targetDur = gameStart ? 10 : float.MinValue;
+        if (useCooldown) survivor.vestCooldown.Start(targetDur);
+        else survivor.vestDuration.Start(targetDur);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
@@ -91,6 +130,9 @@ public class Survivor : CustomRole
     [Localized(nameof(Survivor))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Shield";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

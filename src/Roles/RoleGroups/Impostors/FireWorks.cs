@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lotus.API.Player;
@@ -6,6 +7,8 @@ using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.Options;
 using Lotus.Roles.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
@@ -16,16 +19,21 @@ using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities.Extensions;
 using Lotus.Roles.Internals;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class FireWorks : Shapeshifter
+public class FireWorks : Phantom, IRoleUI
 {
     [NewOnSetup] private List<Vector2> fireWorkLocations = null!;
     private int maxFireworks;
     private int totalFireworks;
     private int plantedFireworks;
     private bool detonateWhenLastImp;
+    private bool canDetonate;
 
     private FixedUpdateLock fixedUpdateLock = new(0.25f);
 
@@ -35,11 +43,22 @@ public class FireWorks : Shapeshifter
     public string FireworkCounter() => totalFireworks >= 0 ? RoleUtils.Counter(totalFireworks, maxFireworks, ModConstants.Palette.MadmateColor) : RoleUtils.Counter(plantedFireworks, color: ModConstants.Palette.MadmateColor);
 
     [UIComponent(UI.Text)]
-    public string DetonateText() => detonateWhenLastImp && impostorCount == 1 && plantedFireworks != 0 ? Translations.AbleToDetonateText : "";
+    public string DetonateText() => detonateWhenLastImp && impostorCount == 1 && plantedFireworks != 0 ? FireworksTranslations.AbleToDetonateText : "";
+
+    public RoleButton AbilityButton(IRoleButtonEditor button) => button
+        .SetText(FireworksTranslations.ButtonText)
+        .BindUses(() => maxFireworks == -1 ? -1 : maxFireworks - plantedFireworks)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/fireworks_set_firework.png", 130, true));
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => detonateWhenLastImp
+        ? petButton.Default(true)
+        : petButton
+            .SetText(Creeper.CreeperTranslations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/creeper_detonate.png", 130, true));
 
     protected override void PostSetup()
     {
-        ShapeshiftDuration = 5f;
+        VanishDuration = 5f;
         maxFireworks = totalFireworks;
     }
 
@@ -51,18 +70,26 @@ public class FireWorks : Shapeshifter
     {
         if (!fixedUpdateLock.AcquireLock() || !detonateWhenLastImp) return;
         impostorCount = GetAliveImpostors();
+        bool newDetonate = impostorCount == 1 && plantedFireworks != 0;
+        if (canDetonate != newDetonate)
+        {
+            canDetonate = newDetonate;
+            if (MyPlayer.AmOwner) Async.Schedule(UpdateAbilityButton, .1f);
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateFireworks)?.Send([MyPlayer.OwnerId], newDetonate, plantedFireworks);
+        }
     }
 
-    [RoleAction(LotusActionType.Unshapeshift)]
+    [RoleAction(LotusActionType.Vanish)]
     public void DoFireworkAbility(ActionHandle handle)
     {
-        // handle.Cancel();
+        handle.Cancel();
         if (impostorCount == 1 && plantedFireworks != 0 && detonateWhenLastImp) DetonateFireworks();
         else if (totalFireworks is -1 or >= 1)
         {
             fireWorkLocations.Add(MyPlayer.GetTruePosition());
             plantedFireworks++;
             if (totalFireworks != -1) totalFireworks--;
+            if (MyPlayer.IsModded() && !MyPlayer.AmOwner) Vents.FindRPC((uint)ModCalls.UpdateFireworks)?.Send([MyPlayer.OwnerId], false, plantedFireworks);
         }
     }
 
@@ -86,27 +113,64 @@ public class FireWorks : Shapeshifter
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
-            .SubOption(sub => sub.KeyName("Plant Firework Cooldown", Translations.Options.PlantFireworkCooldown)
+            .SubOption(sub => sub.KeyName("Plant Firework Cooldown", FireworksTranslations.Options.PlantFireworkCooldown)
                 .AddFloatRange(2.5f, 120f, 2.5f, 19, GeneralOptionTranslations.SecondsSuffix)
-                .BindFloat(f => ShapeshiftCooldown = f)
+                .BindFloat(f => VanishCooldown = f)
                 .Build())
-            .SubOption(sub => sub.KeyName("Total Firework Charges", Translations.Options.TotalFireworks)
+            .SubOption(sub => sub.KeyName("Total Firework Charges", FireworksTranslations.Options.TotalFireworks)
                 .Value(v => v.Text(ModConstants.Infinity).Color(ModConstants.Palette.InfinityColor).Value(-1).Build())
                 .AddIntRange(1, 20, 1, 0)
                 .BindInt(i => totalFireworks = i)
                 .Build())
-            .SubOption(sub => sub.KeyName("Detonate Only When Last Impostor", TranslationUtil.Colorize(Translations.Options.AbleToDetonateEarly, RoleColor))
+            .SubOption(sub => sub.KeyName("Detonate Only When Last Impostor", TranslationUtil.Colorize(FireworksTranslations.Options.AbleToDetonateEarly, RoleColor))
                 .BindBool(b => detonateWhenLastImp = b)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build());
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
-            .RoleAbilityFlags(RoleAbilityFlag.UsesPet | RoleAbilityFlag.UsesUnshiftTrigger);
+            .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
+
+    private void UpdateAbilityButton()
+    {
+        if (canDetonate)
+            UIManager.AbilityButton
+                .SetText(Creeper.CreeperTranslations.ButtonText)
+                .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/creeper_detonate.png", 130, true));
+        else
+            AbilityButton(UIManager.AbilityButton);
+    }
+
+    [ModRPC((uint)ModCalls.UpdateFireworks, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateFireworks(bool canDetonate, int plantedFireworks)
+    {
+        FireWorks? fireWorks = PlayerControl.LocalPlayer.PrimaryRole<FireWorks>();
+        if (fireWorks == null) return;
+        fireWorks.canDetonate = canDetonate;
+        fireWorks.plantedFireworks = plantedFireworks;
+        if (canDetonate)
+            fireWorks.UpdateAbilityButton();
+        else
+            Async.Execute(CoUpdateFireworks(fireWorks));
+
+    }
+
+    private static IEnumerator CoUpdateFireworks(FireWorks fireWorks)
+    {
+        Sprite targetSprite = LotusAssets.LoadSprite("Buttons/Imp/fireworks_set_firework.png", 130, true);
+        RoleButton abilityButton = fireWorks.UIManager.AbilityButton;
+        ActionButton button = abilityButton.GetButton();
+        while (button.graphic.sprite == targetSprite)
+            yield return null;
+        fireWorks.UpdateAbilityButton();
+    }
 
     [Localized(nameof(FireWorks))]
-    private static class Translations
+    public static class FireworksTranslations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Plant";
+
         [Localized(nameof(AbleToDetonateText))]
         public static string AbleToDetonateText = "Detonations Ready!";
 

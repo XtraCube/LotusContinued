@@ -157,15 +157,15 @@ public class Mafioso : Engineer, IInfoResender
     [RoleAction(LotusActionType.Vote)]
     private void HandleVoting(Optional<PlayerControl> player, MeetingDelegate meetingDelegate, ActionHandle handle)
     {
-        if (cashAmount <= 0) return;
+        if (cashAmount <= 0 || hasVoted) return;
         player.Handle(p =>
         {
             if (p.PlayerId == MyPlayer.PlayerId) HandleSelfVote(handle);
-            else if (!hasVoted)
+            else
             {
                 hasVoted = true;
                 // handle.Cancel();
-                // meetingDelegate.CastVote(MyPlayer, player);
+                // GetChatHandler().Message(CanVoteOtherPlayers).Send(MyPlayer);
             }
         }, () => HandleSkip(handle));
     }
@@ -235,7 +235,13 @@ public class Mafioso : Engineer, IInfoResender
 
     private void HandleSkip(ActionHandle handle)
     {
-        if (selectedShopItem == byte.MaxValue) return;
+        if (selectedShopItem == byte.MaxValue)
+        {
+            hasVoted = true;
+            GetChatHandler().Message(CanVoteOtherPlayersOnSkip).Send(MyPlayer);
+            handle.Cancel();
+            return;
+        }
         if (selectedShopItem >= currentShopItems.Length)
         {
             handle.Cancel();
@@ -255,7 +261,7 @@ public class Mafioso : Engineer, IInfoResender
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Modify Shop Costs", ModifyShopCosts)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .BindBool(b => modifyShopCosts = b)
                 .ShowSubOptionPredicate(b => (bool)b)
                 .SubOption(sub2 => sub2.KeyName("Gun Cost", GunCost)
@@ -331,6 +337,12 @@ public class Mafioso : Engineer, IInfoResender
 
         [Localized(nameof(PurchaseItemMessage))]
         public static string PurchaseItemMessage = "You have purchased: {0}. You now have {1} cash leftover.";
+
+        [Localized(nameof(CanVoteOtherPlayers))]
+        public static string CanVoteOtherPlayers = "You can now vote regularly as you voted someone other than you and didn't skip.";
+
+        [Localized(nameof(CanVoteOtherPlayersOnSkip))]
+        public static string CanVoteOtherPlayersOnSkip = "You can now vote regularly as you skipped before selecting something to buy from the shop.";
 
         [Localized(ModConstants.Options)]
         internal static class MafiaOptionTranslations

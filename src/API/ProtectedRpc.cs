@@ -3,6 +3,7 @@ using Lotus.Patches.Actions;
 using Lotus.RPC.CustomObjects;
 using VentLib.Networking.RPC;
 using VentLib.Utilities;
+using VentLib.Utilities.Optionals;
 
 namespace Lotus.API;
 
@@ -22,10 +23,10 @@ public class ProtectedRpc
             return;
         }
 
-        if (target.PlayerId == 255 && !target.notRealPlayer)
+        if (target is {PlayerId: 254, notRealPlayer: true})
         {
-            CustomNetObject netObject = CustomNetObject.ObjectFromPlayer(target);
-            if (netObject != null)
+            Optional<CustomNetObject> netObject = CustomNetObject.ObjectFromPlayer(target);
+            if (netObject.Exists())
             {
                 log.Trace($"Kill was cancled because they are trying to kill a CustomNetObject.");
                 return;

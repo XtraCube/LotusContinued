@@ -9,14 +9,20 @@ using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Escapist : Impostor
+public class Escapist : Impostor, IRoleUI
 {
     private bool clearMarkAfterMeeting;
 
@@ -27,6 +33,8 @@ public class Escapist : Impostor
 
     [UIComponent(UI.Cooldown)]
     private Cooldown canMarkCooldown;
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => UpdatePetButton(editor);
 
     [UIComponent(UI.Text)]
     private string TpIndicator() => canEscapeCooldown.IsReady() && location != null ? Color.red.Colorize("Press Pet to Escape") : "";
@@ -50,7 +58,12 @@ public class Escapist : Impostor
     [RoleAction(LotusActionType.RoundStart)]
     private void ClearMark()
     {
-        if (clearMarkAfterMeeting) location = null;
+        if (clearMarkAfterMeeting)
+        {
+            location = null;
+            if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateEscapist)?.Send([MyPlayer.OwnerId], false, false);
+        }
     }
 
     private void TryMarkLocation()
@@ -58,6 +71,8 @@ public class Escapist : Impostor
         if (canMarkCooldown.NotReady()) return;
         location = MyPlayer.GetTruePosition();
         canEscapeCooldown.Start();
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateEscapist)?.Send([MyPlayer.OwnerId], true, true);
     }
 
     private void TryEscape()
@@ -66,7 +81,31 @@ public class Escapist : Impostor
         Utils.Teleport(MyPlayer.NetTransform, location.Value);
         location = null;
         canMarkCooldown.Start();
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateEscapist)?.Send([MyPlayer.OwnerId], false, true);
     }
+
+    [ModRPC((uint)ModCalls.UpdateEscapist, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcSendUpdateButton(bool hasLocation, bool doCooldown)
+    {
+        Escapist? escapist = PlayerControl.LocalPlayer.PrimaryRole<Escapist>();
+        if (escapist == null) return; // Should never be null but just in case.
+        escapist.location = hasLocation ? Vector2.zero : null; // Doesn't really matter about what we set as this value isn't ever read by the client.
+        escapist.UpdatePetButton(escapist.UIManager.PetButton);
+        if (!doCooldown) return;
+        if (hasLocation) escapist.canEscapeCooldown.Start();
+        else escapist.canMarkCooldown.Start();
+    }
+
+    private RoleButton UpdatePetButton(IRoleButtonEditor editor) => location == null
+        ? editor
+            .SetText(Translations.MarkButtonText)
+            .BindCooldown(canMarkCooldown)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/escapist_mark.png", 130, true))
+        : editor
+            .SetText(Translations.EscapeButtonText)
+            .BindCooldown(canEscapeCooldown)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/escapist_teleport.png", 130, true));
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -82,7 +121,7 @@ public class Escapist : Impostor
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Clear Mark After Meeting", Translations.Options.ClearAfterMeeting)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => clearMarkAfterMeeting = b)
                 .Build());
 
@@ -93,6 +132,9 @@ public class Escapist : Impostor
     [Localized(nameof(Escapist))]
     public static class Translations
     {
+        [Localized(nameof(MarkButtonText))] public static string MarkButtonText = "Mark";
+        [Localized(nameof(EscapeButtonText))] public static string EscapeButtonText = "Escape";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

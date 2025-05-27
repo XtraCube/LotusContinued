@@ -38,8 +38,6 @@ public class MatchData
     public int EmergencyButtonsUsed = 0;
     public int MeetingsCalled = 0;
 
-    private static readonly Func<RemoteList<GameOptionOverride>> OptionOverrideListSupplier = GetGlobalOptions;
-
     public RoleData Roles = new();
 
     public FrozenPlayer? GetFrozenPlayer(PlayerControl? player)
@@ -80,12 +78,12 @@ public class MatchData
 
         public Remote<GameOptionOverride> AddOverride(byte playerId, GameOptionOverride @override)
         {
-            return rolePersistentOverrides.GetOrCompute(playerId, OptionOverrideListSupplier).Add(@override);
+            return rolePersistentOverrides.GetOrCompute(playerId, () => []).Add(@override);
         }
 
         public IEnumerable<GameOptionOverride> GetOverrides(byte playerId)
         {
-            return rolePersistentOverrides.GetOrCompute(playerId, OptionOverrideListSupplier);
+            return rolePersistentOverrides.GetOrCompute(playerId, () => []);
         }
 
         public IEnumerable<CustomRole> GetRoleDefinitions(byte playerId)
@@ -106,6 +104,7 @@ public class MatchData
         this.FrozenPlayers.GetOptional(player.GetGameID()).IfPresent(fp => fp.MainRole = assigned);
         log.Debug($"{roleDefinition.EnglishRoleName} was assigned to {player.name}.");
         if (Game.State is GameState.InLobby or GameState.InIntro) player.GetTeamInfo().MyRole = roleDefinition.RealRole;
+        if (player.AmOwner) assigned.UIManager.Start(player);
         if (sendToClient) assigned.Assign();
     }
 
@@ -114,6 +113,7 @@ public class MatchData
         CustomRole instantiated = role.Instantiate(player);
         this.Roles.AddSubrole(player.PlayerId, instantiated);
         log.Debug($"{role.EnglishRoleName} was added as a Subrole to {player.name}.");
+        if (player.AmOwner) instantiated.UIManager.Start(player);
         if (sendToClient) role.Assign();
     }
 
@@ -134,10 +134,11 @@ public class MatchData
     }
 
     // TODO make way better
-    public static RemoteList<GameOptionOverride> GetGlobalOptions()
+    public static RemoteList<GameOptionOverride> GetGlobalOverrides()
     {
-        RemoteList<GameOptionOverride> globalOverrides = new();
-        globalOverrides.Add(new GameOptionOverride(Override.ShapeshiftCooldown, 0.1f));
+        RemoteList<GameOptionOverride> globalOverrides = [
+            new(Override.ShapeshiftCooldown, 0.1f) // I assume this is for IS anti cheat to think the cooldown is very low.
+        ];
         if (AUSettings.ConfirmImpostor()) globalOverrides.Add(new GameOptionOverride(Override.ConfirmEjects, false));
         return globalOverrides;
     }

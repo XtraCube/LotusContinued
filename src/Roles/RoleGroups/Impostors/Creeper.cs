@@ -3,6 +3,8 @@ using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.Options;
 using Lotus.Roles.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
@@ -17,12 +19,26 @@ using Lotus.Roles.Internals;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Creeper : Phantom
+public class Creeper : Phantom, IRoleUI
 {
     private bool canKillNormally;
     private bool creeperProtectedByShields;
     private float explosionRadius;
     private Cooldown gracePeriod;
+
+    public RoleButton AbilityButton(IRoleButtonEditor button) => button
+        .SetText(CreeperTranslations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/creeper_detonate.png", 130, true));
+    public RoleButton PetButton(IRoleButtonEditor button) => button
+        .BindCooldown(gracePeriod)
+        .SetText(CreeperTranslations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/creeper_detonate.png", 130, true));
+
+    protected override void Setup(PlayerControl player)
+    {
+        VanishCooldown = gracePeriod.Duration;
+        base.Setup(player);
+    }
 
     [UIComponent(UI.Text)]
     public string GracePeriodText() => gracePeriod.IsReady() ? "" : Color.red.Colorize(CreeperTranslations.ExplosionGracePeriod).Formatted(gracePeriod + GeneralOptionTranslations.SecondsSuffix);
@@ -30,7 +46,7 @@ public class Creeper : Phantom
     [RoleAction(LotusActionType.RoundStart)]
     private void BeginGracePeriod()
     {
-        gracePeriod.Start();
+        gracePeriod.Start(); // Clients won't have cooldown on pet button. I'm too lazy to add that.
     }
 
     [RoleAction(LotusActionType.Attack)]
@@ -55,11 +71,11 @@ public class Creeper : Phantom
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Can Kill Normally", CanKillNormal)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => canKillNormally = b)
                 .Build())
             .SubOption(sub => sub.KeyName("Creeper Protected By Shielding", CreeperProtection)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => creeperProtectedByShields = b)
                 .Build())
             .SubOption(sub => sub.KeyName("Explosion Radius", ExplosionRadius)
@@ -84,6 +100,9 @@ public class Creeper : Phantom
     [Localized(nameof(Creeper))]
     public static class CreeperTranslations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Detonate";
+
         [Localized(nameof(ExplosionGracePeriod))]
         public static string ExplosionGracePeriod = "Explosion Grace Period: {0}";
 

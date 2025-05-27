@@ -18,16 +18,21 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Utilities;
 using Lotus.Extensions;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Logging;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Transporter : Crewmate
+public class Transporter : Crewmate, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Transporter));
     private int totalTransports;
@@ -39,6 +44,12 @@ public class Transporter : Crewmate
 
     [UIComponent(UI.Counter)]
     private string RemainingTransportCounter() => RoleUtils.Counter(transportsRemaining, totalTransports);
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .BindCooldown(transportCooldown)
+        .SetText(Translations.ButtonText)
+        .BindUses(() => transportsRemaining)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/transporter_transport.png", 130, true));
 
     protected override void PostSetup()
     {
@@ -60,8 +71,9 @@ public class Transporter : Crewmate
         if (target1.PlayerId == target2.PlayerId) return;
 
         transportCooldown.Start();
-
         this.transportsRemaining--;
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateTransporter)?.Send([MyPlayer.OwnerId], transportsRemaining);
+
         if (target1.inVent) target1.MyPhysics.ExitAllVents();
         if (target2.inVent) target2.MyPhysics.ExitAllVents();
 
@@ -107,6 +119,14 @@ public class Transporter : Crewmate
             .RoleColor("#00EEFF")
             .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
 
+    [ModRPC((uint)ModCalls.UpdateTransporter, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateTransporter(int transportsRemaining)
+    {
+        Transporter? transporter = PlayerControl.LocalPlayer.PrimaryRole<Transporter>();
+        if (transporter == null) return;
+        transporter.transportsRemaining = transportsRemaining;
+        transporter.transportCooldown.Start();
+    }
 
     private class TransportedEvent : AbilityEvent, IMultiTargetEvent
     {
@@ -137,6 +157,7 @@ public class Transporter : Crewmate
     [Localized(nameof(Transporter))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Transport";
         [Localized(ModConstants.Options)]
         public static class Options
         {

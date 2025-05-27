@@ -10,7 +10,7 @@ public interface IAdditionalAssignmentLogic
     /// <b>Important</b>
     /// <br/>
     /// You should have a rough understanding of how role assignment works and roles should <b>ALWAYS</b> call <see cref="CustomRole.Instantiate"/>
-    /// Additionally, the standard-algorithm uses <see cref="GameMode.Instance.Assign"/> for actually applying the role to players. You should replicate
+    /// Additionally, the standard-algorithm uses <see cref="GameModes.Standard.StandardGameMode.Assign"/> for actually applying the role to players. You should replicate
     /// this behaviour but DO NOT set sendToClient=true
     /// </summary>
     /// <param name="allPlayers">A list of all the players.</param>

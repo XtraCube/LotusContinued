@@ -1,7 +1,9 @@
+extern alias JBAnnotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.API.Odyssey;
 using Lotus.GUI;
 using Lotus.GUI.Name;
@@ -29,10 +31,16 @@ using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using Lotus.GameModes.Standard;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.Roles.RoleGroups.Impostors;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Sheriff : Crewmate
+public class Sheriff : Crewmate, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Sheriff));
     private static IAccumulativeStatistic<int> _misfires = Statistic<int>.CreateAccumulative($"Roles.{nameof(Sheriff)}.Misfires", () => Translations.MisfireStat);
@@ -78,6 +86,20 @@ public class Sheriff : Crewmate
     [UIComponent(UI.Cooldown)]
     private Cooldown shootCooldown;
 
+    public RoleButton KillButton(IRoleButtonEditor killButton) => isSheriffDesync
+        ? killButton
+            .BindUses(() => shotsRemaining)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/sheriff_kill.png", 130, true))
+        : killButton.Default(true);
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => isSheriffDesync
+        ? petButton.Default(true)
+        : petButton
+            .BindCooldown(shootCooldown)
+            .BindUses(() => shotsRemaining)
+            .SetText(Witch.Translations.KillButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/sheriff_kill.png", 130, true));
+
     public Sheriff()
     {
         StandardRoles.Callbacks.Add(PopulateSheriffOptions);
@@ -118,6 +140,7 @@ public class Sheriff : Crewmate
         if (!shootCooldown.IsReady() || !HasShots()) return false;
         shotsRemaining--;
         if (!isSheriffDesync) shootCooldown.Start();
+        if (MyPlayer.IsModded() && !MyPlayer.AmOwner) Vents.FindRPC((uint)ModCalls.UpdateSheriff)?.Send([MyPlayer.OwnerId], shotsRemaining);
 
         CustomRole role = target.PrimaryRole();
         int setting = -1;
@@ -146,6 +169,16 @@ public class Sheriff : Crewmate
         MyPlayer.InteractWith(MyPlayer, lotusInteraction);
         return true;
     }
+
+    [UsedImplicitly]
+    [ModRPC(ModCalls.UpdateSheriff, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateSheriff(int shotsRemaining)
+    {
+        Sheriff? sheriff = PlayerControl.LocalPlayer.PrimaryRole<Sheriff>();
+        if (sheriff == null) return;
+        sheriff.shotsRemaining = shotsRemaining;
+        if (PlayerControl.LocalPlayer.Data.Role.Role.IsCrewmate()) sheriff.shootCooldown.Start();
+    }
     // OPTIONS
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
@@ -154,7 +187,7 @@ public class Sheriff : Crewmate
             .SubOption(sub => sub
                 .KeyName("Kill On Misfire", Translations.Options.KillOnMisfire)
                 .Bind(v => canKillCrewmates = (bool)v)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Kill Cooldown", Translations.Options.KillCooldown)
@@ -169,7 +202,7 @@ public class Sheriff : Crewmate
             .SubOption(sub => sub
                 .KeyName("One Shot Per Round", Translations.Options.OneShotPerRound)
                 .Bind(v => this.oneShotPerRound = (bool)v)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Sheriff Action Button", Translations.Options.SheriffActionButton)

@@ -14,19 +14,26 @@ using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Optionals;
 using Lotus.API.Player;
+using Lotus.GUI;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Camouflager : Shapeshifter
+public class Camouflager : Shapeshifter, IRoleUI
 {
     private bool canVent;
     private DateTime lastShapeshift;
     private DateTime lastUnshapeshift;
     private bool camouflaged;
 
+    public RoleButton AbilityButton(IRoleButtonEditor petButton) =>
+        petButton.SetText(CamoTranslations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/camouflager_camouflage.png", 130, true));
+
     [RoleAction(LotusActionType.Attack)]
-    public new bool TryKill(PlayerControl target) => base.TryKill(target);
+    public override bool TryKill(PlayerControl target) => base.TryKill(target);
 
     [RoleAction(LotusActionType.Shapeshift)]
     private void CamouflagerShapeshift(PlayerControl target)
@@ -86,12 +93,12 @@ public class Camouflager : Shapeshifter
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub
-                .KeyName("Camouflage Cooldown", Translations.Options.CamouflageCooldown)
+                .KeyName("Camouflage Cooldown", CamoTranslations.Options.CamouflageCooldown)
                 .Bind(v => ShapeshiftCooldown = (float)v)
                 .AddFloatRange(5, 120, 2.5f, 5, GeneralOptionTranslations.SecondsSuffix)
                 .Build())
             .SubOption(sub => sub
-                .KeyName("Camouflage Duration", Translations.Options.CamouflageDuration)
+                .KeyName("Camouflage Duration", CamoTranslations.Options.CamouflageDuration)
                 .Bind(v => ShapeshiftDuration = (float)v)
                 .AddFloatRange(5, 60, 2.5f, 5, GeneralOptionTranslations.SecondsSuffix)
                 .Build())
@@ -105,8 +112,10 @@ public class Camouflager : Shapeshifter
         base.Modify(roleModifier).CanVent(canVent);
 
     [Localized(nameof(Camouflager))]
-    public static class Translations
+    public static class CamoTranslations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Camouflage";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

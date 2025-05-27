@@ -90,10 +90,9 @@ public class Necromancer : UndeadRole
         player.NameModel().GetComponentHolder<CooldownHolder>().Clear();
         player.NameModel().GetComponentHolder<CooldownHolder>().Add(new CooldownComponent(convertCooldown, GameState.Roaming, ViewMode.Additive, viewers: player));
 
-        StandardGameMode.Instance.Assign(player, this);
+        player.PrimaryRole().ChangeRoleTo(this, false);
         Necromancer necromancer = player.PrimaryRole<Necromancer>()!;
         necromancer.isFirstConvert = false;
-        Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(player, necromancer));
         disableWinCheck = true;
     }
 

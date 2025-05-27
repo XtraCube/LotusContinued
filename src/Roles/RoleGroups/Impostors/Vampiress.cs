@@ -42,6 +42,8 @@ public class Vampiress : Impostor
         bitten.Add(target.PlayerId);
         Async.Schedule(() =>
         {
+            if (!bitten.Remove(target.PlayerId)) return;
+            if (!target.IsAlive()) return;
             FatalIntent intent = new(true, () => new BittenDeathEvent(target, MyPlayer));
             DelayedInteraction interaction = new(intent, killDelay, this);
             MyPlayer.InteractWith(target, interaction);
@@ -64,8 +66,8 @@ public class Vampiress : Impostor
         log.Trace($"Swapping Vampire Mode: {currentMode} => {mode}");
     }
 
-    [RoleAction(LotusActionType.ReportBody, ActionFlag.WorksAfterDeath, priority: API.Priority.Low)]
-    public void KillBitten()
+    [RoleAction(LotusActionType.RoundEnd, ActionFlag.WorksAfterDeath)]
+    private void KillBitten()
     {
         bitten.Filter(Players.PlayerById).Where(p => p.IsAlive()).ForEach(p =>
         {

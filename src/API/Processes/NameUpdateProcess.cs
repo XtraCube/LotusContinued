@@ -86,5 +86,4 @@ public class NameUpdateProcess
         ForceFixedPlayers.Add(player.PlayerId);
         player.SetChatName(player.name);
     }
-
 }

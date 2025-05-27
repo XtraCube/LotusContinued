@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using InnerNet;
 using Lotus.API.Player;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
@@ -53,11 +54,11 @@ class RpcReporter: IReportProducer
                 return;
             }
 
-            string target = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(meta.NetId)?.name ?? Players.GetPlayers().FirstOrDefault(p => p.NetId == meta.NetId)?.name;
+            string targetName = FindObjectByNetId(meta.NetId)?.name ?? "(null target)";
             string recipient = Utils.PlayerByClientId(meta.Recipient).Map(p => p.name).OrElse("Unknown") + $" (Id: {meta.Recipient})";
             string rpc = ((RpcCalls)meta.CallId).Name();
 
-            content += $"[{timestamp}] (Target: {target}, Recipient: {recipient}, RPC: {rpc}, Immediate: {meta.Immediate}, SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{EnumerableExtensions.Fuse(meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()))}])\n";
+            content += $"[{timestamp}] (Target: {targetName}, Recipient: {recipient}, RPC: {rpc}, SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()).Fuse()}])\n";
         });
         return content;
     }
@@ -65,18 +66,28 @@ class RpcReporter: IReportProducer
     private string GenerateMassContent(string timestamp, RpcMassMeta massMeta)
     {
         string content = "";
-        string target = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(massMeta.NetId)?.name ?? Players.GetPlayers().FirstOrDefault(p => p.NetId == massMeta.NetId)?.name;
+        // string target = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(massMeta.NetId)?.name ?? Players.GetPlayers().FirstOrDefault(p => p.NetId == massMeta.NetId)?.name ?? "Unknown";
+        string target = FindObjectByNetId(massMeta.NetId)?.name ?? "(null target)";
         string recipient = Utils.PlayerByClientId(massMeta.Recipient).Map(p => p.name).OrElse("Unknown") + $" (Id: {massMeta.Recipient})";
 
-        content += $"[{timestamp}] MASS RPC => (Target: {target}, Recipient: {recipient}, Immediate: {massMeta.Immediate}, SendOptions: {massMeta.SendOption}, PacketSize: {massMeta.PacketSize})";
+        content += $"[{timestamp}] MASS RPC => (Target: {target}, Recipient: {recipient}, SendOptions: {massMeta.SendOption}, PacketSize: {massMeta.PacketSize})";
         massMeta.ChildMeta.ForEach(meta =>
         {
-            string targ = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(meta.NetId)?.name ?? Players.GetPlayers().FirstOrDefault(p => p.NetId == meta.NetId)?.name;
+            // string targ = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(meta.NetId)?.name ?? Players.GetPlayers().FirstOrDefault(p => p.NetId == meta.NetId)?.name ?? "Unknown";
+            string targ = FindObjectByNetId(massMeta.NetId)?.name ?? "(null target)";
             string recip = Utils.PlayerByClientId(meta.Recipient).Map(p => p.name).OrElse("Unknown") + $" (Id: {meta.Recipient})";
             string rpc = ((RpcCalls)meta.CallId).Name();
 
-            content += $"- [{timestamp}] (Target: {targ}, Recipient: {recip}, RPC: {rpc}, Immediate: {meta.Immediate}, SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{EnumerableExtensions.Fuse(meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()))}])\n";
+            content += $"\n- [{timestamp}] (Target: {targ}, Recipient: {recip}, RPC: {rpc}, SendOptions: {meta.SendOption}, PacketSize: {meta.PacketSize}, Arguments: [{meta.Arguments.Select(i => i?.ToString()?.RemoveHtmlTags()).Fuse()}])";
         });
         return content;
+    }
+
+    private InnerNetObject? FindObjectByNetId(uint netId)
+    {
+        InnerNetObjectCollection allObjects = AmongUsClient.Instance.allObjects;
+        lock (allObjects)
+            if (allObjects.allObjectsFast.TryGetValue(netId, out InnerNetObject innerNetObject)) return innerNetObject;
+        return null;
     }
 }

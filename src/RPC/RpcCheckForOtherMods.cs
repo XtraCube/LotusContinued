@@ -4,12 +4,13 @@ using Lotus.Extensions;
 
 namespace Lotus.RPC;
 
+// ReSharper disable InconsistentNaming
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
 [HarmonyPriority(Priority.VeryHigh)]
 public class RpcCheckForOtherMods
 {
-    internal const byte TOHVersionCheck = 80; // mostly every mod has this set to 80. EHR is just the odd one out.
-    internal const byte EHRVersionCheck = 78;
+    private const byte TOHVersionCheck = 80; // almost every mod has this set to 80.
+    private const byte EHRVersionCheck = 78; // EHR is just the odd one out.
     public static void Prefix(PlayerControl __instance, [HarmonyArgument(0)] byte callId, [HarmonyArgument(1)] MessageReader reader)
     {
         if (!AmongUsClient.Instance.AmHost) return;

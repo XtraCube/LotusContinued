@@ -70,8 +70,7 @@ public class Romantic : Subrole, IInfoResender
         if (love == null || !love.IsAlive()) return;
         if (protectionCooldown.NotReady() || protectionDuration.NotReady()) return;
         handle.Cancel();
-        protectionDuration.Start();
-        Async.Schedule(() => protectionCooldown.Start(), protectionDuration.Duration);
+        protectionDuration.StartThenRun(() => protectionCooldown.Start());
     }
 
     [RoleAction(LotusActionType.RoundEnd)]
@@ -177,13 +176,7 @@ public class Romantic : Subrole, IInfoResender
             return;
         }
 
-        if (winDelegate.GetWinners().Count == 1) // if we are a solo winner
-        {
-            if (!cancelGameWin) return; // if option to cancel is not on
-            winDelegate.CancelGameWin(); // cancel win. this will prob cancel jester exile win
-        }
-        // since we are NOT a solo winner. we can safely remove us from the win con
-        else winDelegate.RemoveWinner(MyPlayer);
+        if (winDelegate.GetWinners().Count != 1) winDelegate.RemoveWinner(MyPlayer);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
@@ -204,11 +197,6 @@ public class Romantic : Subrole, IInfoResender
                 .AddBoolean()
                 .BindBool(b => parterCanWin = b)
                 .ShowSubOptionPredicate(v => !(bool)v)
-                .SubOption(sub2 => sub2
-                    .KeyName("Cancel Game Win if Solo Winner", Translations.Options.CancelGameWinIfSolo)
-                    .AddBoolean(false)
-                    .BindBool(b => cancelGameWin = b)
-                    .Build())
                 .Build());
 
     public override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _vengefulRomantic, _ruthlessRomantic }).ToList();

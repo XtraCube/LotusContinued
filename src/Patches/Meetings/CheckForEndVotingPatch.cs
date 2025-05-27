@@ -17,6 +17,7 @@ using Lotus.Options.General;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
 using Lotus.Options;
+using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Harmony.Attributes;
 using VentLib.Utilities.Optionals;
@@ -34,6 +35,13 @@ public class CheckForEndVotingPatch
         if (!AmongUsClient.Instance.AmHost) return true;
         MeetingDelegate meetingDelegate = MeetingDelegate.Instance;
         if (!meetingDelegate.IsForceEnd() && __instance.playerStates.Any(ps => !ps.AmDead && !ps.DidVote)) return false;
+        if (meetingDelegate.AlreadyCompleted)
+        {
+            log.Exception($"{Mirror.GetCaller()?.FullDescription() ?? "No description."}");
+            log.Exception("The above function tried to call 'MeetingHud.CheckForEndVoting' when we have already completed voting.");
+            return false;
+        }
+        meetingDelegate.AlreadyCompleted = true;
         log.Debug("Beginning End Voting", "CheckEndVotingPatch");
 
 

@@ -167,25 +167,28 @@ public class RpcSetTasksPatch
                     switch (taskById.Length)
                     {
                         case NormalPlayerTask.TaskLength.Long:
-                            NormalPlayerTask? replacedLongTask = ShipStatus.Instance.LongTasks.Where(t => !IsTaskIllegal(t)).FirstOrDefault();
+                            NormalPlayerTask? replacedLongTask =
+                                ShipStatus.Instance.LongTasks.FirstOrDefault(t => !IsTaskIllegal(t));
                             if (replacedLongTask != null) newTasks.Add((byte)replacedLongTask.Index);
                             else newTasks.Add(idx);
                             break;
                         case NormalPlayerTask.TaskLength.Short:
-                            NormalPlayerTask? replacedShortTask = ShipStatus.Instance.ShortTasks.Where(t => !IsTaskIllegal(t)).FirstOrDefault();
+                            NormalPlayerTask? replacedShortTask =
+                                ShipStatus.Instance.ShortTasks.FirstOrDefault(t => !IsTaskIllegal(t));
                             if (replacedShortTask != null) newTasks.Add((byte)replacedShortTask.Index);
                             else newTasks.Add(idx);
                             break;
                     }
                     break;
-                // common tasks are a bit more in depth. as we need to align with everyone elses tasks
+                // common tasks are a bit more in depth. as we need to align with everyone else's tasks
                 case TaskTypes.SwipeCard when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.CardSwipe):
                 case TaskTypes.FixWiring when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.FixWiring):
                     if (ReplacedCommonTasks.TryGetValue(idx, out byte replacedTaskId)) newTasks.Add(replacedTaskId);
                     else
                     {
-                        byte newTaskId = idx; // just take the L if we dont have enough common tasks
-                        NormalPlayerTask? replacedTask = ShipStatus.Instance.CommonTasks.Where(t => !IsTaskIllegal(t)).FirstOrDefault();
+                        byte newTaskId = idx; // just take the L if we don't have enough common tasks
+                        NormalPlayerTask? replacedTask =
+                            ShipStatus.Instance.CommonTasks.FirstOrDefault(t => !IsTaskIllegal(t));
                         if (replacedTask != null) newTaskId = (byte)replacedTask.Index;
                         ReplacedCommonTasks.Add(idx, newTaskId);
                         newTasks.Add(newTaskId);

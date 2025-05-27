@@ -14,6 +14,7 @@ using Lotus.Roles;
 using Lotus.RPC;
 using System.Threading.Tasks;
 using Lotus.Logging;
+using VentLib;
 using VentLib.Utilities;
 
 namespace Lotus.API.Odyssey;
@@ -31,8 +32,20 @@ public static class Game
     public static RandomSpawn RandomSpawn = null!;
     public static int RecursiveCallCheck;
     public static IGameMode CurrentGameMode => ProjectLotus.GameModeManager.CurrentGameMode;
-    public static GameState State = GameState.InLobby;
+
+    public static GameState State
+    {
+        get => _state;
+        set
+        {
+            _state = value;
+            if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost && PlayerControl.LocalPlayer != null)
+                Vents.FindRPC((uint)ModCalls.SetGameState)?.Send(null, (int)value);
+        }
+    }
+
     private static WinDelegate _winDelegate = new();
+    private static GameState _state = GameState.InLobby;
 
     static Game()
     {

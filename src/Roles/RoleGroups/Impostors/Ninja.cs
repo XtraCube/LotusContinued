@@ -14,28 +14,52 @@ using VentLib.Options.UI;
 using VentLib.Utilities;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Ninja : Vanilla.Impostor
+public class Ninja : Vanilla.Impostor, IRoleUI
 {
     private List<PlayerControl> playerList;
     private bool playerTeleportsToNinja;
     public NinjaMode Mode = NinjaMode.Killing;
     private ActivationType activationType;
 
-
     private float ShapeshiftCooldown;
     private float ShapeshiftDuration;
+
+    protected override void Setup(PlayerControl player)
+    {
+        base.Setup(player);
+        playerList = new List<PlayerControl>();
+    }
+
+    public RoleButton AbilityButton(IRoleButtonEditor abilityButton) => activationType is ActivationType.Shapeshift
+        ? abilityButton
+            .SetText(RoleTranslations.Switch)
+            .SetSprite(() => LotusAssets.LoadSprite(Mode == NinjaMode.Hunting ? "Buttons/Imp/ninja_kill.png" : "Buttons/generic_switch_ability.png", 130, true))
+        :  abilityButton.Default(true);
+
+
+    public RoleButton PetButton(IRoleButtonEditor abilityButton) => activationType is ActivationType.PetButton
+        ? abilityButton
+            .SetText(RoleTranslations.Switch)
+            .SetSprite(() => LotusAssets.LoadSprite(Mode == NinjaMode.Hunting ? "Buttons/Imp/ninja_kill.png" : "Buttons/generic_switch_ability.png", 130, true))
+        : abilityButton.Default(true);
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton.Default(false);
 
     [UIComponent(UI.Text)]
     private string CurrentMode() => RoleColor.Colorize(Mode == NinjaMode.Hunting ? "(Hunting)" : "(Killing)");
 
-    protected override void Setup(PlayerControl player) => playerList = new List<PlayerControl>();
-
     [RoleAction(LotusActionType.Attack)]
-    public new bool TryKill(PlayerControl target)
+    public override bool TryKill(PlayerControl target)
     {
         SyncOptions();
         if (Mode is NinjaMode.Killing) return base.TryKill(target);
@@ -51,6 +75,8 @@ public class Ninja : Vanilla.Impostor
     {
         if (activationType is not ActivationType.Shapeshift) return;
         Mode = NinjaMode.Hunting;
+        if (MyPlayer.AmOwner) UpdateAllButtons();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
     [RoleAction(LotusActionType.Unshapeshift)]
@@ -58,10 +84,18 @@ public class Ninja : Vanilla.Impostor
     {
         if (activationType is not ActivationType.Shapeshift) return;
         NinjaHuntAbility();
+        Mode = NinjaMode.Killing;
+        if (MyPlayer.AmOwner) UpdateAllButtons();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
     [RoleAction(LotusActionType.RoundStart)]
-    private void EnterKillMode() => Mode = NinjaMode.Killing;
+    private void EnterKillMode()
+    {
+        Mode = NinjaMode.Killing;
+        if (MyPlayer.AmOwner) UpdateAllButtons();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
+    }
 
     [RoleAction(LotusActionType.RoundEnd)]
     private void NinjaClearTarget() => playerList.Clear();
@@ -74,6 +108,8 @@ public class Ninja : Vanilla.Impostor
         if (Mode is NinjaMode.Hunting) NinjaHuntAbility();
 
         Mode = Mode is NinjaMode.Killing ? NinjaMode.Hunting : NinjaMode.Killing;
+        if (MyPlayer.AmOwner) UpdateAllButtons();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
     }
 
     private void NinjaHuntAbility()
@@ -93,6 +129,26 @@ public class Ninja : Vanilla.Impostor
         playerList.Clear();
     }
 
+    private void UpdateAllButtons()
+    {
+        UpdateKillButton();
+        if (activationType is ActivationType.Shapeshift) AbilityButton(UIManager.AbilityButton);
+        else PetButton(UIManager.PetButton);
+    }
+
+    [ModRPC((uint)ModCalls.UpdateNinja, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateNinja(int modeEnum)
+    {
+        Ninja? ninja = PlayerControl.LocalPlayer.PrimaryRole<Ninja>();
+        if (ninja is null) return;
+        ninja.Mode = (NinjaMode)modeEnum;
+        ninja.UpdateAllButtons();
+    }
+
+    private RoleButton UpdateKillButton() => Mode is NinjaMode.Killing
+        ? UIManager.KillButton.RevertSprite().SetText(Witch.Translations.KillButtonText)
+        : UIManager.KillButton.SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/ninja_hunt.png", 130, true)).SetText(Translations.HuntButtonText);
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
         .SubOption(sub => sub
@@ -106,12 +162,12 @@ public class Ninja : Vanilla.Impostor
             .Value(v => v.Text("Pet Button").Value(0).Build())
             .Value(v => v.Text("Shapeshift Button").Value(1).Build())
             .ShowSubOptionPredicate(v => (int)v == 1)
-            .SubOption(sub => sub
+            .SubOption(sub2 => sub2
                 .KeyName("Shapeshift Cooldown", Shapeshifter.Translations.Options.ShapeshiftCooldown)
                 .AddFloatRange(0, 120, 2.5f, 12, GeneralOptionTranslations.SecondsSuffix)
                 .BindFloat(f => ShapeshiftCooldown = f)
                 .Build())
-            .SubOption(sub => sub
+            .SubOption(sub2 => sub2
                 .KeyName("Shapeshift Duration", Shapeshifter.Translations.Options.ShapeshiftDuration)
                 .Value(1f)
                 .AddFloatRange(2.5f, 120, 2.5f, 6, GeneralOptionTranslations.SecondsSuffix)
@@ -137,6 +193,9 @@ public class Ninja : Vanilla.Impostor
     [Localized(nameof(Ninja))]
     public static class Translations
     {
+        [Localized(nameof(HuntButtonText))]
+        public static string HuntButtonText = "Hunt";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

@@ -18,6 +18,8 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Utilities;
 using Lotus.Extensions;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
@@ -27,7 +29,7 @@ using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
-public class Arsonist : NeutralKillingBase
+public class Arsonist : NeutralKillingBase, IRoleUI
 {
     private static IAccumulativeStatistic<int> _dousedPlayers = Statistic<int>.CreateAccumulative($"Roles.{nameof(Arsonist)}.DousedPlayers", () => Translations.DousedPlayerStatistic);
     private static IAccumulativeStatistic<int> _incineratedPlayers = Statistic<int>.CreateAccumulative($"Roles.{nameof(Arsonist)}.IncineratedPlayers", () => Translations.IncineratedPlayerStatistic);
@@ -50,6 +52,10 @@ public class Arsonist : NeutralKillingBase
     [NewOnSetup] private Dictionary<byte, Remote<IndicatorComponent>> indicators;
     [NewOnSetup] private Dictionary<byte, int> douseProgress;
 
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/arsonist_douse.png", 130, true));
+
     [UIComponent(UI.Counter)]
     private string DouseCounter() => RoleUtils.Counter(dousedPlayers.Count, knownAlivePlayers);
 
@@ -57,7 +63,7 @@ public class Arsonist : NeutralKillingBase
     private string DisplayWin() => dousedPlayers.Count >= backedAlivePlayers ? RoleColor.Colorize(Translations.PressIgniteToWinMessage) : "";
 
     [RoleAction(LotusActionType.Attack)]
-    public new bool TryKill(PlayerControl target)
+    public override bool TryKill(PlayerControl target)
     {
         bool douseAttempt = MyPlayer.InteractWith(target, LotusInteraction.HostileInteraction.Create(this)) is InteractionResult.Proceed;
         if (!douseAttempt) return false;
@@ -92,7 +98,7 @@ public class Arsonist : NeutralKillingBase
 
 
     [RoleAction(LotusActionType.OnPet)]
-    private void KillDoused() => dousedPlayers.Filter(p => Utils.PlayerById(p)).Where(p => p.IsAlive()).Do(p =>
+    private void KillDoused() => dousedPlayers.Filter(Utils.PlayerById).Where(p => p.IsAlive()).Do(p =>
     {
         if (dousedPlayers.Count < CountAlivePlayers() && !canIgniteAnyitme) return;
         FatalIntent intent = new(true, () => new CustomDeathEvent(p, MyPlayer, Translations.IncineratedDeathName));
@@ -119,11 +125,11 @@ public class Arsonist : NeutralKillingBase
         base.RegisterOptions(optionStream)
             .Color(RoleColor)
             .SubOption(sub => sub.KeyName("Attacks to Complete Douse", Translations.Options.AttacksToCompleteDouse)
-                .AddIntRange(3, 100, defaultIndex: 16)
+                .AddIntRange(1, 100, defaultIndex: 2)
                 .BindInt(i => requiredAttacks = i)
                 .Build())
             .SubOption(sub => sub.KeyName("Can Ignite Anytime", Translations.Options.CanIgniteAnytime)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .BindBool(b => canIgniteAnyitme = b)
                 .Build());
 
@@ -137,6 +143,9 @@ public class Arsonist : NeutralKillingBase
     [Localized(nameof(Arsonist))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Douse";
+
         [Localized(nameof(IncineratedDeathName))]
         public static string IncineratedDeathName = "Incinerated";
 

@@ -17,6 +17,7 @@ using VentLib.Utilities;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using Lotus.Extensions;
+using Lotus.Logging;
 using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
@@ -57,8 +58,7 @@ public class BountyHunter : Impostor
     private void BountyHunterAcquireTarget()
     {
         List<PlayerControl> eligiblePlayers = Players.GetAlivePlayers()
-            .Where(p => p.Relationship(MyPlayer) is not Relation.FullAllies)
-            .Without(MyPlayer)
+            .Where(p => p.PlayerId != MyPlayer.PlayerId && p.Relationship(MyPlayer) is not Relation.FullAllies)
             .ToList();
         if (eligiblePlayers.Count == 0)
         {

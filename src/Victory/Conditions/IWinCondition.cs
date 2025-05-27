@@ -23,5 +23,5 @@ public interface IWinCondition: IComparable<IWinCondition>
 
     WinReason GetWinReason();
 
-    int IComparable<IWinCondition>.CompareTo(IWinCondition? other) => other.Priority().CompareTo(Priority());
+    int IComparable<IWinCondition>.CompareTo(IWinCondition? other) => other?.Priority().CompareTo(Priority()) ?? 0;
 }

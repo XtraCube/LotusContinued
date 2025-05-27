@@ -84,11 +84,9 @@ public class Jackal : NeutralKillingBase
         {
             if (!sidekickPlayer.IsAlive()) return; // Don't change role if player is dead.
             log.Debug("Found sidekick player.");
-            Game.CurrentGameMode.Assign(sidekickPlayer, IRoleManager.Current.GetCleanRole(this));
+            sidekickPlayer.PrimaryRole().ChangeRoleTo(this);
 
             Jackal jackalRole = sidekickPlayer.PrimaryRole<Jackal>()!;
-            Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(sidekickPlayer, jackalRole));
-            jackalRole.Assign();
             jackalRole.CanRecruit = sidekickCanRecruit;
         });
     }
@@ -116,16 +114,13 @@ public class Jackal : NeutralKillingBase
         hasRecruited = true;
         sidekickId = target.PlayerId;
 
-        Sidekick.ImpostorVision = impostorVision; // I think imp vision is important enough for them to have.
-        Sidekick.CanVentOverride = SidekickGetsAbilities && canVent;
-        Sidekick.CanSabotageOverride = SidekickGetsAbilities && canSabotage;
-        Game.CurrentGameMode.Assign(target, Sidekick);
-        Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(target, Sidekick));
-
+        target.PrimaryRole().ChangeRoleTo(Sidekick);
         Sidekick targetRole = target.PrimaryRole<Sidekick>()!;
         targetRole.KillCooldown = KillCooldown;
-        targetRole.Assign();
         targetRole.SetParentJackal(this);
+        targetRole.ImpostorVision = impostorVision; // I think imp vision is important enough for them to have.
+        targetRole.CanVentOverride = SidekickGetsAbilities && canVent;
+        targetRole.CanSabotageOverride = SidekickGetsAbilities && canSabotage;
 
         MyPlayer.NameModel().GetComponentHolder<RoleHolder>().ForEach(rc => rc.AddViewer(target));
     }

@@ -35,6 +35,12 @@ public static class FactionTranslations
         [Localized(nameof(Name))] public static string Name = "Neutral";
         [Localized(nameof(Description))] public static string Description = "Stay alive and complete your objective.";
     }
+    [Localized(nameof(NeutralKillers))]
+    public static class NeutralKillers
+    {
+        [Localized(nameof(Name))] public static string Name = "Neutral Killers";
+        [Localized(nameof(Description))] public static string Description = "Kill everyone else and be the last one standing.";
+    }
     [Localized(nameof(Modifiers))]
     public static class Modifiers
     {

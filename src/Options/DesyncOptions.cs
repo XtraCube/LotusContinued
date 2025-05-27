@@ -125,7 +125,7 @@ public static class DesyncOptions
     public static int GetTargetedClientId(string name)
     {
         int clientId = -1;
-        var allClients = AmongUsClient.Instance.allObjectsFast;
+        var allClients = AmongUsClient.Instance.allObjects.allObjectsFast;
         var allClientIds = allClients.Keys;
 
         foreach (uint id in allClientIds)

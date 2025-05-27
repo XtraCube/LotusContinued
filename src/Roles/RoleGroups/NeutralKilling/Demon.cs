@@ -4,10 +4,13 @@ using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.Extensions;
+using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name.Holders;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Interactions.Interfaces;
 using Lotus.Roles.Internals;
@@ -22,7 +25,7 @@ using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
-public class Demon : NeutralKillingBase
+public class Demon : NeutralKillingBase, IRoleUI
 {
     [NewOnSetup] private Dictionary<byte, Remote<NameComponent>> healthBars = null!;
     [NewOnSetup] private Dictionary<byte, int> healthInfo = null!;
@@ -33,6 +36,10 @@ public class Demon : NeutralKillingBase
 
     private const int MaxHealth = 100;
     private const float MaxHealthF = MaxHealth;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/demon_attack.png", 130, true));
 
     protected override void PostSetup()
     {
@@ -134,8 +141,11 @@ public class Demon : NeutralKillingBase
     }
 
     [Localized(nameof(Demon))]
-    private static class Translations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Attack";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

@@ -22,7 +22,8 @@ public class Workhorse : Subrole
 
     public override bool IsAssignableTo(PlayerControl player)
     {
-        return player.PrimaryRole() is ITaskHolderRole itr && itr.HasTasks() && base.IsAssignableTo(player);
+        CustomRole playerRole = player.PrimaryRole();
+        return playerRole.RealRole.IsCrewmate() && playerRole is ITaskHolderRole itr && itr.HasTasks() && base.IsAssignableTo(player);
     }
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>

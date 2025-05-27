@@ -75,9 +75,10 @@ public class StandardGameMode : GameMode
 
     public override void SetupWinConditions(WinDelegate winDelegate)
     {
-        new List<IWinCondition>() {
+        new List<IWinCondition> {
             new VanillaCrewmateWin(), new VanillaImpostorWin(), new SoloPassiveWinCondition(),
             new UndeadWinCondition(), new SoloKillingWinCondition(), new SabotageWin(),
+            new NeutralFactionWin()
         }.ForEach(winDelegate.AddWinCondition);
     }
 

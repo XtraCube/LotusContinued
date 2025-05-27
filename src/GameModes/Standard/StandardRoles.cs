@@ -205,6 +205,7 @@ public class StandardRoles : RoleHolder
         public Survivor Survivor = new();
         public Taskrunner Taskrunner = new();
         public Terrorist Terrorist = new();
+        public Turncoat Turncoat = new();
         public Vulture Vulture = new();
     }
 

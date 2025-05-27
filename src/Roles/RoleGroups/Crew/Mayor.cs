@@ -20,10 +20,16 @@ using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using static Lotus.Roles.RoleGroups.Crew.Mayor.Translations;
 using Lotus.API.Player;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Mayor : Crewmate
+public class Mayor : Crewmate, IRoleUI
 {
     private bool hasPocketMeeting;
 
@@ -40,6 +46,18 @@ public class Mayor : Crewmate
     [UIComponent(UI.Counter)]
     private string PocketCounter() => RoleUtils.Counter(remainingVotes, totalVotes);
 
+
+    protected override void Setup(PlayerControl player)
+    {
+        base.Setup(player);
+        if (!hasPocketMeeting) this.UIManager.DisableUI(); // Setup is called by modded clients, so we can just call this to disable for them.
+    }
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .SetText(ButtonText)
+        .BindUses(() => remainingVotes)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/mayor_pocket_meeting.png", 130, true));
+
     // Removes meeting use counter component if the option is disabled
     protected override void PostSetup()
     {
@@ -54,6 +72,7 @@ public class Mayor : Crewmate
         if (SabotagePatch.CurrentSabotage != null) return;
         if (!hasPocketMeeting || remainingVotes <= 0) return;
         remainingVotes--;
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateMayor)?.Send([MyPlayer.OwnerId], true, remainingVotes);
         MyPlayer.CmdReportDeadBody(null);
         MeetingApi.StartMeeting(creator => creator.QuickCall(MyPlayer));
     }
@@ -82,10 +101,21 @@ public class Mayor : Crewmate
             ChatHandler.Of(RevealMessage).Title(t => t.Color(RoleColor).Text(MayorRevealTitle).Build()).Send(MyPlayer);
     }
 
+    [ModRPC((uint)ModCalls.UpdateMayor, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateMayor(bool isEnabled, int amountRemaining)
+    {
+        Async.WaitUntil(() => PlayerControl.LocalPlayer.PrimaryRole<Mayor>(), mayor =>
+        {
+            if (mayor == null) return;
+            if (isEnabled) mayor.remainingVotes = amountRemaining;
+            else mayor.UIManager.DisableUI();
+        }, .1f, 30);
+    }
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Reveal for Votes", Translations.Options.MayorReveal)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .BindBool(b => revealToVote = b)
                 .Build())
             .SubOption(sub => sub.KeyName("Mayor Additional Votes", Translations.Options.MayorAdditionalVotes)
@@ -93,7 +123,7 @@ public class Mayor : Crewmate
                 .BindInt(i => additionalVotes = i)
                 .Build())
             .SubOption(sub => sub.KeyName("Pocket Meeting", Translations.Options.PocketMeeting)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => hasPocketMeeting = b)
                 .ShowSubOptionPredicate(o => (bool)o)
                 .SubOption(sub2 => sub2.KeyName("Number of Uses", Translations.Options.NumberOfUses)
@@ -108,8 +138,11 @@ public class Mayor : Crewmate
             .IntroSound(AmongUs.GameOptions.RoleTypes.Crewmate);
 
     [Localized(nameof(Mayor))]
-    internal static class Translations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Button";
+
         [Localized(nameof(RevealMessage))]
         internal static string RevealMessage = "Mr. Mayor, you must reveal yourself to gain additional votes. Currently you can vote normally, but if you vote yourself you'll reveal your role to everyone and gain more votes!";
 

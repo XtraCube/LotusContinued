@@ -38,30 +38,37 @@ public class PlayerJoinPatch
             log.Info($"ブロック済みのプレイヤー{client.PlayerName}({client.FriendCode})をBANしました。", "BAN");
         }
 
+        string playerName = client.PlayerName;
+
         Hooks.NetworkHooks.ClientConnectHook.Propagate(new ClientConnectHookEvent(client));
-        Async.WaitUntil(() => client.Character, c => c != null, c => EnforceAdminSettings(client, c), maxRetries: 50);
+        Async.WaitUntil(() => client.Character, c => c != null, c => EnforceAdminSettings(client, c, playerName), maxRetries: 50);
     }
 
-    private static void EnforceAdminSettings(ClientData client, PlayerControl player)
+    private static void EnforceAdminSettings(ClientData client, PlayerControl player, string playerName)
     {
         if (player == null || client == null)
         {
             log.Trace($"Could not enforce admin settings for {client?.PlayerName}.");
             return;
         }
-        player.name = client.PlayerName;
+
+        client.PlayerName = playerName;
+        player.name = playerName;
         bool kickPlayer = false;
         kickPlayer = kickPlayer || GeneralOptions.AdminOptions.KickPlayersWithoutFriendcodes && client.FriendCode == "" && AmongUsClient.Instance.NetworkMode is not NetworkModes.LocalGame;
         kickPlayer = kickPlayer || client.PlatformData.Platform is Android or IPhone && GeneralOptions.AdminOptions.KickMobilePlayers;
 
         if (kickPlayer)
         {
+            log.Trace($"{playerName} was kicked because one of the kick options are on in the Admin Settings area.");
             AmongUsClient.Instance.KickPlayer(client.Id, false);
             return;
         }
 
-        PluginDataManager.WhitelistManager.CheckWhitelistPlayer(player, client);
-        PluginDataManager.BanManager.CheckBanPlayer(player, client);
+        if (PluginDataManager.WhitelistManager.CheckWhitelistPlayer(player, client))
+            log.Trace($"{playerName} was kicked because they weren't on the whitelist.");
+        if (PluginDataManager.BanManager.CheckBanPlayer(player, client))
+            log.Trace($"{playerName} was banned because they are on the host's banlist.");
 
         Hooks.PlayerHooks.PlayerJoinHook.Propagate(new PlayerHookEvent(player));
         CheckAutostart();

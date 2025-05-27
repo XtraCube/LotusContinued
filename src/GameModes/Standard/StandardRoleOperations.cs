@@ -168,7 +168,6 @@ public class StandardRoleOperations : RoleOperations
     protected IEnumerable<GameOptionOverride> CalculateOverrides(PlayerControl player, IEnumerable<CustomRole> definitions, IEnumerable<GameOptionOverride>? overrides)
     {
         IEnumerable<GameOptionOverride> definitionOverrides = definitions.SelectMany(d => d.GetRoleOverrides());
-        definitionOverrides = definitionOverrides.Concat(Game.MatchData.Roles.GetOverrides(player.PlayerId));
         if (overrides != null) definitionOverrides = definitionOverrides.Concat(overrides);
         return definitionOverrides;
     }

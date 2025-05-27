@@ -1,6 +1,7 @@
 using AmongUs.GameOptions;
 using HarmonyLib;
 using Lotus.Extensions;
+using Lotus.Patches.Actions;
 using VentLib.Networking.RPC;
 using VentLib.Utilities;
 

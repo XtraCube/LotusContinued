@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -15,10 +16,16 @@ using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Harmony.Attributes;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using Lotus.API.Odyssey;
+using Lotus.API.Reactive;
+using Lotus.API.Reactive.HookEvents;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
 using Lotus.Roles.Overrides;
+using UnityEngine;
+using VentLib.Networking.RPC.Interfaces;
+using VentLib.Utilities.Attributes;
 
 namespace Lotus.Patches.Actions;
 
@@ -27,11 +34,35 @@ namespace Lotus.Patches.Actions;
 // we shouldn't have to fix your code
 // pls do a proper fix innersloth
 
-// code sampled from Endless Host Roles (Gurge44) (PhantomRolePatch)
+// code sampled from Endless Host Roles (https://github.com/Gurge44/EndlessHostRoles/blob/main/Patches/PhantomRolePatch.cs)
 
+[LoadStatic]
 public static class PhantomActionsPatch
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(PhantomActionsPatch));
+    private static readonly string PhantomActionsPatchHookKey = nameof(PhantomActionsPatchHookKey);
+    private static readonly Dictionary<byte, string> PetsList = [];
+    private static readonly List<byte> InvisiblePlayers = [];
+
+
+    private static int _ignoreSetInvisibilityPatch;
+
+    public static bool IsInvisible(this PlayerControl player) => InvisiblePlayers.Contains(player.PlayerId);
+
+    static PhantomActionsPatch()
+    {
+        Hooks.GameStateHooks.GameStartHook.Bind(PhantomActionsPatchHookKey, _ =>
+        {
+            InvisiblePlayers.Clear();
+            PetsList.Clear();
+        });
+        Hooks.GameStateHooks.RoundEndHook.Bind(PhantomActionsPatchHookKey, OnMeetingCalled);
+        Hooks.GameStateHooks.RoundStartHook.Bind(PhantomActionsPatchHookKey, _ =>
+        {
+            InvisiblePlayers.Clear();
+            PetsList.Clear();
+        });
+    }
 
     [QuickPrefix(typeof(PlayerControl), nameof(PlayerControl.CmdCheckVanish))]
     public static bool CmdCheckVanishPrefix(PlayerControl __instance, float maxDuration)
@@ -84,49 +115,102 @@ public static class PhantomActionsPatch
     }
 
     [QuickPostfix(typeof(PlayerControl), nameof(PlayerControl.SetRoleInvisibility))]
-    public static void OnChangeVisibility(PlayerControl __instance, bool isActive)
+    public static void OnChangeVisibility(PlayerControl __instance, bool isActive, bool shouldAnimate)
     {
         if (!AmongUsClient.Instance.AmHost) return;
-        log.Debug($"{__instance.name} {(isActive ? "is going invisible as Phantom." : "is appearing as Phantom.")}");
-        IEnumerable<byte> alliedPlayerIds = Players.GetPlayers().Where(p => __instance.Relationship(p) is Relation.FullAllies).Where(__instance.PrimaryRole().Faction.CanSeeRole).Select(p => p.PlayerId);
-        Vent farthestVent = Utils.GetFurthestVentFromPlayers();
-        bool isImpFaction = __instance.PrimaryRole().Faction is ImpostorFaction;
-        Players.GetAllPlayers().ForEach(p =>
+        if (_ignoreSetInvisibilityPatch > 0)
         {
-            if (__instance == p) return; // skip player going invis
-            CustomRole role = p.PrimaryRole();
-            if (role.RealRole.IsCrewmate() && isImpFaction) return; // they are crewmate, and we are imp so we are phantom for them
-            if (alliedPlayerIds.Contains(p.PlayerId)) return; // if we are allied than continue
-            if (isActive)
+            _ignoreSetInvisibilityPatch--;
+            log.Debug($"Ignoring `PlayerControl.SetRoleInvisibility` call.");
+            return;
+        }
+        PlayerControl phantom = __instance;
+
+        log.Debug($"{phantom.name} {(isActive ? "is going invisible as Phantom." : "is appearing as Phantom.")}");
+
+        List<byte> alliedPlayerIds = Players.GetPlayers()
+            .Where(p => phantom.Relationship(p) is Relation.FullAllies)
+            .Where(phantom.PrimaryRole().Faction.CanSeeRole)
+            .Select(p => p.PlayerId)
+            .ToList();
+        bool isImpFaction = phantom.PrimaryRole().Faction.GetType() == typeof(ImpostorFaction);
+
+        var writer = RpcV3.Mass(SendOption.Reliable);
+        if (isActive)
+        {
+            InvisiblePlayers.Add(phantom.PlayerId);
+            writer
+                .Start(phantom.NetId, RpcCalls.SetRole)
+                .Write((ushort)RoleTypes.Phantom)
+                .Write(ProjectLotus.AdvancedRoleAssignment)
+                .End()
+                .Start(phantom.NetId, RpcCalls.CheckVanish)
+                .Write(0)
+                .End();
+        }
+        else
+        {
+            InvisiblePlayers.Remove(phantom.PlayerId);
+            if (phantom.inVent)
             {
-                if (p.AmOwner)
-                {
-                    __instance.MyPhysics.StopAllCoroutines();
-                    __instance.NetTransform.SnapTo(farthestVent.transform.position);
-                    __instance.MyPhysics.StartCoroutine(__instance.MyPhysics.CoEnterVent(farthestVent.Id));
-                }
-                else
-                {
-                    Utils.TeleportDeferred(__instance.NetTransform, farthestVent.transform.position).Send(p.GetClientId());
-                    RpcV3.Immediate(__instance.MyPhysics.NetId, RpcCalls.EnterVent).WritePacked(farthestVent.Id).Send(p.GetClientId());
-                }
+                int ventId = phantom.GetLastEnteredVent();
+                phantom.MyPhysics.BootFromVent(ventId);
+                writer.Start(phantom.MyPhysics.NetId, 34)
+                    .WritePacked(ventId)
+                    .End();
             }
-            else
+
+            writer
+                .Start(phantom.NetId, RpcCalls.SetRole)
+                .Write((ushort)RoleTypes.Phantom)
+                .Write(ProjectLotus.AdvancedRoleAssignment)
+                .End();
+            writer
+                .Start(phantom.NetId, RpcCalls.CheckAppear)
+                .Write(shouldAnimate)
+                .End();
+        }
+
+        bool hasRanFinish = false;
+
+        foreach (PlayerControl otherPlayer in Players.GetAllPlayers())
+        {
+            if (phantom.PlayerId == otherPlayer.PlayerId) continue; // skip player going invis
+            CustomRole role = otherPlayer.PrimaryRole();
+            if (role.RealRole.IsCrewmate() && isImpFaction) continue; // they are crewmate, and we are imp so we are phantom for them
+            if (alliedPlayerIds.Contains(otherPlayer.PlayerId)) continue; // if we are allied than continue
+
+            if (isActive) // is vanishing
             {
-                if (p.AmOwner)
+                log.Info($"Desync-vanishing {phantom.name} for {otherPlayer.GetNameWithRole()}.");
+                if (otherPlayer.AmOwner) // host check
                 {
-                    var pos = __instance.GetTruePosition();
-                    __instance.MyPhysics.BootFromVent(farthestVent.Id);
-                    __instance.NetTransform.SnapTo(pos);
+                    _ignoreSetInvisibilityPatch += 1;
+                    phantom.SetRole(RoleTypes.Phantom, ProjectLotus.AdvancedRoleAssignment);
+                    phantom.SetRoleInvisibility(true, true, true);
                 }
-                else
-                {
-                    var pos = __instance.GetTruePosition();
-                    RpcV3.Immediate(__instance.MyPhysics.NetId, RpcCalls.ExitVent).WritePacked(farthestVent.Id).Send(p.GetClientId());
-                    Utils.TeleportDeferred(__instance.NetTransform, pos).Send(p.GetClientId());
-                }
+                else writer.Send(otherPlayer.OwnerId);
+
+                if (hasRanFinish) return;
+                Async.Schedule(() => FinishVanishDesync(phantom, isImpFaction, alliedPlayerIds), 1.2f);
             }
-        });
+            else // is returning
+            {
+                log.Info($"Desync-appearing {phantom.name} for {otherPlayer.GetNameWithRole()}.");
+                if (otherPlayer.AmOwner) // host check
+                {
+                    _ignoreSetInvisibilityPatch += 1;
+                    phantom.StartCoroutine(phantom.CoSetRole(RoleTypes.Phantom, ProjectLotus.AdvancedRoleAssignment));
+                    phantom.SetRoleInvisibility(false, true, true);
+                }
+                else writer.Send(otherPlayer.OwnerId);
+
+                if (hasRanFinish) return;
+                // Async.Schedule(() => StartAppearDesync(phantom, isImpFaction, alliedPlayerIds), .01f);
+                Async.Schedule(() => FinishAppearDesync(phantom, isImpFaction, alliedPlayerIds), 1.8f);
+            }
+            hasRanFinish = true;
+        }
     }
 
     [QuickPrefix(typeof(PlayerControl), nameof(PlayerControl.CheckVanish))]
@@ -145,13 +229,13 @@ public static class PhantomActionsPatch
             {
                 DestroyableSingleton<HudManager>.Instance.AbilityButton.SetFromSettings(phantom.Data.Role.Ability);
                 phantom.Data.Role.SetCooldown();
+                phantom.PrimaryRole().UIManager.ForceUpdate();
                 return false;
             }
 
             RpcV3.Immediate(phantom.NetId, RpcCalls.SetRole).Write((ushort)RoleTypes.Phantom).Write(true).Send(phantom.GetClientId());
-            phantom.RpcResetAbilityCooldown();
-
-            Async.Schedule(() => phantom.SetKillCooldown(phantom.PrimaryRole().GetOverride(Override.KillCooldown)?.GetValue() as float? ?? AUSettings.KillCooldown()), 0.2f);
+            Async.Schedule(() => phantom.RpcResetAbilityCooldown(), NetUtils.DeriveDelay(0.2f));
+            // Async.Schedule(() => phantom.SetKillCooldown(phantom.PrimaryRole().GetOverride(Override.KillCooldown)?.GetValue() as float? ?? AUSettings.KillCooldown()), NetUtils.DeriveDelay(0.2f));
 
             return false;
         }
@@ -166,5 +250,152 @@ public static class PhantomActionsPatch
 
         PlayerControl phantom = __instance;
         log.Info($"CheckAppear - {phantom.GetNameWithRole()}");
+    }
+
+    private static void FinishVanishDesync(PlayerControl phantom, bool isImpFaction, List<byte> alliedPlayerIds)
+    {
+        phantom.Data.DefaultOutfit.PetSequenceId += 10;
+        var sender = RpcV3.Mass(SendOption.Reliable);
+
+        string petId = phantom.Data.DefaultOutfit.PetId;
+        if (petId != "")
+        {
+            PetsList[phantom.PlayerId] = petId;
+            sender.Start(phantom.NetId, RpcCalls.SetPetStr)
+                .Write("")
+                .Write(phantom.GetNextRpcSequenceId(RpcCalls.SetPetStr))
+                .End();
+        }
+
+        sender
+            .Start(phantom.NetId, RpcCalls.Exiled)
+            .End();
+
+
+        foreach (PlayerControl otherPlayer in Players.GetAllPlayers())
+        {
+            if (Game.State is GameState.InMeeting || phantom.PlayerId == otherPlayer.PlayerId) continue;
+            CustomRole role = otherPlayer.PrimaryRole();
+            if (role.RealRole.IsCrewmate() && isImpFaction) continue;
+            if (alliedPlayerIds.Contains(otherPlayer.PlayerId)) continue;
+
+            if (otherPlayer.AmOwner)
+            {
+                phantom.SetPet("");
+
+                // Would cause client to be half-alive (they would be a ghost and can't walk through walls. so we're just not even going to deal with that.
+                // phantom.Exiled();
+                phantom.invisibilityAlpha = 0;
+                phantom.shouldAppearInvisible = true;
+                phantom.Visible = false;
+                phantom.cosmetics.SetPhantomRoleAlpha(0);
+            } else sender.Send(otherPlayer.OwnerId);
+        }
+    }
+
+    private static void StartAppearDesync(PlayerControl phantom, bool shouldAnimate)
+    {
+        var writer = RpcV3.Mass()
+            .Start(phantom.NetId, RpcCalls.CheckAppear)
+            .Write(shouldAnimate)
+            .End();
+        phantom.CheckAppear(shouldAnimate);
+        writer.Send();
+    }
+
+    private static void FinishAppearDesync(PlayerControl phantom, bool isImpFaction, List<byte> alliedPlayerIds)
+    {
+        bool changePet = PetsList.TryGetValue(phantom.PlayerId, out var petId);
+
+        var writer = RpcV3.Mass()
+            .Start(phantom.NetId, RpcCalls.SetRole)
+            .Write((ushort)RoleTypes.Crewmate) // set crewmate as we are a desynced & non-allied impostor
+            .Write(ProjectLotus.AdvancedRoleAssignment)
+            .End();
+
+        if (changePet)
+            writer
+                .Start(phantom.NetId, RpcCalls.SetPetStr)
+                .Write(petId ?? "")
+                .Write(phantom.GetNextRpcSequenceId(RpcCalls.SetPetStr))
+                .End();
+
+        foreach (PlayerControl otherPlayer in Players.GetAllPlayers())
+        {
+            if (Game.State is GameState.InMeeting || phantom == null || otherPlayer.PlayerId == phantom.PlayerId) continue;
+            CustomRole role = otherPlayer.PrimaryRole();
+            if (role.RealRole.IsCrewmate() && isImpFaction || alliedPlayerIds.Contains(otherPlayer.PlayerId)) continue;
+
+
+            if (otherPlayer.AmOwner)
+            {
+                phantom.SetRole(RoleTypes.Crewmate, ProjectLotus.AdvancedRoleAssignment);
+                if (changePet) phantom.SetPet(petId);
+            }
+            else writer.Send(otherPlayer.OwnerId);
+        }
+    }
+
+    private static void OnMeetingCalled(GameStateHookEvent _)
+    {
+        if (InvisiblePlayers.Count == 0) return;
+        List<PlayerControl> invisiblePhantoms = InvisiblePlayers
+            .Select(Utils.PlayerById)
+            .Where(op => op.Exists())
+            .Select(op => op.Get())
+            .ToList();
+        if (invisiblePhantoms.Count == 0)
+        {
+            InvisiblePlayers.Clear();
+            return;
+        }
+
+        foreach (PlayerControl phantom in invisiblePhantoms)
+        {
+            if (!phantom.IsAlive())
+            {
+                InvisiblePlayers.Remove(phantom.PlayerId);
+                PetsList.Remove(phantom.PlayerId);
+                continue;
+            }
+
+            List<byte> alliedPlayerIds = Players.GetPlayers()
+                .Where(p => phantom.Relationship(p) is Relation.FullAllies)
+                .Where(phantom.PrimaryRole().Faction.CanSeeRole)
+                .Select(p => p.PlayerId)
+                .ToList();
+            bool isImpFaction = phantom.PrimaryRole().Faction.GetType() == typeof(ImpostorFaction);
+            log.Debug($"Force making {phantom.name} visible for meeting.");
+
+            foreach (PlayerControl otherPlayer in Players.GetAllPlayers())
+            {
+                if (otherPlayer.PlayerId == phantom.PlayerId) continue;
+                CustomRole role = otherPlayer.PrimaryRole();
+                if (role.RealRole.IsCrewmate() && isImpFaction || alliedPlayerIds.Contains(otherPlayer.PlayerId)) continue;
+                log.Debug($"making {phantom.name} visible for {otherPlayer.name}.");
+                Async.Execute(CoRevertInvisible(phantom, otherPlayer));
+            }
+            InvisiblePlayers.Remove(phantom.PlayerId);
+        }
+    }
+
+    private static IEnumerator CoRevertInvisible(PlayerControl phantom, PlayerControl target)
+    {
+        phantom.RpcSetRoleDesync(RoleTypes.Crewmate, target);
+        yield return new WaitForSeconds(NetUtils.DeriveDelay(1f));
+        phantom.RpcSetRoleDesync(RoleTypes.Phantom, target);
+        yield return new WaitForSeconds(NetUtils.DeriveDelay(1f));
+        if (target.AmOwner)
+        {
+            _ignoreSetInvisibilityPatch += 1;
+            phantom.SetRoleInvisibility(false, false, true);
+        } else RpcV3.Immediate(phantom.NetId, RpcCalls.StartAppear).Write(false).Send(target.GetClientId());
+        yield return new WaitForSeconds(NetUtils.DeriveDelay(1f));
+        phantom.RpcSetRoleDesync(RoleTypes.Crewmate, target);
+        if (PetsList.TryGetValue(phantom.PlayerId, out var petId))
+        {
+            if (target.AmOwner) phantom.SetPet(petId);
+            else RpcV3.Immediate(phantom.NetId, RpcCalls.SetPetStr).Write(petId).Write(phantom.GetNextRpcSequenceId(RpcCalls.SetPetStr)).Send(target.GetClientId());
+        }
     }
 }

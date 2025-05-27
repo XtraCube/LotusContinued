@@ -19,16 +19,32 @@ using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using Lotus.API.Vanilla.Meetings;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Tracker : Vanilla.Tracker
+public class Tracker : Vanilla.Tracker, IRoleUI
 {
     private TrackBodyValue canTrackBodies;
     private bool canTrackUnreportableBodies;
 
-    private Cooldown trackBodyCooldown;
-    private Cooldown trackBodyDuration;
+    [UIComponent(UI.Cooldown)] private Cooldown trackBodyCooldown;
+    [UIComponent(UI.Cooldown)] private Cooldown trackBodyDuration;
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .BindCooldown(trackBodyCooldown)
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/tracker_track_bodies.png", 130, true));
+
+    protected override void Setup(PlayerControl player)
+    {
+        base.Setup(player);
+        if (canTrackBodies is not TrackBodyValue.OnPet) UIManager.DisableUI(); // Setup is called by modded clients, so we can just call this to disable for them.
+    }
 
     [UIComponent(UI.Indicator)]
     public string DisplayDeadBodies()
@@ -46,7 +62,24 @@ public class Tracker : Vanilla.Tracker
     {
         if (canTrackBodies is not TrackBodyValue.OnPet) return;
         if (trackBodyCooldown.NotReady() || trackBodyDuration.NotReady()) return;
-        trackBodyDuration.StartThenRun(() => trackBodyCooldown.Start());
+        if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(trackBodyDuration);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateTracker)?.Send([MyPlayer.OwnerId], false);
+        trackBodyDuration.StartThenRun(() =>
+        {
+            if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(trackBodyCooldown);
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateTracker)?.Send([MyPlayer.OwnerId], true);
+            trackBodyCooldown.Start();
+        });
+    }
+
+    [ModRPC((uint)ModCalls.UpdateTracker, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateTracker(bool useCooldown)
+    {
+        Tracker? tracker = PlayerControl.LocalPlayer.PrimaryRole<Tracker>();
+        if (tracker == null) return;
+        tracker.UIManager.PetButton.BindCooldown(useCooldown ? tracker.trackBodyCooldown : tracker.trackBodyDuration);
+        if (useCooldown) tracker.trackBodyCooldown.Start();
+        else tracker.trackBodyDuration.Start();
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
@@ -59,7 +92,7 @@ public class Tracker : Vanilla.Tracker
                 .ShowSubOptionPredicate(i => (int)i != 0)
                 .SubOption(sub2 => sub2.KeyName("Can Track Unreportable Bodies", Translations.Options.CanTrackUnreportableBodies)
                     .BindBool(b => canTrackUnreportableBodies = b)
-                    .AddOnOffValues()
+                    .AddBoolean()
                     .Build())
                 .SubOption(sub2 => sub2.KeyName("Track Body Duration", Translations.Options.TrackBodyDuration)
                     .AddFloatRange(2.5f, 120f, 2.5f, 4, GeneralOptionTranslations.SecondsSuffix)
@@ -76,8 +109,9 @@ public class Tracker : Vanilla.Tracker
             // .RoleColor(new Color(0.82f, 0.24f, 0.82f))
             .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
 
-    private static class Translations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Locate";
         public static class Options
         {
 

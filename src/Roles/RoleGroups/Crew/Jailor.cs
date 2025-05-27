@@ -5,6 +5,7 @@ using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.API.Vanilla.Meetings;
+using Lotus.API.Vanilla.Sabotages;
 using Lotus.Chat;
 using Lotus.Extensions;
 using Lotus.Factions;
@@ -12,16 +13,22 @@ using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name.Holders;
+using Lotus.Patches.Systems;
 using Lotus.Roles.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Overrides;
 using Lotus.Roles.RoleGroups.Vanilla;
+using Lotus.RPC;
 using Lotus.Utilities;
 using UnityEngine;
+using VentLib;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Collections;
@@ -31,10 +38,10 @@ using static Lotus.Roles.RoleGroups.Crew.Sheriff.Translations.Options;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Jailor: Crewmate
+public class Jailor: Crewmate, IRoleUI
 {
     // Settings
-    private Cooldown jailCooldown;
+    [UIComponent(UI.Cooldown)] private Cooldown jailCooldown;
     private int maxExecutionTimes;
     private bool suicideOnCrewmateExecuted;
     private bool jailedPlayerVoteCounts;
@@ -46,8 +53,20 @@ public class Jailor: Crewmate
     private byte jailedPlayer;
     private bool canExecute;
 
-
     private Remote<TextComponent>? jailedText;
+
+    public RoleButton KillButton(IRoleButtonEditor editor) => useKillButton
+        ? editor
+            .SetText(Translations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/jailor_jail.png", 130, true))
+        : editor.Default(true);
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => useKillButton
+        ? editor.Default(true)
+        : editor
+            .BindCooldown(jailCooldown)
+            .SetText(Translations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/jailor_jail.png", 130, true));
 
     protected override void PostSetup()
     {
@@ -62,7 +81,11 @@ public class Jailor: Crewmate
     {
         jailedPlayer = byte.MaxValue;
         jailedText?.Delete();
-        jailCooldown.Start(isRoundOne ? 10 : float.MinValue);
+        if (!useKillButton)
+        {
+            jailCooldown.Start(isRoundOne ? 10 : float.MinValue);
+            if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateJailor)?.Send([MyPlayer.OwnerId], isRoundOne);
+        }
     }
 
     [RoleAction(LotusActionType.OnPet)]
@@ -71,15 +94,15 @@ public class Jailor: Crewmate
         if (useKillButton) return;
         List<PlayerControl> closestPlayers = MyPlayer.GetPlayersInAbilityRangeSorted();
         if (closestPlayers.Count == 0) return;
+        if (jailCooldown.NotReady()) return;
+        jailCooldown.Start();
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateJailor)?.Send([MyPlayer.OwnerId], false);
         TryKill(closestPlayers[0]);
     }
 
     [RoleAction(LotusActionType.Attack)]
     private bool TryKill(PlayerControl target)
     {
-        if (jailCooldown.NotReady()) return false;
-        jailCooldown.Start();
-
         MyPlayer.RpcMark(target);
         InteractionResult result = MyPlayer.InteractWith(target, LotusInteraction.NeutralInteraction.Create(this));
         if (result is InteractionResult.Proceed)
@@ -179,11 +202,19 @@ public class Jailor: Crewmate
         jailed.IfPresent(p => ChatHandler.Of(Translations.JailedMessage, RoleColor.Colorize(RoleName)).Send(p));
     }
 
+    [ModRPC((uint)ModCalls.UpdateJailor, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateJailor(bool isRoundOne)
+    {
+        Jailor? jailor = PlayerControl.LocalPlayer.PrimaryRole<Jailor>();
+        if (jailor == null) return;
+        jailor.jailCooldown.Start(isRoundOne ? 10 : float.MinValue);
+    }
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) => base.RegisterOptions(optionStream)
         .Color(RoleColor)
         .SubOption(sub => sub
             .KeyName("Jail Cooldown", Translations.Options.JailCooldown)
-            .AddFloatRange(1, 15, 1, 10)
+            .AddFloatRange(1, 15, 1, 9)
             .BindFloat(jailCooldown.SetDuration)
             .Build())
         .SubOption(sub => sub
@@ -218,6 +249,8 @@ public class Jailor: Crewmate
     protected override RoleModifier Modify(RoleModifier roleModifier) => base.Modify(roleModifier)
         .RoleColor(new Color(.65f, .65f, .65f))
         .DesyncRole(useKillButton ? RoleTypes.Impostor : RoleTypes.Crewmate)
+        .OptionOverride(Override.ImpostorLightMod, () => AUSettings.CrewLightMod(), () => useKillButton)
+        .OptionOverride(Override.ImpostorLightMod, () => AUSettings.CrewLightMod() / 5, () => useKillButton && SabotagePatch.CurrentSabotage != null && SabotagePatch.CurrentSabotage.SabotageType() is SabotageType.Lights)
         .IntroSound(RoleTypes.Crewmate)
         .RoleAbilityFlags(!useKillButton ? (RoleAbilityFlags & RoleAbilityFlag.UsesPet) : RoleAbilityFlags, true)
         .OptionOverride(new IndirectKillCooldown(jailCooldown.Duration));
@@ -225,6 +258,8 @@ public class Jailor: Crewmate
     [Localized(nameof(Jailor))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Jail";
+
         [Localized(nameof(JailedText))] public static string JailedText = "JAILED";
 
         [Localized(nameof(JailorMessage))] public static string JailorMessage = "Vote the jailed player to execute them. Depending on settings, you may die if they are crewmate. They may also be forced to vote the same person as you. No one can vote the Jailee, and they cannot be killed unless by you.";

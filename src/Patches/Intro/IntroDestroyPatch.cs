@@ -25,6 +25,7 @@ using VentLib.Networking.RPC;
 using Lotus.GameModes.Standard;
 using System.Collections.Generic;
 using System;
+using Lotus.GameModes;
 
 namespace Lotus.Patches.Intro;
 
@@ -55,7 +56,7 @@ class IntroDestroyPatch
             p.RpcResetAbilityCooldown();
             executeSample.Stop();
         });
-        Async.Schedule(() => Players.GetPlayers().ForEach(p => Async.Execute(ReverseEngineeredRPC.UnshfitButtonTrigger(p))), NetUtils.DeriveDelay(2f));
+        // Async.Schedule(() => Players.GetPlayers().ForEach(p => Async.Execute(ReverseEngineeredRPC.UnshiftButtonTrigger(p))), NetUtils.DeriveDelay(2f));
         fullSample.Stop();
         Game.State = GameState.Roaming;
         Game.MatchData.StartTime = DateTime.Now;
@@ -111,11 +112,14 @@ class IntroDestroyPatch
         if (!hasPet) player.CRpcShapeshift(player, false);
 
         INameModel nameModel = player.NameModel();
-        if (SelectRolesPatch.desyncedIntroText.TryGetValue(player.PlayerId, out VentLib.Utilities.Collections.Remote<GUI.Name.Components.TextComponent>? value) && value != null)
+        if (role.desyncedIntroText != null)
         {
-            value.Delete();
+            role.desyncedIntroText.Delete();
+            role.desyncedIntroText = null;
         }
+
         Players.GetPlayers().ForEach(p => nameModel.RenderFor(p, GameState.Roaming, force: true));
         player.SyncAll();
+        if (Game.CurrentGameMode.GameFlags().HasFlag(GameModeFlags.AllowChatDuringGame)) ReverseEngineeredRPC.EnableChatForPlayer(player);
     }
 }

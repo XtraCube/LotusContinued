@@ -77,15 +77,7 @@ public class Amnesiac : CustomRole, IVariableRole
                 targetRole = roleHolder.Static.Impostor;
         }
 
-        CustomRole newRole = StandardGameMode.Instance.RoleManager.GetCleanRole(targetRole);
-
-        Game.CurrentGameMode.Assign(MyPlayer, newRole);
-
-        CustomRole role = MyPlayer.PrimaryRole();
-        if (ProjectLotus.AdvancedRoleAssignment) role.Assign();
-        else role.DesyncRole = RoleTypes.Impostor;
-        Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(MyPlayer, role, this));
-
+        this.ChangeRoleTo(targetRole);
         arrowComponent?.Delete();
         handle.Cancel();
     }

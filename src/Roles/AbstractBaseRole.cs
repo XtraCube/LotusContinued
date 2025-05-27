@@ -42,6 +42,7 @@ using Lotus.Patches.Intro;
 using Object = UnityEngine.Object;
 using Lotus.Roles.Outfit;
 using Lotus.Options.Patches;
+using Lotus.Roles.GUI;
 
 namespace Lotus.Roles;
 
@@ -117,8 +118,9 @@ public abstract class AbstractBaseRole
     internal GameOption RoleOptions;
     internal readonly Assembly DeclaringAssembly;
 
-    public virtual List<Statistic> Statistics() => new();
     public virtual HashSet<Type> BannedModifiers() => new();
+    public virtual RoleUIManager UIManager { get; } = new();
+    public virtual List<Statistic> Statistics() => new();
     public RoleMetadata Metadata;
 
     public string EnglishRoleName { get; internal set; }
@@ -136,10 +138,11 @@ public abstract class AbstractBaseRole
         this.EnglishRoleName = this.GetType().Name.Replace("CRole", "").Replace("Role", "");
         log.Debug($"AbstractBaseRole() Role Name: {EnglishRoleName}");
         CreateInstanceBasedVariables();
-        // Why? Modify may reference uncreated options, yet when setting up options developers may try to reference
+
+        // Why are we calling this? Modify may reference uncreated options, yet when setting up options developers may try to reference
         // RoleColor (which is white until after Modify)
-        // To solve this we call Modify to TRY to setup the role color, crashing once it requires uncreated options
-        // The modify in the Solodify method is the "real" modify
+        // To solve this we call Modify to TRY to set up the role color, crashing once it requires uncreated options
+        // The modify call in the Solidify method is the "real" modify
         RoleModifier _;
         try
         {
@@ -255,6 +258,7 @@ public abstract class AbstractBaseRole
 
     protected void CreateInstanceBasedVariables()
     {
+        this.UIManager.SetBaseRole(this);
         this.GetType().GetFields(AccessFlags.InstanceAccessFlags | BindingFlags.FlattenHierarchy)
             .Where(f => f.GetCustomAttribute<NewOnSetupAttribute>() != null)
             .Select(f => new NewOnSetup(f, f.GetCustomAttribute<NewOnSetupAttribute>()!.UseCloneIfPresent))
@@ -706,10 +710,7 @@ public abstract class AbstractBaseRole
 
         public RoleModifier AddRoleProperty(RoleProperty[] properties, bool replace = false)
         {
-            if (replace)
-            {
-                myRole.Metadata.Set(RoleProperties.Key, new RoleProperties());
-            }
+            if (replace) myRole.Metadata.Set(RoleProperties.Key, new RoleProperties());
             myRole.Metadata.GetOrDefault(RoleProperties.Key, new RoleProperties()).AddAll(properties);
             return this;
         }

@@ -16,24 +16,36 @@ using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities.Extensions;
 using Lotus.API.Player;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Disperser : Impostor
+public class Disperser : Impostor, IRoleUI
 {
     private bool disperserDispersed;
 
     [UIComponent(UI.Cooldown)]
     private Cooldown abilityCooldown;
 
+    public RoleButton PetButton(IRoleButtonEditor petButton) =>
+        petButton
+            .BindCooldown(abilityCooldown)
+            .SetText(Translations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/disperser_disperse.png", 130, true));
+
     [RoleAction(LotusActionType.Attack)]
-    public new bool TryKill(PlayerControl target) => base.TryKill(target);
+    public override bool TryKill(PlayerControl target) => base.TryKill(target);
 
     [RoleAction(LotusActionType.OnPet)]
     private void DispersePlayers()
     {
         if (abilityCooldown.NotReady()) return;
         abilityCooldown.Start();
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateDisperser)?.Send([MyPlayer.OwnerId]);
         List<Vent> vents = Object.FindObjectsOfType<Vent>().ToList();
         if (vents.Count == 0) return;
         Players.GetAlivePlayers()
@@ -45,6 +57,14 @@ public class Disperser : Impostor
             });
     }
 
+    [ModRPC((uint)ModCalls.UpdateDisperser, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateDisperser()
+    {
+        Disperser? disperser = PlayerControl.LocalPlayer.PrimaryRole<Disperser>();
+        if (disperser == null) return;
+        disperser.abilityCooldown.Start();
+    }
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub
@@ -53,18 +73,20 @@ public class Disperser : Impostor
                 .AddFloatRange(0, 120, 2.5f, 5, GeneralOptionTranslations.SecondsSuffix)
                 .Build())
             .SubOption(sub => sub.KeyName("Disperser Gets Dispersed", TranslationUtil.Colorize(Translations.Options.DisperserGetsDispersed, RoleColor))
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => disperserDispersed = b)
                 .Build());
 
-    protected override RoleModifier Modify(RoleModifier roleModifier) =>
-        base.Modify(roleModifier)
-            .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
+    protected override RoleModifier Modify(RoleModifier roleModifier) => base.Modify(roleModifier)
+        .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
 
 
     [Localized(nameof(Disperser))]
-    private static class Translations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Disperse";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

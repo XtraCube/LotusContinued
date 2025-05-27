@@ -9,27 +9,36 @@ using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.Roles.RoleGroups.Impostors;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class ExConvict : Crewmate
+public class ExConvict : Crewmate, IRoleUI
 {
     private Vector2? location;
     private bool clearMarkAfterMeeting;
 
 
-    [UIComponent(UI.Cooldown)]
-    private Cooldown canEscapeCooldown;
+    [UIComponent(UI.Cooldown)] private Cooldown canEscapeCooldown;
 
-    [UIComponent(UI.Cooldown)]
-    private Cooldown canMarkCooldown;
+    [UIComponent(UI.Cooldown)] private Cooldown canMarkCooldown;
 
     [UIComponent(UI.Text)]
-    private string TpIndicator() => canEscapeCooldown.IsReady() && location != null ? Color.cyan.Colorize("Press Pet to Escape") : "";
+    private string TpIndicator() => canEscapeCooldown.IsReady() && location != null
+        ? Color.cyan.Colorize("Press Pet to Escape")
+        : "";
+
+    public RoleButton PetButton(IRoleButtonEditor editor) => UpdatePetButton(editor);
 
     protected override void PostSetup()
     {
@@ -47,7 +56,12 @@ public class ExConvict : Crewmate
     [RoleAction(LotusActionType.RoundStart)]
     private void ClearMark()
     {
-        if (clearMarkAfterMeeting) location = null;
+        if (clearMarkAfterMeeting)
+        {
+            location = null;
+            if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateExConvict)?.Send([MyPlayer.OwnerId], false, false);
+        }
     }
 
     private void TryMarkLocation()
@@ -55,6 +69,8 @@ public class ExConvict : Crewmate
         if (canMarkCooldown.NotReady()) return;
         location = MyPlayer.GetTruePosition();
         canEscapeCooldown.Start();
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateExConvict)?.Send([MyPlayer.OwnerId], true, true);
     }
 
     private void TryEscape()
@@ -63,7 +79,31 @@ public class ExConvict : Crewmate
         Utils.Teleport(MyPlayer.NetTransform, location.Value);
         location = null;
         canMarkCooldown.Start();
+        if (MyPlayer.AmOwner) UpdatePetButton(UIManager.PetButton);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateExConvict)?.Send([MyPlayer.OwnerId], false, true);
     }
+
+    [ModRPC((uint)ModCalls.UpdateExConvict, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcSendUpdateButton(bool hasLocation, bool doCooldown)
+    {
+        ExConvict? exConvict = PlayerControl.LocalPlayer.PrimaryRole<ExConvict>();
+        if (exConvict == null) return; // Should never be null but just in case.
+        exConvict.location = hasLocation ? Vector2.zero : null; // Doesn't really matter about what we set as this value isn't ever read by the client.
+        exConvict.UpdatePetButton(exConvict.UIManager.PetButton);
+        if (!doCooldown) return;
+        if (hasLocation) exConvict.canEscapeCooldown.Start();
+        else exConvict.canMarkCooldown.Start();
+    }
+
+    private RoleButton UpdatePetButton(IRoleButtonEditor editor) => location == null
+        ? editor
+            .SetText(Escapist.Translations.MarkButtonText)
+            .BindCooldown(canMarkCooldown)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/ex-convict_mark.png", 130, true))
+        : editor
+            .SetText(Escapist.Translations.EscapeButtonText)
+            .BindCooldown(canEscapeCooldown)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/ex-convict_teleport.png", 130, true));
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -79,7 +119,7 @@ public class ExConvict : Crewmate
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Clear Mark After Meeting", Translations.Options.ClearAfterMeeting)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => clearMarkAfterMeeting = b)
                 .Build());
 

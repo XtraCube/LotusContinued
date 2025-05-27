@@ -54,6 +54,8 @@ public abstract class GameMode : IGameMode
 
     public virtual BlockableGameAction BlockedActions() => BlockableGameAction.Nothing;
 
+    public virtual GameModeFlags GameFlags() => GameModeFlags.None;
+
     public abstract void Setup();
 
     public abstract void Assign(PlayerControl player, CustomRole role, bool addAsMainRole = true, bool sendToClient = false);
@@ -62,43 +64,55 @@ public abstract class GameMode : IGameMode
     {
         if (!ProjectLotus.AdvancedRoleAssignment)
         {
-            Players.GetAllPlayers().Sorted(p => p.IsHost() ? 0 : 1).ForEach(p => p.PrimaryRole().Assign());
+            Players.GetAllPlayers().Sorted(p => p.IsHost() ? 0 : 1).ForEach(p => p.PrimaryRole().Assign(true));
             return;
         }
         players = Players.GetAllPlayers().ToList();
-        PlayerControl lastPlayer = players.Last();
+        List<LastPlayerInfo> lastPlayerInfos = [];
 
         log.Debug("Assigning roles...");
-        players.Where(p => p != lastPlayer).ForEach(p => p.PrimaryRole().Assign());
-        log.Debug("Assigned everyone but the last player.");
+        players.ForEach(p => lastPlayerInfos.Add(p.PrimaryRole().Assign(false).Get()));
+        log.Debug("Assigned everyone but the last player for each player.");
 
+        Dictionary<byte, bool> realDisconnectInfo = new();
         Async.Schedule(() =>
         {
-            Dictionary<byte, bool> Disconnected = new();
+            log.Debug("Sending Disconnected Data.");
             players.ForEach(pc =>
             {
-                Disconnected[pc.PlayerId] = pc.Data.Disconnected;
+                realDisconnectInfo[pc.PlayerId] = pc.Data.Disconnected;
                 pc.Data.Disconnected = true;
+                pc.Data.MarkDirty();
+                AmongUsClient.Instance.SendAllStreamedObjects();
             });
-            log.Debug("Sending Disconncted Data.");
-            GeneralRPC.SendGameData();
-            players.ForEach(pc => pc.Data.Disconnected = Disconnected[pc.PlayerId]);
         }, NetUtils.DeriveDelay(0.5f));
         Async.Schedule(() =>
         {
-            log.Debug("Sending the last player's role info...");
-            lastPlayer.PrimaryRole().Assign();
+            log.Debug("Sending the the last player's info for each player...");
+            lastPlayerInfos.ForEach(lp =>
+            {
+                // log.Debug($"Assigning {lp.TargetRoleForSeer} for {lp.Target} on {lp.Seer}'s screen.");
+                if (lp.Seer.AmOwner) lp.Target.SetRole(lp.TargetRoleForSeer, ProjectLotus.AdvancedRoleAssignment);
+                else RpcV3.Immediate(lp.Target.NetId, RpcCalls.SetRole)
+                    .Write((ushort)lp.TargetRoleForSeer)
+                    .Write(ProjectLotus.AdvancedRoleAssignment)
+                    .Send(lp.Seer.OwnerId);
+                lp.Seer.GetTeamInfo().AddPlayer(lp.Target.PlayerId, lp.TargetRoleForSeer.IsImpostor());
+            });
             log.Debug("Sent! Cleaning up in a second...");
         }, NetUtils.DeriveDelay(1f));
         Async.Schedule(() =>
         {
-            players.ForEach(pc => PlayerNameColor.Set(pc));
-            DestroyableSingleton<HudManager>.Instance.StartCoroutine(DestroyableSingleton<HudManager>.Instance.CoShowIntro());
-            DestroyableSingleton<HudManager>.Instance.HideGameLoader();
-        }, NetUtils.DeriveDelay(1.2f));
-        Async.Schedule(() =>
-        {
-            GeneralRPC.SendGameData();
+            players.ForEach(pc =>
+            {
+                bool disconnected = realDisconnectInfo[pc.PlayerId];
+                pc.Data.Disconnected = disconnected;
+                if (!disconnected)
+                {
+                    pc.Data.MarkDirty();
+                    AmongUsClient.Instance.SendAllStreamedObjects();
+                }
+            });
             log.Trace("Cleaned up and sent old disconnect info.");
         }, NetUtils.DeriveDelay(1.5f));
     }

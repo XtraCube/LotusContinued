@@ -274,20 +274,25 @@ public class Guesser : Subrole
         LastResort.IncompatibleRoles.ForEach(r => restrictedRoles?.Add(r));
         return restrictedRoles;
     }
+    // If the faction is neutral, use neutral type attribute.
+    private Type GetFactionType(IFaction playerFaction) => playerFaction is INeutralFaction
+        ? FactionInstances.Neutral.GetType()
+        : playerFaction.GetType();
 
     private int GetAmountOfPeopleOnFaction(Type faction) => Players.GetAlivePlayers().Count(p =>
-        p.PrimaryRole().Faction.GetType() == faction && p.GetSubroles().Any(s => s is Guesser));
+        GetFactionType(p.PrimaryRole().Faction) == faction && p.GetSubroles().Any(s => s is Guesser));
 
     public override bool IsAssignableTo(PlayerControl player)
     {
-        Type myFaction = player.PrimaryRole().Faction.GetType();
+        Type myFaction = GetFactionType(player.PrimaryRole().Faction);
 
         // Check if their faction already has the max amount of allowed players.
         // If they are maxed out, we don't even call base and just immediately exit.
+
         if (GetAmountOfPeopleOnFaction(myFaction) >= FactionMaxDictionary.GetValueOrDefault(myFaction, 0))
             return false;
 
-        // Return base as that''s the only check.
+        // Return base as that's the only check.
         // Base checks restricted roles.
         return base.IsAssignableTo(player);
     }

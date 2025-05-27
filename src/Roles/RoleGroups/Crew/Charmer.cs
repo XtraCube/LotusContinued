@@ -37,10 +37,15 @@ using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using Lotus.GameModes.Standard;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Charmer : Crewmate
+public class Charmer : Crewmate, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Charmer));
     public static HashSet<Type> CharmerBannedModifiers = new() { typeof(Rogue) };
@@ -69,6 +74,20 @@ public class Charmer : Crewmate
     [NewOnSetup] private Dictionary<byte, (Remote<NameComponent>, Remote<IStatus>?, IFaction)> charmedPlayers = new();
 
     public override bool HasTasks() => !usesKillButton;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => usesKillButton
+        ? killButton
+            .SetText(Translations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/charmer_charm.png", 130, true))
+        : killButton.Default(true);
+
+    public RoleButton PetButton(IRoleButtonEditor petButton) => usesKillButton
+        ? petButton.Default(true)
+        : petButton
+            .SetText(Translations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/charmer_charm.png", 130, true))
+            .BindUses(() => tasksPerUsage == 0 ? -1 : Mathf.FloorToInt(taskAbilityCount / tasksPerUsage))
+            .BindCooldown(charmingCooldown);
 
     protected override void PostSetup()
     {
@@ -101,6 +120,7 @@ public class Charmer : Crewmate
         }
 
         taskAbilityCount = 0;
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateCharmer)?.Send([MyPlayer.OwnerId], taskAbilityCount, false);
         MyPlayer.RpcMark(player);
         if (MyPlayer.InteractWith(player, LotusInteraction.HostileInteraction.Create(this)) is InteractionResult.Halt) return true;
 
@@ -124,7 +144,11 @@ public class Charmer : Crewmate
         PlayerControl? closestPlayer = MyPlayer.GetPlayersInAbilityRangeSorted().FirstOrDefault();
         if (closestPlayer == null) return;
         if (charmedPlayers.ContainsKey(closestPlayer.PlayerId)) return;
-        if (CharmPlayer(closestPlayer)) charmingCooldown.Start();
+        if (CharmPlayer(closestPlayer))
+        {
+            charmingCooldown.Start();
+            if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateCharmer)?.Send([MyPlayer.OwnerId], taskAbilityCount, true);
+        }
     }
 
     [RoleAction(LotusActionType.Interaction, ActionFlag.WorksAfterDeath | ActionFlag.GlobalDetector)]
@@ -154,8 +178,20 @@ public class Charmer : Crewmate
         player.PrimaryRole().Faction = tuple.Item3;
     }
 
+    protected override void OnTaskComplete(Optional<NormalPlayerTask> _)
+    {
+        taskAbilityCount = Mathf.Clamp(++taskAbilityCount, 0, TasksPerUsage);
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateCharmer)?.Send([MyPlayer.OwnerId], taskAbilityCount, false);
+    }
 
-    protected override void OnTaskComplete(Optional<NormalPlayerTask> _) => taskAbilityCount = Mathf.Clamp(++taskAbilityCount, 0, TasksPerUsage);
+    [ModRPC((uint)ModCalls.UpdateCharmer, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateCharmer(int taskAbilityCount, bool startCooldown)
+    {
+        Charmer? charmer = PlayerControl.LocalPlayer.PrimaryRole<Charmer>();
+        if (charmer == null) return;
+        charmer.taskAbilityCount = taskAbilityCount;
+        if (startCooldown) charmer.charmingCooldown.Start();
+    }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -177,11 +213,11 @@ public class Charmer : Crewmate
                 .Build())
             .SubOption(sub => sub.KeyName("Charmed Players Win with Crew", Translations.Options.CharmedPlayersWinWithCrew)
                 .BindBool(b => charmedPlayersWinWithCrew = b)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build())
             .SubOption(sub => sub.KeyName("Break Charm on Charmer Death", TranslationUtil.Colorize(Translations.Options.BreakCharmOnDeath, RoleColor))
                 .BindBool(b => breakCharmOnDeath = b)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build())
             .SubOption(sub => sub.KeyName("Max Charmed Players", Translations.Options.MaxCharmedPlayers)
                 .BindInt(i => maxCharmedPlayers = i)
@@ -210,8 +246,11 @@ public class Charmer : Crewmate
 
 
     [Localized(nameof(Charmer))]
-    private static class Translations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Charm";
+
         [Localized(nameof(CharmedText))]
         public static string CharmedText = "Charmed";
 

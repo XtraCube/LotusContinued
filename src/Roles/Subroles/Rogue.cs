@@ -55,6 +55,7 @@ public class Rogue : Subrole
         typeof(Charmer),
         typeof(Jailor)
     };
+
     private static ColorGradient _psychoGradient = new(new Color(0.41f, 0.1f, 0.18f), new Color(0.85f, 0.77f, 0f));
     public static Dictionary<Type, int> FactionMaxDictionary = new();
 

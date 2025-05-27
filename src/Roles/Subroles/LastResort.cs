@@ -18,6 +18,7 @@ using UnityEngine;
 using Lotus.API.Odyssey;
 using Lotus.GUI.Name.Holders;
 using System.Linq;
+using Lotus.API;
 using VentLib.Utilities;
 
 namespace Lotus.Roles.Subroles;
@@ -25,7 +26,7 @@ namespace Lotus.Roles.Subroles;
 public class LastResort : Subrole
 {
     /// <summary>
-    /// A list of roles that Last Resort is not compatiable with. Add your role to this list to make it not be assigned with your role.
+    /// A list of roles that Last Resort is not compatible with. Add your role to this list to make it not be assigned with your role.
     /// </summary>
     public static readonly List<Type> IncompatibleRoles = new()
     {
@@ -39,7 +40,8 @@ public class LastResort : Subrole
         typeof(Bodyguard),
         typeof(Medic),
         typeof(Oracle),
-        typeof(Guesser)
+        typeof(Guesser),
+        typeof(Turncoat)
     };
     public override string Identifier() => "»";
 
@@ -50,7 +52,7 @@ public class LastResort : Subrole
     private int additionalVotes;
     private bool hasRevealed = false;
 
-    [RoleAction(LotusActionType.Vote)]
+    [RoleAction(LotusActionType.Vote, priority: Priority.High)]
     private void OnLocalPlayerVote(Optional<PlayerControl> voted, MeetingDelegate meetingDelegate, ActionHandle handle)
     {
         if (hasRevealed)
@@ -66,7 +68,7 @@ public class LastResort : Subrole
         MyPlayer.NameModel().GetComponentHolder<RoleHolder>().Components().ForEach(component => component.SetViewerSupplier(() => PlayerControl.AllPlayerControls.ToArray().ToList()));
     }
 
-    [RoleAction(LotusActionType.ReportBody, ActionFlag.GlobalDetector, priority: API.Priority.Last)]
+    [RoleAction(LotusActionType.RoundEnd,  priority: API.Priority.Last)]
     private void OnReportBody() => ChatHandler.Of(Translations.HintText, RoleName).LeftAlign(false).Send(MyPlayer);
 
     public override HashSet<Type>? RestrictedRoles()

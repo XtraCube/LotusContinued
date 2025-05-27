@@ -11,4 +11,5 @@ public class RoleTranslations
     [Localized("CanSabotage")] public static string CanSabotage = "Can Sabotage";
     [Localized("Maximum")] public static string MaximumText = "Maximum";
     [Localized("CanVent")] public static string CanVent = "Can Vent";
+    [Localized("Switch")] public static string Switch = "Switch";
 }

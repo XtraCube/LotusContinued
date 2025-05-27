@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
@@ -27,7 +28,7 @@ internal class LegacyResolver : IBlackscreenResolver
 
     private byte resetCameraPlayer = byte.MaxValue;
     private Vector2 resetCameraPosition;
-    private MeetingDelegate meetingDelegate;
+    private MeetingDelegate? meetingDelegate;
     private Dictionary<byte, (bool isDead, bool isDisconnected)> playerStates = null!;
     private HashSet<byte> unpatchable;
 
@@ -40,6 +41,7 @@ internal class LegacyResolver : IBlackscreenResolver
 
     internal LegacyResolver(MeetingDelegate meetingDelegate)
     {
+        this.unpatchable = [];
         this.meetingDelegate = meetingDelegate;
         resetCameraPlayer = Players.GetPlayers(PlayerFilter.Dead).FirstOrOptional().Map(p => p.PlayerId).OrElse(byte.MaxValue);
         Hooks.PlayerHooks.PlayerMessageHook.Bind(nameof(BlackscreenResolver), _ => BlockLavaChat(), true);
@@ -107,12 +109,12 @@ internal class LegacyResolver : IBlackscreenResolver
     private HashSet<byte> StoreAndSendFallbackData()
     {
         _patching = true;
-        byte exiledPlayer = meetingDelegate.ExiledPlayer?.PlayerId ?? byte.MaxValue;
+        byte exiledPlayer = meetingDelegate?.ExiledPlayer?.PlayerId ?? byte.MaxValue;
         NetworkedPlayerInfo[] playerInfos = GameData.Instance.AllPlayers.ToArray().Where(p => p != null).ToArray();
         playerInfos.FirstOrOptional(p => p.PlayerId == exiledPlayer).IfPresent(info => info.IsDead = true);
 
         playerStates = playerInfos.ToDict(i => i.PlayerId, i => (i.IsDead, i.Disconnected));
-        HashSet<byte> unpatchablePlayers = SendPatchedData(meetingDelegate.ExiledPlayer?.PlayerId ?? byte.MaxValue);
+        HashSet<byte> unpatchablePlayers = SendPatchedData(meetingDelegate?.ExiledPlayer?.PlayerId ?? byte.MaxValue);
         log.Debug($"Unpatchable Players: {unpatchablePlayers.Filter(p => Utils.PlayerById(p)).Select(p => p.name).Fuse()}");
         return unpatchablePlayers;
     }
@@ -136,7 +138,7 @@ internal class LegacyResolver : IBlackscreenResolver
         runOnFinish();
     }
 
-    private bool TryGetDeadPlayer(out PlayerControl? deadPlayer)
+    private bool TryGetDeadPlayer([MaybeNullWhen(false)] out PlayerControl deadPlayer)
     {
         bool ReturnPlayer(PlayerControl player)
         {
@@ -153,7 +155,7 @@ internal class LegacyResolver : IBlackscreenResolver
         if (deadPlayer != null) return ReturnPlayer(deadPlayer);
 
         // Lastly we check the exiled player
-        if (meetingDelegate.ExiledPlayer != null) deadPlayer = meetingDelegate.ExiledPlayer.Object;
+        if (meetingDelegate != null && meetingDelegate.ExiledPlayer != null) deadPlayer = meetingDelegate.ExiledPlayer.Object;
         return deadPlayer != null && ReturnPlayer(deadPlayer);
     }
 
@@ -174,9 +176,9 @@ internal class LegacyResolver : IBlackscreenResolver
     private static HashSet<byte> SendPatchedData(byte exiledPlayer)
     {
         DevLogger.GameInfo();
-        HostRpc.RpcDebug("Game Data BEFORE Patch");
+        GeneralModRpc.RpcDebug("Game Data BEFORE Patch");
         HashSet<byte> unpatchable = AntiBlackoutLogic.PatchedDataLegacy(exiledPlayer);
-        HostRpc.RpcDebug("Game Data AFTER Patch");
+        GeneralModRpc.RpcDebug("Game Data AFTER Patch");
         return unpatchable;
     }
 

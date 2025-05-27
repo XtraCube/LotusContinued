@@ -26,10 +26,15 @@ using VentLib.Utilities.Extensions;
 using static Lotus.Roles.RoleGroups.Crew.Investigator.Translations.Options;
 using Lotus.Logging;
 using Lotus.GameModes.Standard;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Investigator : Crewmate
+public class Investigator : Crewmate, IRoleUI
 {
     public static List<(Func<CustomRole, bool> predicate, GameOptionBuilder builder)> RoleTypeBuilders = new()
     {
@@ -66,6 +71,11 @@ public class Investigator : Crewmate
         StandardRoles.Callbacks.Add(PopulateInvestigatorOptions);
     }
 
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .BindCooldown(abilityCooldown)
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/investigator_investigate.png", 130, true));
+
     [RoleAction(LotusActionType.OnPet)]
     private void Investigate()
     {
@@ -74,6 +84,7 @@ public class Investigator : Crewmate
         if (players.Count == 0) return;
 
         abilityCooldown.Start();
+        if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateInvestigator)?.Send([MyPlayer.OwnerId]);
         PlayerControl player = players[0];
         if (MyPlayer.InteractWith(player, LotusInteraction.NeutralInteraction.Create(this)) is InteractionResult.Halt) return;
 
@@ -103,6 +114,14 @@ public class Investigator : Crewmate
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier).RoleColor(new Color(1f, 0.79f, 0.51f)).RoleAbilityFlags(RoleAbilityFlag.UsesPet);
 
+    [ModRPC((uint)ModCalls.UpdateInvestigator, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateInvestigator()
+    {
+        Investigator? investigator = PlayerControl.LocalPlayer.PrimaryRole<Investigator>();
+        if (investigator == null) return;
+        investigator.abilityCooldown.Start();
+    }
+
     private void PopulateInvestigatorOptions()
     {
         StandardRoles.Instance.AllRoles.OrderBy(r => r.EnglishRoleName).ForEach(r =>
@@ -130,8 +149,11 @@ public class Investigator : Crewmate
     }
 
     [Localized(nameof(Investigator))]
-    internal static class Translations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Investigate";
+
         [Localized(ModConstants.Options)]
         internal static class Options
         {

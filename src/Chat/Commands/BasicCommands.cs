@@ -29,6 +29,7 @@ using VentLib.Utilities;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using VentLib.Networking.RPC;
+using VentLib.Utilities.Optionals;
 
 namespace Lotus.Chat.Commands;
 
@@ -53,12 +54,12 @@ public class BasicCommands : CommandTranslations
 
         string FactionName(CustomRole role)
         {
-            if (role is Subrole) return "Modifiers";
-            if (role.Faction is not Neutral) return role.Faction.Name();
+            if (role is Subrole) return FactionTranslations.Modifiers.Name;
+            if (role.Faction is not INeutralFaction) return role.Faction.Name();
 
             SpecialType specialType = role.Metadata.GetOrDefault(LotusKeys.AuxiliaryRoleType, SpecialType.None);
 
-            return specialType is SpecialType.NeutralKilling ? "Neutral Killers" : "Neutral";
+            return specialType is SpecialType.NeutralKilling ? FactionTranslations.NeutralKillers.Name : FactionTranslations.Neutral.Name;
         }
 
         IRoleManager.Current.AllCustomRoles().ForEach(r => defsByFactions.GetOrCompute(FactionName(r), () => new List<CustomRole>()).Add(r));
@@ -71,7 +72,7 @@ public class BasicCommands : CommandTranslations
             string fName = FactionName(r);
             if (factionName != fName)
             {
-                if (factionName == "Modifiers") text += $"\n★ {factionName}\n";
+                if (factionName == FactionTranslations.Modifiers.Name) text += $"\n★ {factionName}\n";
                 else text += $"\n{HostOptionTranslations.RoleCategory.Formatted(fName)}\n";
                 factionName = fName;
             }
@@ -85,7 +86,7 @@ public class BasicCommands : CommandTranslations
         ChatHandler.Of(text, HostOptionTranslations.RoleInfo).LeftAlign().Send(source);
     }
 
-    [Command(CommandFlag.LobbyOnly, "name")]
+    [Command(CommandFlag.LobbyOnly, "name", "rn", "rename")]
     public static void Name(PlayerControl source, CommandContext context)
     {
         string name = string.Join(" ", context.Args).Trim();
@@ -116,7 +117,7 @@ public class BasicCommands : CommandTranslations
         source.RpcSetName(name);
     }
 
-    [Command(CommandFlag.LobbyOnly, "color", "colour")]
+    [Command(CommandFlag.LobbyOnly, "color", "colour", "cor")]
     public static void SetColor(PlayerControl source, CommandContext context)
     {
         int allowedUsers = GeneralOptions.MiscellaneousOptions.ChangeColorAndLevelUsers;
@@ -220,9 +221,17 @@ public class BasicCommands : CommandTranslations
         ChatHandler.Of("Successfully reloaded titles.").Send(source);
     }
 
-    [Command(CommandFlag.HostOnly | CommandFlag.InGameOnly, "fix")]
+    [Command(CommandFlag.InGameOnly, "fix")]
     public static void FixPlayer(PlayerControl source, CommandContext context)
     {
+        bool allowed = source.IsHost() || PluginDataManager.ModManager.GetStatusOfPlayer(source).ModType == "Admin";
+
+        if (!allowed)
+        {
+            ChatHandlers.NotPermitted().Send(source);
+            return;
+        }
+
         if (context.Args.Length == 0)
         {
             PlayerIds(source, context);
@@ -254,10 +263,10 @@ public class BasicCommands : CommandTranslations
             {
                 ChatHandler.Of($"Starting fix of blackscreen caused by game start for \"{target.name}\"").LeftAlign().Send(source);
                 List<PlayerControl> players = Players.GetAllPlayers().ToList();
-                PlayerControl lastPlayer = players.Last();
 
                 log.Debug("Assigning roles...");
-                players.Where(p => p != lastPlayer).ForEach(p => SingleAssign(p.PrimaryRole()));
+                Optional<LastPlayerInfo> lastPlayerInfo = source.PrimaryRole().Assign(false);
+                if (!lastPlayerInfo.Exists()) return;
                 log.Debug("Assigned everyone but the last player.");
 
                 Async.Schedule(() =>
@@ -269,7 +278,7 @@ public class BasicCommands : CommandTranslations
                         disconnected[pc.PlayerId] = pc.Data.Disconnected;
                         pc.Data.Disconnected = true;
                     });
-                    log.Debug("Sending Disconncted Data.");
+                    log.Debug("Sending Disconnected Data.");
                     GeneralRPC.SendGameData(target.GetClientId());
                     players.ForEach(pc => pc.Data.Disconnected = disconnected[pc.PlayerId]);
                     ChatHandler.Of("Step 1 finished.\n(Setup Stage)").Send(source);
@@ -277,7 +286,8 @@ public class BasicCommands : CommandTranslations
                 Async.Schedule(() =>
                 {
                     log.Debug("Sending the last player's role info...");
-                    SingleAssign(lastPlayer.PrimaryRole());
+                    var info = lastPlayerInfo.Get();
+                    info.Target.RpcSetRoleDesync(info.TargetRoleForSeer, info.Seer);
                     log.Debug("Sent! Cleaning up in a second...");
                     ChatHandler.Of("Step 2 finished.\n(they should see the \"shhhh\" screen now)").Send(source);
                     CheckEndGamePatch.Deferred = false;
@@ -293,23 +303,6 @@ public class BasicCommands : CommandTranslations
 
                 if (!LegacyResolver.PerformForcedReset(target)) ChatHandler.Of("Unable to perform forced Blackscreen Fix. No players have died yet.", CommandError).LeftAlign().Send(source);
                 else ChatHandler.Of($"Successfully cleared blackscreen of \"{target.name}\"").LeftAlign().Send(source);
-            }
-        }
-
-        void SingleAssign(CustomRole role)
-        {
-            if (role.RealRole.IsCrewmate() || role.MyPlayer.PlayerId == target.PlayerId)
-                RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)role.RealRole).Write(true).Send(target.GetClientId());
-            else if (target.GetVanillaRole().IsCrewmate())
-                RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)(role.Faction is ImpostorFaction ? role.RealRole : RoleTypes.Crewmate)).Write(true).Send(target.GetClientId());
-            else
-            {
-                PlayerControl[] alliedPlayers = Players.GetPlayers().Where(p => role.Relationship(p) is Relation.FullAllies).ToArray();
-                HashSet<byte> alliedPlayerIds = alliedPlayers.Where(role.Faction.CanSeeRole).Select(p => p.PlayerId).ToHashSet();
-
-                if (alliedPlayerIds.Contains(target.PlayerId))
-                    RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)role.RealRole).Write(true).Send(target.GetClientId());
-                else RpcV3.Immediate(role.MyPlayer.NetId, RpcCalls.SetRole).Write((ushort)RoleTypes.Crewmate).Write(true).Send(target.GetClientId());
             }
         }
     }

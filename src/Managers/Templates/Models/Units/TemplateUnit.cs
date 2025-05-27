@@ -73,8 +73,8 @@ public class TemplateUnit
         { "Time", _ => DateTime.Now.ToShortTimeString() },
         { "Players", _ => PlayerControl.AllPlayerControls.ToArray().Select(p => p.name).Fuse() },
         { "PlayerCount", _ => PlayerControl.AllPlayerControls.Count.ToString() },
-        { "AllRoles", _ => TUAllRoles.GetAllRoles(false) },
-        { "AllModifiers", _ => TUAllRoles.GetAllRoles(true, true).Replace("Modifiers\n", "") },
+        { "AllRoles", _ => TUAllRoles.GetAllRoles(RoleSearchType.OnlyRoles) },
+        { "AllModifiers", _ => TUAllRoles.GetAllRoles(RoleSearchType.OnlyModifiers).Replace("Modifiers\n", "") },
 
         { "AlivePlayers", _ => Players.GetAlivePlayers().Select(p => p.name).Fuse() },
         { "AlivePlayerCount", _ => Players.GetAlivePlayers().Count().ToString() },

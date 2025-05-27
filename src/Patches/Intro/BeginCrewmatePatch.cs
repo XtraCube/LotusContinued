@@ -5,6 +5,8 @@ using HarmonyLib;
 using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
+using Lotus.Factions.Crew;
+using Lotus.Factions.Impostors;
 using Lotus.GameModes.Standard;
 using Lotus.Logging;
 using Lotus.Roles;
@@ -13,6 +15,7 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Managers.Interfaces;
 using UnityEngine;
 using VentLib.Localization;
+using VentLib.Utilities;
 
 namespace Lotus.Patches.Intro;
 
@@ -56,7 +59,8 @@ class BeginCrewmatePatch
         __instance.TeamTitle.text = role.RoleName;
         __instance.TeamTitle.color = role.RoleColor;
         __instance.BackgroundBar.material.color = role.RoleColor;
-        __instance.ImpostorText.gameObject.SetActive(false);
+        if (role.Faction is ImpostorFaction) __instance.ImpostorText.gameObject.SetActive(false);
+        Async.Schedule(() => ShowRolePatch.Postfix(__instance), 4f);
     }
 
     public static AudioClip? GetIntroSound(RoleTypes roleType)

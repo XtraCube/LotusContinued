@@ -16,10 +16,12 @@ using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using Lotus.API.Player;
 using Lotus.Managers.History.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Sniper : Shapeshifter
+public class Sniper : Shapeshifter, IRoleUI
 {
     private bool preciseShooting;
     private int playerPiercing;
@@ -28,6 +30,10 @@ public class Sniper : Shapeshifter
     private int totalBulletCount;
     private int currentBulletCount;
     private Vector2 startingLocation;
+
+    public RoleButton AbilityButton(IRoleButtonEditor button) => button
+        .SetText(SniperTranslations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/sniper_aim.png", 130, true));
 
     [UIComponent(UI.Counter)]
     private string BulletCountCounter() => currentBulletCount >= 0 ? RoleUtils.Counter(currentBulletCount, color: ModConstants.Palette.MadmateColor) : "";
@@ -91,36 +97,39 @@ public class Sniper : Shapeshifter
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub
-                .KeyName("Sniper Bullet Count", Translations.Options.SniperBulletCount)
+                .KeyName("Sniper Bullet Count", SniperTranslations.Options.SniperBulletCount)
                 .Value(v => v.Text(ModConstants.Infinity).Color(ModConstants.Palette.InfinityColor).Value(-1).Build())
                 .BindInt(v => totalBulletCount = v)
                 .SubOption(sub2 => sub2
-                    .KeyName("Refund Bullet on Kills", Translations.Options.RefundBulletOnKill)
+                    .KeyName("Refund Bullet on Kills", SniperTranslations.Options.RefundBulletOnKill)
                     .BindBool(b => refundOnKill = b)
                     .AddOnOffValues(false)
                     .Build())
                 .AddIntRange(1, 20, 1, 8)
                 .Build())
             .SubOption(sub => sub
-                .KeyName("Sniping Cooldown", Translations.Options.SnipingCooldown)
+                .KeyName("Sniping Cooldown", SniperTranslations.Options.SnipingCooldown)
                 .BindFloat(f => ShapeshiftCooldown = f + 5f)
                 .AddFloatRange(2.5f, 120f, 2.5f, 19, GeneralOptionTranslations.SecondsSuffix)
                 .Build())
             .SubOption(sub => sub
-                .KeyName("Precise Shooting", Translations.Options.PreciseShooting)
+                .KeyName("Precise Shooting", SniperTranslations.Options.PreciseShooting)
                 .BindBool(v => preciseShooting = v)
                 .AddOnOffValues(false)
                 .Build())
             .SubOption(sub => sub
-                .KeyName("Player Piercing", Translations.Options.PlayerPiercing)
+                .KeyName("Player Piercing", SniperTranslations.Options.PlayerPiercing)
                 .Value(v => v.Text(ModConstants.Infinity).Color(ModConstants.Palette.InfinityColor).Value(-1).Build())
                 .BindInt(v => playerPiercing = v)
                 .AddIntRange(1, ModConstants.MaxPlayers, 1, 2)
                 .Build());
 
     [Localized(nameof(Sniper))]
-    private static class Translations
+    public static class SniperTranslations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Aim";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

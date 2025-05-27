@@ -34,6 +34,7 @@ public static class Players
         // if (filter.HasFlag(PlayerFilter.NeutralKilling)) players = players.Where(p => p.PrimaryRole().Metadata.Get(LotusKeys.AuxiliaryRoleType) is SpecialType.NeutralKilling);
         if (filter.HasFlag(PlayerFilter.Neutral)) players = players.Where(p => p.PrimaryRole().SpecialType is SpecialType.Neutral);
         if (filter.HasFlag(PlayerFilter.NeutralKilling)) players = players.Where(p => p.PrimaryRole().SpecialType is SpecialType.NeutralKilling);
+        if (filter.HasFlag(PlayerFilter.Undead)) players = players.Where(p => p.PrimaryRole().SpecialType is SpecialType.Undead);
         return players;
     }
 
@@ -111,5 +112,6 @@ public enum PlayerFilter
     Impostor = 16,
     Crewmate = 32,
     Neutral = 64,
-    NeutralKilling = 128
+    NeutralKilling = 128,
+    Undead = 256
 }

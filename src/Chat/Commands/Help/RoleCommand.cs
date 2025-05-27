@@ -46,14 +46,25 @@ public class RoleCommand
     public static void Roles(PlayerControl source, CommandContext context)
     {
         ;
-        if (context.Args.Length == 0 || context.Args[0] is "" or " ") ChatHandler.Of(TUAllRoles.GetAllRoles(true)).LeftAlign().Send(source);
+        if (context.Args.Length == 0 || context.Args[0] is "" or " ") ChatHandler.Of(TUAllRoles.GetAllRoles()).LeftAlign().Send(source);
         else
         {
             string roleName = context.Args.Join(delimiter: " ").ToLower().Trim().Replace("[", "").Replace("]", "").ToLowerInvariant();
-            IEnumerable<CustomRole> allFoundRoles = IRoleManager.Current.AllCustomRoles().Where(r => r.RoleName.ToLowerInvariant().Contains(roleName) || r.Aliases.Contains(roleName));
-            if (allFoundRoles.Count() > 5) SendSpecial(source, AbortSearch);
-            else if (allFoundRoles.Count() > 0) allFoundRoles.ForEach(r => ShowRole(source, r));
-            else SendSpecial(source, NoRoles);
+            List<CustomRole> allFoundRoles = IRoleManager.Current.AllCustomRoles()
+                .Where(r => r.RoleName.ToLowerInvariant().Contains(roleName) || r.Aliases.Contains(roleName))
+                .ToList();
+            switch (allFoundRoles.Count)
+            {
+                case >= 5:
+                    SendSpecial(source, AbortSearch);
+                    break;
+                case > 0:
+                    allFoundRoles.ForEach(r => ShowRole(source, r));
+                    break;
+                default:
+                    SendSpecial(source, NoRoles);
+                    break;
+            }
         }
     }
 
@@ -66,10 +77,21 @@ public class RoleCommand
             return;
         }
         string roleName = context.Args.Join(delimiter: " ").ToLower().Trim().Replace("[", "").Replace("]", "").ToLowerInvariant();
-        IEnumerable<CustomRole> allFoundRoles = IRoleManager.Current.AllCustomRoles().Where(r => r.RoleName.ToLowerInvariant().Contains(roleName) || r.Aliases.Contains(roleName));
-        if (allFoundRoles.Count() > 5) SendSpecial(source, AbortSearch);
-        else if (allFoundRoles.Count() > 0) allFoundRoles.ForEach(r => ShowRoleOptions(source, r, false));
-        else SendSpecial(source, NoRoles);
+        List<CustomRole> allFoundRoles = IRoleManager.Current.AllCustomRoles()
+            .Where(r => r.RoleName.ToLowerInvariant().Contains(roleName) || r.Aliases.Contains(roleName))
+            .ToList();
+        switch (allFoundRoles.Count)
+        {
+            case >= 5:
+                SendSpecial(source, AbortSearch);
+                break;
+            case > 0:
+                allFoundRoles.ForEach(r => ShowRoleOptions(source, r, false));
+                break;
+            default:
+                SendSpecial(source, NoRoles);
+                break;
+        }
     }
     private static void ShowRoleOptions(PlayerControl source, CustomRole role, bool addSubRoles)
     {
