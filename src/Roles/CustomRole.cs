@@ -199,7 +199,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         }
 
         RoleTypes sentRole = RealRole;
-        if (!MyPlayer.IsAlive()) sentRole = sentRole.GhostEquivalent();
+        if (!MyPlayer.IsAlive() && !isStartOfGame) sentRole = sentRole.GhostEquivalent();
 
         if (MyPlayer.AmOwner) MyPlayer.SetRole(sentRole, ProjectLotus.AdvancedRoleAssignment);
         else
@@ -238,7 +238,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
             else if (targetRole.Faction.GetType() == typeof(ImpostorFaction) && RealRole.IsCrewmate()) outputRole = targetRole.RealRole; // If they are impostor, and we are crewmate, than we can see their real role.
             else outputRole = RoleTypes.Crewmate; // This must mean they are a desynced impostor and not on our team or we cant see their role. So we should see them as crewmate.
 
-            return target.IsAlive() ? outputRole : outputRole.GhostEquivalent();
+            return target.IsAlive() || isStartOfGame ? outputRole : outputRole.GhostEquivalent();
         }
     }
 
