@@ -70,8 +70,7 @@ public class Romantic : Subrole, IInfoResender
         if (love == null || !love.IsAlive()) return;
         if (protectionCooldown.NotReady() || protectionDuration.NotReady()) return;
         handle.Cancel();
-        protectionDuration.Start();
-        Async.Schedule(() => protectionCooldown.Start(), protectionDuration.Duration);
+        protectionDuration.StartThenRun(() => protectionCooldown.Start());
     }
 
     [RoleAction(LotusActionType.RoundEnd)]
