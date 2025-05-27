@@ -69,10 +69,10 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
 
     public RoleButton BindCooldown(Cooldown? cooldown)
     {
-        boundCooldown = cooldown;
         ActionButton button = GetButton();
 
         button.cooldownTimerText.gameObject.SetActive(cooldown != null);
+        this.boundCooldown = cooldown;
 
         return this;
     }
@@ -196,6 +196,7 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
         // ActionButton button = GetButton();
         // button.buttonLabelText.text = localizedText;
         // button.graphic.sprite = GetSprite();
+        changedSprite = true;
     }
 
     public RoleButton Clone() => (RoleButton)this.MemberwiseClone();

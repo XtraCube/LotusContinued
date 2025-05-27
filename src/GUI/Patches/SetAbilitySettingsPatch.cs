@@ -16,7 +16,7 @@ public class SetAbilitySettingsPatch
     public static bool Prefix(AbilityButton __instance)
     {
         List<CustomRole> customRoles = PlayerControl.LocalPlayer.GetAllRoleDefinitions().ToList();
-        customRoles.Do(cr => cr.UIManager.ForceUpdate());
+        // customRoles.Do(cr => cr.UIManager.ForceUpdate());
         bool anyOverride = customRoles.Any(cr =>
         {
             RoleUIManager provider = cr.UIManager;
