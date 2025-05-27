@@ -96,16 +96,11 @@ public abstract class GameMode : IGameMode
                 else RpcV3.Immediate(lp.Target.NetId, RpcCalls.SetRole)
                     .Write((ushort)lp.TargetRoleForSeer)
                     .Write(ProjectLotus.AdvancedRoleAssignment)
-                    .Send(lp.Seer.GetClientId());
+                    .Send(lp.Seer.OwnerId);
+                lp.Seer.GetTeamInfo().AddPlayer(lp.Target.PlayerId, lp.TargetRoleForSeer.IsImpostor());
             });
             log.Debug("Sent! Cleaning up in a second...");
         }, NetUtils.DeriveDelay(1f));
-        Async.Schedule(() =>
-        {
-            players.ForEach(PlayerNameColor.Set);
-            DestroyableSingleton<HudManager>.Instance.StartCoroutine(DestroyableSingleton<HudManager>.Instance.CoShowIntro());
-            DestroyableSingleton<HudManager>.Instance.HideGameLoader();
-        }, NetUtils.DeriveDelay(1.2f));
         Async.Schedule(() =>
         {
             players.ForEach(pc =>
