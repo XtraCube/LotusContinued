@@ -74,17 +74,17 @@ public abstract class GameMode : IGameMode
         players.ForEach(p => lastPlayerInfos.Add(p.PrimaryRole().Assign(false).Get()));
         log.Debug("Assigned everyone but the last player for each player.");
 
+        Dictionary<byte, bool> realDisconnectInfo = new();
         Async.Schedule(() =>
         {
-            Dictionary<byte, bool> realDisconnectInfo = new();
+            log.Debug("Sending Disconnected Data.");
             players.ForEach(pc =>
             {
                 realDisconnectInfo[pc.PlayerId] = pc.Data.Disconnected;
                 pc.Data.Disconnected = true;
+                pc.Data.MarkDirty();
+                AmongUsClient.Instance.SendAllStreamedObjects();
             });
-            log.Debug("Sending Disconnected Data.");
-            GeneralRPC.SendGameData();
-            players.ForEach(pc => pc.Data.Disconnected = realDisconnectInfo[pc.PlayerId]);
         }, NetUtils.DeriveDelay(0.5f));
         Async.Schedule(() =>
         {
@@ -108,7 +108,16 @@ public abstract class GameMode : IGameMode
         }, NetUtils.DeriveDelay(1.2f));
         Async.Schedule(() =>
         {
-            GeneralRPC.SendGameData();
+            players.ForEach(pc =>
+            {
+                bool disconnected = realDisconnectInfo[pc.PlayerId];
+                pc.Data.Disconnected = disconnected;
+                if (!disconnected)
+                {
+                    pc.Data.MarkDirty();
+                    AmongUsClient.Instance.SendAllStreamedObjects();
+                }
+            });
             log.Trace("Cleaned up and sent old disconnect info.");
         }, NetUtils.DeriveDelay(1.5f));
     }
