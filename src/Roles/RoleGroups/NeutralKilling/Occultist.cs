@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿extern alias JBAnnotations;
+using System.Collections.Generic;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.Roles.Internals.Enums;
@@ -131,6 +133,7 @@ public class Occultist : NeutralKillingBase, IRoleUI
 
     public override void HandleDisconnect() => ClearCursedPlayers();
 
+    [UsedImplicitly]
     [ModRPC((uint)ModCalls.UpdateOccultist, RpcActors.Host, RpcActors.NonHosts)]
     private static void RpcUpdateKillButton(bool curseMode)
     {

@@ -95,7 +95,7 @@ public class RoleUIManager
     public virtual void InitializeButtons()
     {
         PetButton = new RoleButton(() => AmongUsButtonSpriteReferences.PetButton);
-        UseButton = new RoleButton( () => AmongUsButtonSpriteReferences.UseButton);
+        UseButton = new RoleButton(() => AmongUsButtonSpriteReferences.UseButton);
         ReportButton = new RoleButton(() => AmongUsButtonSpriteReferences.ReportButton);
         VentButton = new RoleButton(() => AmongUsButtonSpriteReferences.VentButton);
         AbilityButton = new RoleButton(() => AmongUsButtonSpriteReferences.AbilityButton);
