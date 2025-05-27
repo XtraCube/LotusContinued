@@ -45,6 +45,7 @@ public class NeutralFactionWin: IFactionWinCondition
         }
 
         if (didWin) winningFaction = winningFaction.Distinct().ToList();
+        factions = winningFaction;
         return didWin;
     }
 
