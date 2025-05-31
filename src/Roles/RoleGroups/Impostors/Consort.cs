@@ -41,6 +41,10 @@ public class Consort : Impostor, IRoleUI
     public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
         .Default(false);
 
+    public RoleButton PetButton(IRoleButtonEditor petButton) => petButton
+        .SetText(RoleTranslations.Switch)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/generic_switch_ability.png", 130, true));
+
     [UIComponent(UI.Text)]
     private string BlockingText() => !blocking ? "" : Color.red.Colorize("Blocking");
 
