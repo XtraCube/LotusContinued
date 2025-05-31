@@ -127,7 +127,7 @@ public class Necromancer : UndeadRole
         else undeadWinners.Where(tc => IsConvertedUndead(tc) || MyPlayer.IsAlive() && IsUnconvertedUndead(tc)).ForEach(uw => winners.Remove(uw));
     }
 
-    protected override string ForceRoleImageDirectory() => "RoleImages/Neutral/necromancer.yaml";
+    protected override string ForceRoleImageDirectory() => "RoleOutfits/Neutral/necromancer.yaml";
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
