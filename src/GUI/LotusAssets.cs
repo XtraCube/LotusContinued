@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Lotus.Extensions;
 using Lotus.Logging;
 using Lotus.Utilities;
@@ -22,14 +23,21 @@ public class LotusAssets
         }
     }
 
-    public static T LoadAsset<T>(string name) where T : UnityEngine.Object
+    public static T LoadAsset<T>(string path) where T : UnityEngine.Object
     {
-        return Bundle.LoadAsset<T>(name)!;
+        return Bundle.LoadAsset<T>(path)!;
     }
 
-    public static Sprite LoadSprite(string name, float pixelsPerUnit = 100f, bool linear = false, int mipMapLevel = 0)
+
+    public static bool TryLoadAsset<T>(string path, [MaybeNullWhen(false)] out T asset) where T : UnityEngine.Object
     {
-        Sprite? originalSprite = Bundle.LoadAsset<Sprite>(name);
+        T? targetAsset = asset = Bundle.LoadAsset<T>(path);
+        return targetAsset != null;
+    }
+
+    public static Sprite LoadSprite(string path, float pixelsPerUnit = 100f, bool linear = false, int mipMapLevel = 0, Vector4 borderInPixels = default(Vector4))
+    {
+        Sprite? originalSprite = Bundle.LoadAsset<Sprite>(path);
         if (originalSprite == null) return null!;
 
         Texture2D originalTexture = originalSprite.texture;
@@ -48,9 +56,21 @@ public class LotusAssets
         RenderTexture.active = previous;
         RenderTexture.ReleaseTemporary(rt);
 
-        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), pixelsPerUnit);
+        Sprite sprite = Sprite.Create(texture,
+            new Rect(0, 0, texture.width, texture.height),
+            new Vector2(0.5f, 0.5f),
+            pixelsPerUnit,
+            0,
+            SpriteMeshType.FullRect,
+            borderInPixels);
         sprite.texture.requestedMipmapLevel = mipMapLevel;
 
         return sprite;
+    }
+
+    public static bool TryLoadSprite(string path, [MaybeNullWhen(false)] out Sprite sprite, float pixelsPerUnit = 100f, bool linear = false, int mipMapLevel = 0, Vector4 borderInPixels = default(Vector4))
+    {
+        Sprite outputSprite = sprite = LoadSprite(path, pixelsPerUnit, linear, mipMapLevel, borderInPixels);
+        return outputSprite != null!;
     }
 }
