@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Lotus.Managers.Announcements;
+using Lotus.Managers.Combo;
 using Lotus.Managers.Friends;
 using Lotus.Managers.Templates;
 using Lotus.Managers.Titles;
@@ -24,6 +25,7 @@ public static class PluginDataManager
     private const string ReadAnnouncementsFile = "ReadAnnouncements.yaml";
     private const string ModdedPlayerFile = "ModdedPlayers.yaml";
     private const string BannedPlayerFile = "BannedPlayers.yaml";
+    private const string ComboListFile = "RoleComboInfo.yaml";
     private const string WordListFile = "BannedWords.yaml";
     private const string TemplateFile = "Templates.yaml";
 
@@ -35,6 +37,7 @@ public static class PluginDataManager
 
     public static CustomAnnouncementManager AnnouncementManager;
     public static WhitelistManager WhitelistManager;
+    public static ComboListManager ComboListManager;
     public static TemplateManager TemplateManager;
     public static FriendManager FriendManager;
     public static TitleManager TitleManager;
@@ -54,6 +57,7 @@ public static class PluginDataManager
 
         AnnouncementManager = TryLoad(() => new CustomAnnouncementManager(ModifiableDataDirectory.GetFile(ReadAnnouncementsFile)), "Announcement Manager")!;
         WhitelistManager = TryLoad(() => new WhitelistManager(ModifiableDataDirectory.GetFile(WhitelistFile)), "Whitelist Manager")!;
+        ComboListManager = TryLoad(() => new ComboListManager(ModifiableDataDirectory.GetFile(ComboListFile)), "Combolist Manager")!;
         TemplateManager = TryLoad(() => new TemplateManager(ModifiableDataDirectory.GetFile(TemplateFile)), "Template Manager")!;
         FriendManager = TryLoad(() => new FriendManager(ModifiableDataDirectory.GetFile(FriendListFile)), "Friend Manager")!;
         TitleManager = TryLoad(() => new TitleManager(ModifiableDataDirectory.GetDirectory(TitleDirectory)), "Title Manager")!;
@@ -77,9 +81,10 @@ public static class PluginDataManager
             onError((ex, "Moving the Old Directory"));
         }
 
+        WhitelistManager = TryLoad(() => new WhitelistManager(ModifiableDataDirectory.GetFile(WhitelistFile)), "Whitelist Manager", onError)!;
+        ComboListManager = TryLoad(() => new ComboListManager(ModifiableDataDirectory.GetFile(ComboListFile)), "Combolist Manager", onError)!;
         TemplateManager = TryLoad(() => new TemplateManager(ModifiableDataDirectory.GetFile(TemplateFile)), "Template Manager", onError)!;
         FriendManager = TryLoad(() => new FriendManager(ModifiableDataDirectory.GetFile(FriendListFile)), "Friend Manager", onError)!;
-        WhitelistManager = TryLoad(() => new WhitelistManager(ModifiableDataDirectory.GetFile(WhitelistFile)), "Whitelist Manager")!;
         TitleManager = TryLoad(() => new TitleManager(ModifiableDataDirectory.GetDirectory(TitleDirectory)), "Title Manager", onError)!;
         BanManager = TryLoad(() => new BanManager(ModifiableDataDirectory.GetFile(BannedPlayerFile)), "Ban Manager", onError)!;
         ChatManager = TryLoad(() => new ChatManager(ModifiableDataDirectory.GetFile(WordListFile)), "Chat Manager", onError)!;
