@@ -25,7 +25,7 @@ public class LotusAssets
 
     public static T LoadAsset<T>(string path) where T : UnityEngine.Object
     {
-        return Bundle.LoadAsset<T>(path)!;
+        return Bundle.LoadAsset<T>(path.ToLower())!;
     }
 
 
