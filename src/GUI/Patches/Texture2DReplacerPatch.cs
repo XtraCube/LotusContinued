@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -8,6 +9,7 @@ using Lotus.Logging;
 using UnityEngine;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Harmony.Attributes;
+using VentLib.Utilities.Optionals;
 
 namespace Lotus.GUI.Patches;
 
@@ -15,8 +17,8 @@ public class Texture2DReplacerPatch
 {
     public static readonly string[] ReplacedGraphics =
     [
-        "GameSettingReworkAssets", "LobbyReworkAssets", "MainMenuSprites", "OldButtons"
-        //, "UiButtons" // This texture got changed... so to prevent issues, we just won't replace it for now.
+        "GameSettingReworkAssets", "LobbyReworkAssets", "MainMenuSprites",
+        "OldButtons", "Online_EnterCode_CreateLobby", "UiButtons"
     ];
 
     public const string StartPath = "Replaced/";
@@ -26,7 +28,7 @@ public class Texture2DReplacerPatch
         Resources.FindObjectsOfTypeAll(Il2CppType.Of<Texture2D>())
             .ForEach(obj =>
             {
-                if (!obj.TryCast(out Texture2D texture)) return;
+                if (!obj.TryCast<Texture2D>(out var texture)) return;
                 if (texture == null) return;
                 if (!ReplacedGraphics.Contains(texture.name)) return;
 
@@ -57,6 +59,7 @@ public class Texture2DReplacerPatch
 
     [QuickPostfix(typeof(HudManager), nameof(HudManager.Start))] private static void HudManagerPostfix(HudManager __instance) => CheckForTextures();
     [QuickPostfix(typeof(AccountManager), nameof(AccountManager.Awake))] private static void AccountManagerPostfix(AccountManager __instance) => CheckForTextures();
+    [QuickPostfix(typeof(MainMenuManager), nameof(MainMenuManager.Awake))] private static void MainMenuManagerPostfix(MainMenuManager __instance) => CheckForTextures();
     [QuickPostfix(typeof(ProgressTracker), nameof(ProgressTracker.Start))] private static void ProgressTrackerPostfix(ProgressTracker __instance) => CheckForTextures();
     [QuickPostfix(typeof(LobbyViewSettingsPane), nameof(LobbyViewSettingsPane.Awake))] private static void LobbyViewSettingsPanePostfix(LobbyViewSettingsPane __instance) => CheckForTextures();
 }
