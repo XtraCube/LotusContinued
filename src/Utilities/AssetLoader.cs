@@ -98,7 +98,7 @@ public class AssetLoader
         }
         catch (Exception ex)
         {
-            log.Exception($"Failed to load embedded font: {ex.Message}");
+            log.Exception($"Failed to load asset bundle: {ex.Message}");
             return null!;
         }
     }
