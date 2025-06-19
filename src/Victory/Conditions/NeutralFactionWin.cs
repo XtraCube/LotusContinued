@@ -50,4 +50,5 @@ public class NeutralFactionWin: IFactionWinCondition
     }
 
     public WinReason GetWinReason() => noOneWon ? new(ReasonType.NoWinCondition, "No one is alive.") : new(ReasonType.FactionLastStanding);
+    public int Priority() => -1;
 }
