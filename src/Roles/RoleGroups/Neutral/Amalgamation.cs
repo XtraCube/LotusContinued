@@ -120,7 +120,7 @@ public class Amalgamation : CustomRole
                 .BindBool(b => absorbModifiers = b)
                 .Build());
 
-    protected override RoleType GetRoleType() => RoleType.Variation;
+    public override RoleType GetRoleType() => RoleType.Variation;
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         roleModifier

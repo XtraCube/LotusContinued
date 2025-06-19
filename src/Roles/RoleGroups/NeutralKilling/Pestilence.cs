@@ -121,7 +121,7 @@ public class Pestilence : NeutralKillingBase
                     .Build())
                 .Build());
 
-    protected override RoleType GetRoleType() => RoleType.Transformation;
+    public override RoleType GetRoleType() => RoleType.Transformation;
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)

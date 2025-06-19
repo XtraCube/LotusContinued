@@ -97,7 +97,7 @@ public class VengefulRomantic : Subrole
                 .BindBool(b => suicideAfterRevenge = b)
                 .Build());
 
-    protected override RoleType GetRoleType() => RoleType.Transformation;
+    public override RoleType GetRoleType() => RoleType.Transformation;
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)

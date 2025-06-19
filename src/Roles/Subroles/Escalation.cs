@@ -49,7 +49,7 @@ public class Escalation : Subrole
                 .BindFloat(f => speedGainPerKill = f)
                 .Build());
 
-    protected override RoleType GetRoleType() => RoleType.Variation;
+    public override RoleType GetRoleType() => RoleType.Variation;
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
