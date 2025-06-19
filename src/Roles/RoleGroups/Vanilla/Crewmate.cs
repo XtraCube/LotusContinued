@@ -13,7 +13,7 @@ public class Crewmate : TaskRoleBase
         roleModifier
             .VanillaRole(RoleTypes.Crewmate)
             .Faction(FactionInstances.Crewmates)
-            .RoleColor(new Color(0.71f, 0.94f, 1f))
+            .RoleColor(ModConstants.Palette.CrewmateColor)
             .CanVent(false);
 
     public override List<Statistic> Statistics() => new() { VanillaStatistics.TasksComplete };
