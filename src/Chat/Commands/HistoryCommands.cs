@@ -7,7 +7,7 @@ using VentLib.Commands.Interfaces;
 
 namespace Lotus.Chat.Commands;
 
-[Command("history")]
+[Command(CommandFlag.LobbyOnly, "history")]
 public class HistoryCommands : ICommandReceiver
 {
     public void Receive(PlayerControl source, CommandContext context)
