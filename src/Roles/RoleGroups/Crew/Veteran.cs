@@ -93,21 +93,21 @@ public class Veteran : Crewmate
             .SubOption(sub => sub
                 .KeyName("Kill Crewmates", Translations.Options.KillCrewmates)
                 .Bind(v => canKillCrewmates = (bool)v)
-                .AddOnOffValues().Build())
+                .AddBoolean().Build())
             .SubOption(sub => sub
                 .KeyName("Kill While Transported", Translations.Options.KillWhileTransported)
                 .Bind(v => canKillWhileTransported = (bool)v)
-                .AddOnOffValues().Build())
+                .AddBoolean().Build())
             .SubOption(sub => sub
                 .KeyName("Kill Ranged Attackers", Translations.Options.KillRangedAttackers)
                 .BindBool(v => canKillRangedAttackers = v)
-                .AddOnOffValues().Build());
+                .AddBoolean().Build());
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
             .VanillaRole(RoleTypes.Crewmate)
             .RoleColor(new Color(0.6f, 0.5f, 0.25f))
-            .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
+            .RoleAbilityFlags(RoleAbilityFlag.UsesPet & RoleAbilityFlag.IsAbleToKill);
 
     private class VettedEvent : KillEvent, IRoleEvent
     {
