@@ -28,6 +28,7 @@ public class JackalFaction: Faction<JackalFaction>, INeutralFaction<JackalFactio
             TheUndead => Relation.None,
             Crewmates => Relation.None,
             ImpostorFaction => Relation.None,
+            JackalFaction => Relation.FullAllies,
             Neutral when other.GetType() == typeof(Neutral) => Relation.None,
             _ => other.Relationship(this)
         };
