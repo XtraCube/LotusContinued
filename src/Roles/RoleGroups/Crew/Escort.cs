@@ -135,7 +135,7 @@ public class Escort : Crewmate, IRoleUI
 
             if (duration <= 0) return;
 
-            BlockDuration = new Cooldown(duration);
+            BlockDuration = new Cooldown(duration, true);
             BlockDuration.StartThenRun(Delete);
         }
 
