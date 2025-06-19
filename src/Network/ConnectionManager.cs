@@ -41,14 +41,11 @@ public class ConnectionManager
     {
         get
         {
-            if (AmongUsClient.Instance.NetworkMode != NetworkModes.OnlineGame) return false;
-
-            const string Domain = "among.us";
-
             // From Reactor.gg
+            const string Domain = "among.us";
             return ServerManager.Instance.CurrentRegion?.TryCast<StaticHttpRegionInfo>() is { } regionInfo &&
-                regionInfo.PingServer.EndsWith(Domain, System.StringComparison.Ordinal) &&
-                regionInfo.Servers.All(serverInfo => serverInfo.Ip.EndsWith(Domain, System.StringComparison.Ordinal));
+                   regionInfo.PingServer.EndsWith(Domain, System.StringComparison.Ordinal) &&
+                   regionInfo.Servers.All(serverInfo => serverInfo.Ip.EndsWith(Domain, System.StringComparison.Ordinal));
         }
     }
 }

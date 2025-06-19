@@ -93,6 +93,7 @@ public abstract class LotusAddon
         {
             log.Trace($"Exporting GameMode ({gamemode.Name}) for {Name}");
             // ProjectLotus.GameModeManager.AddGamemodeSettingToOptions(gamemode.MainTab().GetOptions());
+            gamemode.RoleManager.RoleHolder.AllRoles.ForEach(r => r.Addon = this);
             GameModes.Add(gamemode);
             ProjectLotus.GameModeManager.GameModes.Add(gamemode);
         }

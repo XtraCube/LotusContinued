@@ -11,7 +11,7 @@ public class Sidekick : NeutralKillingBase
 {
     private Jackal parentJackal;
 
-    public bool ImpostorVision;
+    public bool ImpostorVision = true;
     public bool CanVentOverride;
     public bool CanSabotageOverride;
 
@@ -26,7 +26,7 @@ public class Sidekick : NeutralKillingBase
     public override void HandleDisconnect() => parentJackal.OnSidekickDisconnect();
     public override bool CanSabotage() => CanSabotageOverride;
 
-    protected override RoleType GetRoleType() => RoleType.DontShow;
+    public override RoleType GetRoleType() => RoleType.DontShow;
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
             .RoleColor(Jackal.JackalColor)

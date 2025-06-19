@@ -92,7 +92,7 @@ public class Striker : NeutralKillingBase
     private void FakeDie(ActionHandle handle)
     {
         handle.Cancel(); // Stops me from dying and does RpcMark.
-        if (reviveTimer.NotReady()) return;
+        if (reviveTimer.NotReady() || MyPlayer.inVent || MyPlayer.walkingToVent) return;
 
         Utils.Teleport(MyPlayer.NetTransform, new Vector2(Random.RandomRange(5000, 99999), Random.RandomRange(5000, 99999)));
         reviveTimer.StartThenRun(RevivePlayer);

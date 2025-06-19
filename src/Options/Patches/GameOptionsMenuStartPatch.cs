@@ -1,28 +1,20 @@
-// using HarmonyLib;
-// using Il2CppInterop.Runtime.InteropTypes.Arrays;
-// using UnityEngine;
-// using VentLib.Logging;
-// using AmongUs.GameOptions;
-// using Lotus.Utilities;
-// using VentLib.Utilities;
+using HarmonyLib;
+using UnityEngine;
+using Lotus.GUI;
+using Lotus.Utilities;
 
-// namespace VentLib.Options.Game.Patches;
+namespace Lotus.Options.Patches;
 
-// [HarmonyPatch(typeof(GameSettingMenu), nameof(GameSettingMenu.Start))]
-// public static class GameSettingsStartPatch
-// {
-//     public static void Postfix(GameSettingMenu __instance)
-//     {
-//         Async.Schedule(() =>
-//         {
-//             Transform background = __instance.transform.Find("Background");
-//             GameObject plBackground = new("PLBackground");
-//             plBackground.transform.localPosition = new Vector3(background.localPosition.x, background.localPosition.y, background.localPosition.z);
-//             var spriteRenderer = plBackground.AddComponent<SpriteRenderer>();
-//             spriteRenderer.sprite = AssetLoader.LoadSprite("Lotus.assets.PLBackground-Upscale.png", 250f);
-//             plBackground.transform.parent = background.parent;
-//             background.gameObject.SetActive(false);
-//         }, 0.05f);
-//     }
-// }
-// // did not work so REMOVED, maybe I'll come back to this
+[HarmonyPatch(typeof(GameSettingMenu), nameof(GameSettingMenu.Start))]
+public static class GameSettingsStartPatch
+{
+    public static void Postfix(GameSettingMenu __instance)
+    {
+        Transform background = __instance.transform.Find("Background");
+        SpriteRenderer plBackground = background.parent.gameObject.QuickComponent<SpriteRenderer>("PLBackground",
+            background.localPosition + new Vector3(0f, 0.2f, 0f));
+        plBackground.sprite = LotusAssets.LoadSprite("PLBackground-Upscale.png", 190);
+        plBackground.gameObject.layer = LayerMask.NameToLayer("UI");
+        background.gameObject.SetActive(false);
+    }
+}

@@ -74,6 +74,7 @@ public class Jackal : NeutralKillingBase
     // Set sidekick as Jackal on Disconnect.
     public override void HandleDisconnect() => MyDeath();
 
+    [RoleAction(LotusActionType.Exiled)]
     [RoleAction(LotusActionType.PlayerDeath)]
     private void MyDeath()
     {
@@ -113,14 +114,15 @@ public class Jackal : NeutralKillingBase
 
         hasRecruited = true;
         sidekickId = target.PlayerId;
+        Sidekick.ImpostorVision = impostorVision; // I think imp vision is important enough for them to have.
 
         target.PrimaryRole().ChangeRoleTo(Sidekick);
         Sidekick targetRole = target.PrimaryRole<Sidekick>()!;
         targetRole.KillCooldown = KillCooldown;
         targetRole.SetParentJackal(this);
-        targetRole.ImpostorVision = impostorVision; // I think imp vision is important enough for them to have.
-        targetRole.CanVentOverride = SidekickGetsAbilities && canVent;
         targetRole.CanSabotageOverride = SidekickGetsAbilities && canSabotage;
+        targetRole.BaseCanVent = targetRole.CanVentOverride = SidekickGetsAbilities && canVent;
+        targetRole.MyPlayer.SyncAll();
 
         MyPlayer.NameModel().GetComponentHolder<RoleHolder>().ForEach(rc => rc.AddViewer(target));
     }

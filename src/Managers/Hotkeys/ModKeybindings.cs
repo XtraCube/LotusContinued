@@ -15,6 +15,7 @@ using static Lotus.Managers.Hotkeys.HotkeyManager;
 using Lotus.API.Player;
 using VentLib.Utilities.Extensions;
 using System.Linq;
+using Lotus.GUI.Menus.ComboMenu;
 using Lotus.GUI.Menus.HistoryMenu2;
 using VentLib.Localization;
 
@@ -182,7 +183,10 @@ public class ModKeybindings
         if (!DestroyableSingleton<HudManager>.InstanceExists) return;
         if (DestroyableSingleton<HudManager>.Instance.Chat.IsOpenOrOpening) return;
         HM2 historyMenu = DestroyableSingleton<HudManager>.Instance.GetComponent<HM2>();
-        if (historyMenu != null) historyMenu.ToggleMenu();
+        if (historyMenu == null) return;
+        ComboMenu comboMenu = Object.FindObjectOfType<ComboMenu>();
+        if (comboMenu != null && comboMenu.Opened()) return;
+        historyMenu.ToggleMenu();
     }
 
     private static void ToggleChat()

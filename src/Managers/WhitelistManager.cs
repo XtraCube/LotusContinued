@@ -21,7 +21,13 @@ public class WhitelistManager
     {
         this.file = fileInfo;
         StreamReader reader = new(file.Open(FileMode.OpenOrCreate));
-        List<string> lines = reader.ReadToEnd().Split("\n").Where(l => l != "\n").Where(l => l != "").Select(f => f.Replace("\r", "")).Distinct().ToList();
+        List<string> lines = reader.ReadToEnd()
+            .Split("\n")
+            .Where(l => l != "\n")
+            .Where(l => l != "")
+            .Select(f => f.Replace("\r", "").Trim().ToLower())
+            .Distinct()
+            .ToList();
         reader.Close();
         whitelistedFriendcodes.AddRange(lines);
     }
@@ -30,7 +36,7 @@ public class WhitelistManager
     {
         return !GeneralOptions.AdminOptions.EnableWhitelist
                || AmongUsClient.Instance.NetworkMode != NetworkModes.OnlineGame
-               || whitelistedFriendcodes.Contains(player.FriendCode);
+               || whitelistedFriendcodes.Contains(player.FriendCode.Trim().ToLower());
     }
 
     public bool CheckWhitelistPlayer(PlayerControl player, ClientData client)

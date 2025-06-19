@@ -23,6 +23,7 @@ public class CheckEndGamePatch
 
     public static bool BeginWin;
     public static bool Deferred;
+    public static int DeferredQueue;
     private static DateTime slowDown = DateTime.Now;
     private static FixedUpdateLock _fixedUpdateLock = new(0.1f);
 
@@ -47,7 +48,7 @@ public class CheckEndGamePatch
         if (!AmongUsClient.Instance.AmHost) return true;
         if (Game.State is GameState.InLobby or GameState.InIntro) return false;
         if (!_fixedUpdateLock.AcquireLock()) return false;
-        if (Deferred) return false;
+        if (Deferred || DeferredQueue > 0) return false;
 
         uint id = Profilers.Global.Sampler.Start("CheckEndGamePatch");
 
@@ -95,7 +96,10 @@ public class CheckEndGamePatch
         Deferred = false;
         BeginWin = false;
         log.Info("Ending Game");
-        GameManager.Instance.RpcEndGame(reason, false);
+        var msg = AmongUsClient.Instance.StartEndGame();
+        msg.Write((byte)reason);
+        msg.Write(false);
+        AmongUsClient.Instance.FinishEndGame(msg);
         Async.Schedule(() => GameManager.Instance.EndGame(), 0.1f);
     }
 
@@ -109,4 +113,10 @@ public class CheckEndGamePatch
         Deferred = wasDeferred;
         return BeginWin;
     }
+}
+
+[HarmonyPatch(typeof(GameManager), nameof(GameManager.RpcEndGame))]
+class RpcEndGamePatch
+{
+    public static bool Prefix() => false;
 }

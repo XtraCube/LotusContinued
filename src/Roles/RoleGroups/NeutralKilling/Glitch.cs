@@ -44,6 +44,9 @@ public class Glitch : NeutralKillingBase, IRoleUI
     [NewOnSetup] private Dictionary<byte, Escort.BlockDelegate> blockedPlayers;
 
     public RoleButton KillButton(IRoleButtonEditor killButton) => UpdateKillButton(killButton);
+    public RoleButton PetButton(IRoleButtonEditor petButton) => petButton
+        .SetText(RoleTranslations.Switch)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/generic_switch_ability.png", 130, true));
 
     [UIComponent(UI.Text)]
     private string BlockingText() => textColor.Colorize(hackingMode ? _glitchHackingMode : _glitchKillingMode);

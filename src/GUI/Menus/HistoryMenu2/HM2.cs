@@ -6,6 +6,7 @@ using Lotus.Extensions;
 using Lotus.Logging;
 using Lotus.Utilities;
 using UnityEngine;
+using VentLib.Localization.Attributes;
 using VentLib.Utilities;
 using VentLib.Utilities.Attributes;
 using VentLib.Utilities.Extensions;
@@ -14,8 +15,11 @@ using VentLib.Utilities.Harmony.Attributes;
 namespace Lotus.GUI.Menus.HistoryMenu2;
 
 [RegisterInIl2Cpp]
+[Localized("GUI.HistoryMenu")]
 public class HM2 : MonoBehaviour
 {
+    [Localized("ButtonText")] private static string _buttonText = "History";
+
     private GameObject anchorObject;
     private GameObject buttonObject;
 
@@ -52,7 +56,7 @@ public class HM2 : MonoBehaviour
         historyButton.graphic.sprite = LotusAssets.LoadSprite("History.png", 800);
         historyButton.GetComponentInChildren<PassiveButton>().Modify(ToggleMenu);
         historyButton.SetActive(true);
-        Async.Schedule(() => historyButton.buttonLabelText.text = "History", 0.05f);
+        Async.Schedule(() => historyButton.buttonLabelText.text = _buttonText, 0.05f);
 
         // ===================
         // Set up Parent Menu
@@ -89,6 +93,7 @@ public class HM2 : MonoBehaviour
         historyButton.SetDisabled();
 
         HudManager.Instance.IsIntroDisplayed = true;
+        PlayerControl.LocalPlayer.NetTransform.Halt();
 
         opened = true;
         anchorObject.SetActive(true);
@@ -100,7 +105,7 @@ public class HM2 : MonoBehaviour
         if (AmongUsClient.Instance.AmHost) GameStartManager.Instance.StartButton.gameObject.SetActive(true);
         else GameStartManager.Instance.StartButtonClient.gameObject.SetActive(true);
 
-        HudManager.Instance.gameObject.transform.Find("LobbyInfoPane/AspectSize").gameObject.SetActive(true);
+        HudManager.Instance.gameObject.transform.FindChild("LobbyInfoPane/AspectSize").gameObject.SetActive(true);
         historyButton.SetEnabled();
 
         HudManager.Instance.IsIntroDisplayed = false;
@@ -108,6 +113,8 @@ public class HM2 : MonoBehaviour
         opened = false;
         anchorObject.SetActive(false);
     }
+
+    public bool Opened() => opened;
 
     private void CreateTabBehaviours()
     {

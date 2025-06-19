@@ -5,6 +5,7 @@ using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using Lotus.Managers;
 using Lotus.Extensions;
+using Lotus.Factions.Impostors;
 using Lotus.Roles;
 using VentLib.Localization.Attributes;
 using VentLib.Utilities;
@@ -12,6 +13,7 @@ using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using static MeetingHud;
 using Lotus.Managers.Blackscreen.Interfaces;
+using Lotus.Roles.Internals.Enums;
 
 namespace Lotus.API.Vanilla.Meetings;
 
@@ -159,11 +161,11 @@ public class MeetingDelegate
     {
         if (!AUSettings.ConfirmImpostor() || player == null) return;
 
-        int impostors = Players.GetPlayers(PlayerFilter.Impostor | PlayerFilter.Alive).Count();
+        int impostorCount = Players.GetPlayers(PlayerFilter.Impostor | PlayerFilter.Alive).Count() - 1;
 
         CustomRole roleDefinition = player.PrimaryRole();
         string textFormatting = "<size=0><size=2.5>" + RoleRevealText.Formatted(player.name, roleDefinition.RoleColor.Colorize(roleDefinition.RoleName));
-        textFormatting += "\n" + (impostors == 0 ? NoImpostorsText : RemainingImpostorsText.Formatted(impostors)) + "</size>";
+        textFormatting += "\n" + (impostorCount == 0 ? NoImpostorsText : RemainingImpostorsText.Formatted(impostorCount)) + "</size>";
 
         player.RpcSetName(textFormatting);
     }

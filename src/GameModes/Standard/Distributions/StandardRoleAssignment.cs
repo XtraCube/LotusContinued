@@ -7,6 +7,7 @@ using Lotus.GameModes.Standard.Distributions;
 using Lotus.Options;
 using Lotus.Roles;
 using System.Linq;
+using Lotus.API.Odyssey;
 using Lotus.Utilities;
 using Lotus.Roles.RoleGroups.Vanilla;
 using VentLib.Utilities.Extensions;
@@ -14,6 +15,7 @@ using Lotus.API.Player;
 using Lotus.GameModes.Standard.Lotteries;
 using Lotus.Roles.Interfaces;
 using Lotus.Factions.Impostors;
+using Lotus.Managers;
 using Lotus.Roles.Builtins;
 using Lotus.Roles.Subroles;
 using Lotus.Patches;
@@ -47,6 +49,30 @@ public class StandardRoleAssignment
 
         DoNameBasedAssignment(unassignedPlayers);
 
+        // ASSIGN FORCED ROLES (COMBO ROLES)
+        log.Debug("Checking for Forced Roles");
+        List<string> forcedRoles = [];
+        PluginDataManager.ComboListManager.ListCombos
+            .Where(c => c.ComboType is 0)
+            .Where(c => (c.Role1EnglishName == string.Empty) ^ (c.Role2EnglishName == string.Empty))
+            .ForEach(rci =>
+            {
+                string targetRoleName = rci.Role1EnglishName == string.Empty ? rci.Role2EnglishName : rci.Role1EnglishName;
+                CustomRole roleInstance = GlobalRoleManager.Instance.AllCustomRoles()
+                    .FirstOrDefault(r => r.EnglishRoleName == targetRoleName, EmptyRole.Instance);
+                if (roleInstance is EmptyRole) return;
+                // WE DO NOT CHECK COUNT OR CHANCE!! It's called "Forced" for a reason. These roles are automatically assigned.
+                forcedRoles.Add(targetRoleName); // Keep track of added roles so we don't add them
+
+                // WE ALSO DO NOT CHECK FOR VARIABLE ROLES!! Maybe some people want this to change, but again, it's FORCED! So no alternate versions.
+                PlayerControl targetPlayer = roleInstance is not Subrole
+                    ? unassignedPlayers.PopRandom() // ONLY POP PLAYER FROM LIST IF THIS IS AN ACTUAL ROLE
+                    : unassignedPlayers.GetRandom();
+                StandardGameMode.Instance.Assign(targetPlayer, roleInstance, roleInstance is not Subrole);
+                log.Debug($"{roleInstance.EnglishRoleName} was assigned to {targetPlayer.name} because it's a forced single combo.");
+                AssignForcedSubroles(targetPlayer, roleInstance);
+            });
+
         // ASSIGN IMPOSTOR ROLES
         log.Debug("Assigning Impostor Roles");
         RunAdditionalAssignmentLogic(allPlayers, unassignedPlayers, 1);
@@ -58,11 +84,17 @@ public class StandardRoleAssignment
         {
             CustomRole role = impostorLottery.Next();
             if (role.GetType() == typeof(Impostor) && impostorLottery.HasNext()) continue;
+            if (forcedRoles.Remove(role.EnglishRoleName)) continue; // Remove from list in case count is more than 2.
+            if (IsRoleBannedWithOtherRole(role)) continue;
 
             if (role.Faction is Madmates)
             {
                 if (madmateCount >= roleDistribution.MaximumMadmates) continue;
-                StandardGameMode.Instance.Assign(unassignedPlayers.PopRandom(), IVariableRole.PickAssignedRole(role));
+                CustomRole variantMadmate = IVariableRole.PickAssignedRole(role);
+                if (!CanAssignRolesForcedWithRole(variantMadmate, unassignedPlayers)) continue;
+                PlayerControl targetMadmate = unassignedPlayers.PopRandom();
+                StandardGameMode.Instance.Assign(targetMadmate, variantMadmate);
+                AssignForcedSubroles(targetMadmate, variantMadmate);
                 madmateCount++;
                 if (RoleOptions.MadmateOptions.MadmatesTakeImpostorSlots) impostorCount++;
                 continue;
@@ -74,7 +106,11 @@ public class StandardRoleAssignment
                 continue;
             }
 
-            StandardGameMode.Instance.Assign(unassignedPlayers.PopRandom(), IVariableRole.PickAssignedRole(role));
+            CustomRole variant = IVariableRole.PickAssignedRole(role);
+            if (!CanAssignRolesForcedWithRole(variant, unassignedPlayers)) continue;
+            PlayerControl targetPlayer = unassignedPlayers.PopRandom();
+            StandardGameMode.Instance.Assign(targetPlayer, variant);
+            AssignForcedSubroles(targetPlayer, variant);
             impostorCount++;
         }
 
@@ -98,7 +134,13 @@ public class StandardRoleAssignment
                     neutralKillingLottery = new NeutralKillingLottery(); // Refresh the lottery again to fulfill the minimum requirement
                 continue;
             }
-            StandardGameMode.Instance.Assign(unassignedPlayers.PopRandom(), IVariableRole.PickAssignedRole(role));
+            if (forcedRoles.Remove(role.EnglishRoleName)) continue; // Remove from list in case count is more than 2.
+            if (IsRoleBannedWithOtherRole(role)) continue;
+            CustomRole variant = IVariableRole.PickAssignedRole(role);
+            if (!CanAssignRolesForcedWithRole(variant, unassignedPlayers)) continue;
+            PlayerControl targetPlayer = unassignedPlayers.PopRandom();
+            StandardGameMode.Instance.Assign(targetPlayer, variant);
+            AssignForcedSubroles(targetPlayer, variant);
             nkRoles++;
         }
 
@@ -122,7 +164,13 @@ public class StandardRoleAssignment
                     neutralLottery = new NeutralLottery(); // Refresh the lottery again to fulfill the minimum requirement
                 continue;
             }
-            StandardGameMode.Instance.Assign(unassignedPlayers.PopRandom(), IVariableRole.PickAssignedRole(role));
+            if (forcedRoles.Remove(role.EnglishRoleName)) continue; // Remove from list in case count is more than 2.
+            if (IsRoleBannedWithOtherRole(role)) continue;
+            CustomRole variant = IVariableRole.PickAssignedRole(role);
+            if (!CanAssignRolesForcedWithRole(variant, unassignedPlayers)) continue;
+            PlayerControl targetPlayer = unassignedPlayers.PopRandom();
+            StandardGameMode.Instance.Assign(targetPlayer, variant);
+            AssignForcedSubroles(targetPlayer, variant);
             neutralRoles++;
         }
 
@@ -136,13 +184,19 @@ public class StandardRoleAssignment
         {
             CustomRole role = crewmateLottery.Next();
             if (role.GetType() == typeof(Crewmate) && crewmateLottery.HasNext()) continue;
-            StandardGameMode.Instance.Assign(unassignedPlayers.PopRandom(), role);
+            if (forcedRoles.Remove(role.EnglishRoleName)) continue; // Remove from list in case count is more than 2.
+            if (IsRoleBannedWithOtherRole(role)) continue;
+            CustomRole variant = IVariableRole.PickAssignedRole(role);
+            if (!CanAssignRolesForcedWithRole(variant, unassignedPlayers)) continue;
+            PlayerControl targetPlayer = unassignedPlayers.PopRandom();
+            StandardGameMode.Instance.Assign(targetPlayer, variant);
+            AssignForcedSubroles(targetPlayer, variant);
         }
 
         // ====================
 
         // ASSIGN SUB-ROLES
-        AssignSubroles(allPlayers);
+        AssignSubroles(allPlayers, forcedRoles);
         // ================
 
         log.Debug("Finishing up...");
@@ -168,7 +222,7 @@ public class StandardRoleAssignment
         }
     }
 
-    private void AssignSubroles(List<PlayerControl> allPlayers)
+    private void AssignSubroles(List<PlayerControl> allPlayers, List<string> forcedRoles)
     {
         if (RoleOptions.SubroleOptions.ModifierLimits == 0) return; // no modifiers
         log.Debug("Assigning Subroles...");
@@ -187,9 +241,10 @@ public class StandardRoleAssignment
         {
             CustomRole role = subRoleLottery.Next();
             if (role is IllegalRole) continue;
-            if (role is IRoleCandidate candidate)
-                if (candidate.ShouldSkip()) continue;
             CustomRole variant = role is Subrole sr ? IVariantSubrole.PickAssignedRole(sr) : IVariableRole.PickAssignedRole(role);
+            if (forcedRoles.Remove(variant.EnglishRoleName)) continue; // Remove from list in case count is more than 2.
+            if (variant is IRoleCandidate candidate)
+                if (candidate.ShouldSkip()) continue;
             List<PlayerControl> players = Players.GetAllPlayers().Where(CanAssignTo).ToList();
             if (players.Count == 0)
             {
@@ -198,18 +253,94 @@ public class StandardRoleAssignment
                 players = Players.GetAllPlayers().Where(p => p.GetSubroles().Count <= evenDistribution).ToList(); ;
                 if (players.Count == 0) break;
             }
-            log.Debug($"testing role {role.EnglishRoleName}");
+            // log.Debug($"testing role {role.EnglishRoleName}");
 
             bool assigned = false;
             while (players.Count > 0 && !assigned)
             {
                 PlayerControl victim = players.PopRandom();
                 if (victim.GetSubroles().Any(r => r.GetType() == variant.GetType())) continue;
+                if (AreRolesBlockedWithEachOther(variant, victim.PrimaryRole())) continue; // Check if the player's primary role and subrole are blocked.
+                if (victim.GetSubroles().Any(cr => AreRolesBlockedWithEachOther(variant, cr))) continue; // Check if any of their subroles are blocked with this one.
                 if (variant is ISubrole subrole && !(assigned = subrole.IsAssignableTo(victim))) continue;
                 StandardGameMode.Instance.Assign(victim, variant, false);
+                AssignForcedSubroles(victim, variant);
             }
         }
     }
+
+    // COMBO HELPER FUNCTIONS
+    private bool IsRoleBannedWithOtherRole(CustomRole targetRole) => PluginDataManager.ComboListManager.ListCombos
+        .Where(c => c.ComboType is 1)
+        .Where(c => (c.Role1EnglishName == targetRole.EnglishRoleName) ^ (c.Role2EnglishName == targetRole.EnglishRoleName))
+        .Any(rci =>
+        {
+            string otherRoleName = rci.Role1EnglishName == targetRole.EnglishRoleName // get the other role's english name
+                ? rci.Role2EnglishName
+                : rci.Role1EnglishName;
+            return Game.MatchData.Roles.MainRoles.Values.Any(cr => cr.EnglishRoleName == otherRoleName); // Check if any currently assigned roles match.
+        });
+
+    private bool AreRolesBlockedWithEachOther(CustomRole subRole, CustomRole targetRole) => PluginDataManager.ComboListManager.ListCombos
+        .Where(c => c.ComboType is 1)
+        .Any(rci => (rci.Role1EnglishName == subRole.EnglishRoleName && rci.Role2EnglishName == targetRole.EnglishRoleName)
+                    || (rci.Role1EnglishName == targetRole.EnglishRoleName && rci.Role2EnglishName == subRole.EnglishRoleName));
+
+    /// <summary>
+    /// Checks the list of combos of the current preset to see if there are any roles that should always spawn when this one spawns.<br/>
+    /// Any roles assigned as the result of this function will not call this function again to prevent recursiveness.<br/>
+    /// Modifiers will still be assigned as normal however.
+    /// </summary>
+    /// <param name="targetRole">The role to look for when checking the combo list.</param>
+    /// <param name="unassignedPlayers">The remaining </param>
+    /// <returns>Whether there are enough players left to assign the roles that always spawn with 'targetRole'. <br/>Also returns true if there are no roles forced at all.</returns>
+    private bool CanAssignRolesForcedWithRole(CustomRole targetRole, List<PlayerControl> unassignedPlayers)
+    {
+        List<CustomRole> rolesToAssign = [];
+        PluginDataManager.ComboListManager.ListCombos
+            .Where(c => c.ComboType is 0)
+            .Where(c => (c.Role1EnglishName == targetRole.EnglishRoleName) ^ (c.Role2EnglishName == targetRole.EnglishRoleName))
+            .ForEach(rci =>
+            {
+                string otherRoleName = rci.Role1EnglishName == targetRole.EnglishRoleName // get the other role's english name
+                    ? rci.Role2EnglishName
+                    : rci.Role1EnglishName;
+                CustomRole roleInstance = GlobalRoleManager.Instance.AllCustomRoles()
+                    .FirstOrDefault(r => r.EnglishRoleName == otherRoleName, EmptyRole.Instance);
+                if (roleInstance is EmptyRole) return;
+                if (roleInstance is Subrole) return; // Skip subroles.
+                if (IsRoleBannedWithOtherRole(roleInstance)) return;
+                rolesToAssign.Add(roleInstance);
+            });
+        if (rolesToAssign.Count >= unassignedPlayers.Count) return false; // >= we also need to assign 'targetRole'
+        rolesToAssign.ForEach(r =>
+        {
+            PlayerControl player = unassignedPlayers.PopRandom();
+            StandardGameMode.Instance.Assign(player, r);
+            log.Debug($"{r.EnglishRoleName} was assigned to {player.name} because its in a forced role combo with {targetRole.EnglishRoleName}.");
+        });
+        return true;
+    }
+
+    private void AssignForcedSubroles(PlayerControl player, CustomRole mainRole)
+    {
+        PluginDataManager.ComboListManager.ListCombos
+            .Where(c => c.ComboType is 0)
+            .Where(c => (c.Role1EnglishName == mainRole.EnglishRoleName) ^ (c.Role2EnglishName == mainRole.EnglishRoleName))
+            .ForEach(rci =>
+            {
+                string otherRoleName = rci.Role1EnglishName == mainRole.EnglishRoleName // get the other role's english name
+                    ? rci.Role2EnglishName
+                    : rci.Role1EnglishName;
+                CustomRole roleInstance = GlobalRoleManager.Instance.AllCustomRoles()
+                    .FirstOrDefault(r => r.EnglishRoleName == otherRoleName, EmptyRole.Instance);
+                if (roleInstance is EmptyRole) return;
+                if (roleInstance is not Subrole) return; // Skip actual roles.
+                log.Debug($"{roleInstance.EnglishRoleName} was assigned to {player.name} because of a forced modifier/role combo with {mainRole.EnglishRoleName}.");
+                StandardGameMode.Instance.Assign(player, roleInstance, false);
+            });
+    }
+    // -----------------------------------------------
 
     private void RunAdditionalAssignmentLogic(List<PlayerControl> allPlayers, List<PlayerControl> unassignedPlayers, int stage)
         => _additionalAssignmentLogics.ForEach(logic => logic.AssignRoles(allPlayers, unassignedPlayers, stage));

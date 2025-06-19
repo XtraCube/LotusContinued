@@ -55,7 +55,7 @@ public static class ModConstants
         public static Color PassiveColor = new(1f, 0.87f, 0.91f);
         public static Color KillingColor = new(1f, 0.27f, 0.18f);
         public static Color MadmateColor = new(0.73f, 0.18f, 0.02f);
-        public static Color CrewmateColor = new(0.71f, 0.94f, 1f);
+        public static Color CrewmateColor = new(0.55f, 1f, 1f);
 
 
         public static Color GeneralColor1 = new(0.15f, 0.27f, 0.33f);

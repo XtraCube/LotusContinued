@@ -43,7 +43,7 @@ public class RuthlessRomantic : NeutralKillingBase
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) => AddKillCooldownOptions(base.RegisterOptions(optionStream));
 
-    protected override RoleType GetRoleType() => RoleType.Variation;
+    public override RoleType GetRoleType() => RoleType.Variation;
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)

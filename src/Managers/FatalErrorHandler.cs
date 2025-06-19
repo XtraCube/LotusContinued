@@ -34,7 +34,13 @@ public class FatalErrorHandler
         if (GameManager.Instance == null) return;
         log.Exception(exception);
         ExceptionMessages.Enqueue((exception, phase));
-        Async.Schedule(() => GameManager.Instance.RpcEndGame(GameOverReason.ImpostorDisconnect, false), 1);
+        Async.Schedule(() =>
+        {
+            var msg = AmongUsClient.Instance.StartEndGame();
+            msg.Write((byte)GameOverReason.ImpostorDisconnect);
+            msg.Write(false);
+            AmongUsClient.Instance.FinishEndGame(msg);
+        }, 1);
     }
 
     private static void ReportErrors()

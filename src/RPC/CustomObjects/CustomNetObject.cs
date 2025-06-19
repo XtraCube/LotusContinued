@@ -12,13 +12,14 @@ using Lotus.Network;
 using TMPro;
 using UnityEngine;
 using VentLib;
+using VentLib.Networking.RPC;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using Object = UnityEngine.Object;
 
 // Code from: https://github.com/Gurge44/EndlessHostRoles/blob/main/Modules/CustomNetObject.cs
-// It is sort-of modified however.
+// It is sort-of modified, however.
 
 // Sidenote:
 // I HATE working with CustomRpcSender.
@@ -120,8 +121,17 @@ public class CustomNetObject
         });
     }
 
-    public void SnapTo(Vector2 position)
+    public void SnapTo(Vector2 position, SendOption sendOption = SendOption.None)
     {
+        if (AmongUsClient.Instance.AmClient)
+            playerControl.NetTransform.SnapTo(position, (ushort)(playerControl.NetTransform.lastSequenceId + 1U));
+
+        ushort num = (ushort)(playerControl.NetTransform.lastSequenceId + 2U);
+        MessageWriter messageWriter = AmongUsClient.Instance.StartRpcImmediately(playerControl.NetTransform.NetId, 21, sendOption);
+        NetHelpers.WriteVector2(position, messageWriter);
+        messageWriter.Write(num);
+        AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
+
         Position = position;
     }
 
@@ -165,11 +175,11 @@ public class CustomNetObject
             return;
         }
 
-        if (playerControl.IsModded())
-            Async.Schedule(() =>
-            {
-                // Vents.FindRPC((uint)ModCalls.FixModdedClientCNO).Send([player.GetClientId()], playerControl, false);
-            }, 0.4f);
+        // if (player.IsModded())
+        //     Async.Schedule(() =>
+        //     {
+        //         Vents.FindRPC((uint)ModCalls.FixModdedClientCNO).Send([player.GetClientId()], playerControl, false);
+        //     }, 0.4f);
 
         MessageWriter writer = MessageWriter.Get();
         writer.StartMessage(6);
@@ -192,34 +202,6 @@ public class CustomNetObject
             playerControlTimer = 0f;
             Async.Execute(RecreateNetObject);
         }
-
-        CustomNetworkTransform nt = playerControl.NetTransform;
-        if (nt == null) return;
-
-        playerControl.Collider.enabled = false;
-
-        if (Position != nt.body.position)
-        {
-            Transform transform = nt.transform;
-            nt.body.position = Position;
-            transform.position = Position;
-            nt.body.velocity = Vector2.zero;
-            nt.lastSequenceId++;
-        }
-
-        if (nt.HasMoved())
-        {
-            if (PhysicsHelpers.AnythingBetween(nt.lastPosSent, nt.body.position, Constants.ShipOnlyMask, false))
-            {
-                nt.RpcSnapTo(nt.body.position);
-            }
-            else
-            {
-
-                nt.sendQueue.Enqueue(nt.body.position);
-                nt.SetDirtyBit(2U);
-            }
-        }
     }
 
     protected void CreateNetObject(string sprite, Vector2 position)
@@ -235,7 +217,34 @@ public class CustomNetObject
         MessageWriter msg = MessageWriter.Get(SendOption.Reliable);
         msg.StartMessage(5);
         msg.Write(AmongUsClient.Instance.GameId);
-        AmongUsClient.Instance.CreateSpawnMessage(playerControl, -2, SpawnFlags.None).SerializeValues(msg);
+        msg.StartMessage(4);
+        msg.WritePacked(playerControl.SpawnId);
+        msg.WritePacked(-2);
+        msg.Write((byte)SpawnFlags.None);
+        InnerNetObject[] componentsInChildren = playerControl.GetComponentsInChildren<InnerNetObject>();
+        msg.WritePacked(componentsInChildren.Length);
+
+        for (int index = 0; index < componentsInChildren.Length; ++index)
+        {
+            InnerNetObject innerNetObject = componentsInChildren[index];
+            innerNetObject.OwnerId = -2;
+            innerNetObject.SpawnFlags = SpawnFlags.None;
+
+            if (innerNetObject.NetId == 0U)
+            {
+                innerNetObject.NetId = AmongUsClient.Instance.NetIdCnt++;
+                InnerNetObjectCollection allObjects = AmongUsClient.Instance.allObjects;
+                allObjects.allObjects.Add(innerNetObject);
+                allObjects.allObjectsFast.Add(innerNetObject.NetId, innerNetObject);
+            }
+
+            msg.WritePacked(innerNetObject.NetId);
+            msg.StartMessage(1);
+            innerNetObject.Serialize(msg, true);
+            msg.EndMessage();
+        }
+
+        msg.EndMessage();
 
         if (ConnectionManager.IsVanillaServer)
             for (uint i = 1; i <= 3; ++i)

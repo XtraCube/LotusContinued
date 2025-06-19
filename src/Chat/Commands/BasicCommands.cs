@@ -261,6 +261,11 @@ public class BasicCommands : CommandTranslations
             string choice = context.Args[1];
             if (choice.StartsWith("s"))
             {
+                if (CheckEndGamePatch.DeferredQueue > 0)
+                {
+                    ChatHandlers.NotPermitted("You are not allowed to fix another player right now.").Send(source);
+                    return;
+                }
                 ChatHandler.Of($"Starting fix of blackscreen caused by game start for \"{target.name}\"").LeftAlign().Send(source);
                 List<PlayerControl> players = Players.GetAllPlayers().ToList();
 
@@ -269,18 +274,19 @@ public class BasicCommands : CommandTranslations
                 if (!lastPlayerInfo.Exists()) return;
                 log.Debug("Assigned everyone but the last player.");
 
+                Dictionary<byte, bool> realDisconnectInfo = new();
                 Async.Schedule(() =>
                 {
-                    Dictionary<byte, bool> disconnected = new();
-                    CheckEndGamePatch.Deferred = true;
+                    CheckEndGamePatch.DeferredQueue++;
                     players.ForEach(pc =>
                     {
-                        disconnected[pc.PlayerId] = pc.Data.Disconnected;
+                        realDisconnectInfo[pc.PlayerId] = pc.Data.Disconnected;
                         pc.Data.Disconnected = true;
+                        pc.Data.MarkDirty();
+                        AmongUsClient.Instance.SendAllStreamedObjects();
                     });
                     log.Debug("Sending Disconnected Data.");
-                    GeneralRPC.SendGameData(target.GetClientId());
-                    players.ForEach(pc => pc.Data.Disconnected = disconnected[pc.PlayerId]);
+                    players.ForEach(pc => pc.Data.Disconnected = realDisconnectInfo[pc.PlayerId]);
                     ChatHandler.Of("Step 1 finished.\n(Setup Stage)").Send(source);
                 }, NetUtils.DeriveDelay(0.5f));
                 Async.Schedule(() =>
@@ -290,11 +296,20 @@ public class BasicCommands : CommandTranslations
                     info.Target.RpcSetRoleDesync(info.TargetRoleForSeer, info.Seer);
                     log.Debug("Sent! Cleaning up in a second...");
                     ChatHandler.Of("Step 2 finished.\n(they should see the \"shhhh\" screen now)").Send(source);
-                    CheckEndGamePatch.Deferred = false;
                 }, NetUtils.DeriveDelay(1f));
                 Async.Schedule(() =>
                 {
-                    GeneralRPC.SendGameData(target.GetClientId());
+                    players.ForEach(pc =>
+                    {
+                        bool disconnected = realDisconnectInfo[pc.PlayerId];
+                        pc.Data.Disconnected = disconnected;
+                        if (!disconnected)
+                        {
+                            pc.Data.MarkDirty();
+                            AmongUsClient.Instance.SendAllStreamedObjects();
+                        }
+                    });
+                    CheckEndGamePatch.DeferredQueue--;
                     ChatHandler.Of("Step 3 finished.\n(Cleanup Stage)").Send(source);
                 }, NetUtils.DeriveDelay(1.5f));
             }

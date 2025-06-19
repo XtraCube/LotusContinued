@@ -1,3 +1,4 @@
+using Hazel;
 using UnityEngine;
 using VentLib.Networking.RPC;
 using VentLib.Utilities;
@@ -28,5 +29,5 @@ public class Flag : CustomNetObject
         startPosition = position;
     }
 
-    public void Return() => SnapTo(startPosition);
+    public void Return() => SnapTo(startPosition, SendOption.Reliable);
 }

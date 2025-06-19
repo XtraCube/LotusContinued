@@ -3,7 +3,7 @@ using Lotus.Options;
 using UnityEngine;
 
 namespace Lotus.Factions.Neutrals;
-public class Neutral : Faction<Neutral>, INeutralFaction<Neutral>
+public class Neutral : Faction<Neutral>//, INeutralFaction<Neutral>
 {
     private readonly string factionName;
 
