@@ -28,8 +28,8 @@ public class ReportDeadBodyPatch
             return false;
 
         // MeetingRoomManager.Instance.AssignSelf(__instance, target);
-        if (GameManager.Instance.CheckTaskCompletion())
-            return false;
+        // if (GameManager.Instance.CheckTaskCompletion())
+        //     return false;
 
 
         ActionHandle handle = ActionHandle.NoInit();
