@@ -2,6 +2,7 @@ using System.Linq;
 using Lotus.API.Odyssey;
 using Lotus.Options;
 using Lotus.Extensions;
+using Lotus.Roles;
 using Lotus.Utilities;
 using VentLib;
 using VentLib.Utilities.Extensions;
@@ -39,5 +40,18 @@ public static class GeneralModRpc
     public static void SetGameState(int state)
     {
         Game.State = (GameState)state;
+    }
+
+    // GENERAL ROLE RPC
+    [ModRPC((uint)RoleRPC.RevertRoleUI, RpcActors.Host, RpcActors.NonHosts)]
+    public static void RevertRoleUI()
+    {
+        PlayerControl.LocalPlayer.PrimaryRole().UIManager.RevertEverything();
+    }
+
+    [ModRPC((uint)RoleRPC.ForceRoleUIUpdate, RpcActors.Host, RpcActors.NonHosts)]
+    public static void ForceRoleUIUpdate()
+    {
+        PlayerControl.LocalPlayer.PrimaryRole().UIManager.ForceUpdate();
     }
 }

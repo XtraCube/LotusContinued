@@ -39,6 +39,7 @@ using Lotus.Managers.History.Events;
 using Lotus.Roles.Managers.Interfaces;
 using Lotus.Utilities;
 using Lotus.Roles.RoleGroups.Crew;
+using VentLib;
 using VentLib.Networking.RPC.Interfaces;
 using VentLib.Utilities.Optionals;
 
@@ -255,10 +256,15 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
             .Select(p => p.PlayerId)
             .ToHashSet();
 
+        if (MyPlayer.AmOwner) UIManager.RevertEverything();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)RoleRPC.RevertRoleUI)!.Send([MyPlayer.OwnerId]);
         Game.CurrentGameMode.Assign(MyPlayer, newRole);
         newRole = MyPlayer.PrimaryRole();
         newRole.Assign(true);
         Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(MyPlayer, newRole, this));
+
+        if (MyPlayer.AmOwner) newRole.UIManager.ForceUpdate();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)RoleRPC.ForceRoleUIUpdate)!.Send([MyPlayer.OwnerId]);
 
         HashSet<byte> newAllies = Players.GetAllPlayers()
             .Where(p => newRole.Relationship(p) is Relation.FullAllies)
