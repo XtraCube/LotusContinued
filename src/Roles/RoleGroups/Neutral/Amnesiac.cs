@@ -87,9 +87,9 @@ public class Amnesiac : CustomRole, IVariableRole
             .Tab(DefaultTabs.NeutralTab)
             .SubOption(sub => sub.KeyName("Steals Exact Role", Translations.Options.StealsExactRole)
                 .Bind(v => stealExactRole = (bool)v)
-                .AddOnOffValues(false).Build())
+                .AddBoolean(false).Build())
             .SubOption(sub => sub.KeyName("Has Arrows to Bodies", Translations.Options.HasArrowsToBody)
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => hasArrowsToBodies = b)
                 .Build());
 
