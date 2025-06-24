@@ -82,6 +82,7 @@ public class Janitor : Impostor, IRoleUI
         if (MyPlayer.InteractWith(target, new LotusInteraction(new FakeFatalIntent(), this)) is InteractionResult.Halt)
             return false;
         MyPlayer.RpcVaporize(target);
+        Game.MatchData.GameHistory.SetCauseOfDeath(target.PlayerId, new DeathEvent(target, MyPlayer));
         Game.MatchData.GameHistory.AddEvent(new KillEvent(MyPlayer, target));
         Game.MatchData.GameHistory.AddEvent(new GenericAbilityEvent(MyPlayer,
             $"{Color.red.Colorize(MyPlayer.name)} cleaned {target.GetRoleColor().Colorize(target.name)}."));
@@ -168,28 +169,6 @@ public class Janitor : Impostor, IRoleUI
 
             [Localized(nameof(KillCooldownMultiplier))]
             public static string KillCooldownMultiplier = "Kill Cooldown Multiplier";
-        }
-    }
-
-    private class FakeFatalIntent : IFatalIntent
-    {
-        public void Action(PlayerControl actor, PlayerControl target)
-        {
-        }
-
-        public void Halted(PlayerControl actor, PlayerControl target)
-        {
-        }
-
-        public Optional<IDeathEvent> CauseOfDeath() => Optional<IDeathEvent>.Null();
-
-        public bool IsRanged() => false;
-
-        private Dictionary<string, object?>? meta;
-        public object? this[string key]
-        {
-            get => (meta ?? new Dictionary<string, object?>()).GetValueOrDefault(key);
-            set => (meta ?? new Dictionary<string, object?>())[key] = value;
         }
     }
 }

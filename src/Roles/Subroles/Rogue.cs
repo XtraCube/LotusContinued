@@ -1,7 +1,9 @@
+extern alias JBAnnotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
@@ -38,8 +40,8 @@ public class Rogue : Subrole
     /// <summary>
     /// A list of roles that Rogue is not compatible with. Add your role to this list to make it not be assigned with your role.
     /// </summary>
-    public static readonly List<Type> IncompatibleRoles = new()
-    {
+    [UsedImplicitly] public static readonly List<Type> IncompatibleRoles =
+    [
         typeof(Crusader),
         typeof(Observer),
         typeof(Sheriff),
@@ -54,7 +56,7 @@ public class Rogue : Subrole
         typeof(Altruist),
         typeof(Charmer),
         typeof(Jailor)
-    };
+    ];
 
     private static ColorGradient _psychoGradient = new(new Color(0.41f, 0.1f, 0.18f), new Color(0.85f, 0.77f, 0f));
     public static Dictionary<Type, int> FactionMaxDictionary = new();

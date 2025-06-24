@@ -32,6 +32,8 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
     private Material? material;
 
     private Sprite originalSprite = null!;
+    private string originalText;
+
     private Sprite _sprite = null!;
     private LazySprite? lazySprite;
     private string localizedText;
@@ -42,7 +44,7 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
         underlyingButton = UnityOptional<ActionButton>.Of(buttonSupplier.Invoke());
         underlyingButton.IfPresent(b =>
         {
-            localizedText = b.buttonLabelText.text;
+            localizedText = originalText = b.buttonLabelText.text;
             Sprite = this.originalSprite = b.graphic.sprite;
 
             if (b.usesRemainingSprite == null)
@@ -125,6 +127,8 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
         return this;
     }
 
+    public RoleButton RevertText() => this.SetText(originalText);
+
     public Sprite GetSprite() => Sprite;
 
     public string GetText() => localizedText;
@@ -197,6 +201,7 @@ public class RoleButton: IRoleButtonEditor, ICloneable<RoleButton>
         // button.buttonLabelText.text = localizedText;
         // button.graphic.sprite = GetSprite();
         changedSprite = true;
+        Update();
     }
 
     public RoleButton Clone() => (RoleButton)this.MemberwiseClone();

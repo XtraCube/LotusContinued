@@ -48,7 +48,26 @@ public class RoleUIManager
     }
     internal void ForceUpdate()
     {
+        // log.Debug($"---- FORCE UPDATE {modifiedButtons.Count}");
         modifiedButtons.ForEach(b => b.ForceUpdate());
+    }
+
+    public void RevertEverything()
+    {
+        // log.Debug($"---- REVERT EVERYTHING {modifiedButtons.Count}");
+        modifiedButtons.Do(button =>
+        {
+            button
+                .BindCooldown(null)
+                .BindUses(null)
+                .RevertSprite()
+                .RevertText();
+        });
+        modifiedButtons.Do(b =>
+        {
+            b.ForceUpdate();
+            b.GetButton().SetCoolDown(0, 1);
+        });
     }
 
     public virtual void HandleUIComponent(IRoleUI component)

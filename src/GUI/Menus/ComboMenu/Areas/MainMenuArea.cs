@@ -115,7 +115,7 @@ public class MainMenuArea: MonoBehaviour, IComboMenuArea
     {
         DisplayedCombo combo = (DisplayedCombo)monoCombo;
         log.Debug("deleting combo...");
-        PluginDataManager.ComboListManager.RemoveCombo(allCombos[displayedCombos.IndexOf(combo)]);
+        PluginDataManager.ComboListManager.RemoveCombo(allCombos[displayedCombos.IndexOf(combo) + startIndex]);
     }
 
     private void GoToAddComboMenu()
