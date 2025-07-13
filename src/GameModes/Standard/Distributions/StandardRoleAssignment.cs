@@ -68,7 +68,7 @@ public class StandardRoleAssignment
                     return;
                 }
                 // WE DO NOT CHECK COUNT OR CHANCE!! It's called "Forced" for a reason. These roles are automatically assigned.
-                forcedRoles.Add(targetRoleName); // Keep track of added roles so we don't add them
+                forcedRoles.Add(roleInstance.EnglishRoleName); // Keep track of added roles so we don't add them
 
                 // WE ALSO DO NOT CHECK FOR VARIABLE ROLES!! Maybe some people want this to change, but again, it's FORCED! So no alternate versions.
                 PlayerControl targetPlayer = unassignedPlayers.PopRandom();
@@ -76,6 +76,8 @@ public class StandardRoleAssignment
                 log.Debug($"{roleInstance.EnglishRoleName} was assigned to {targetPlayer.name} because it's a forced single combo.");
                 AssignForcedSubroles(targetPlayer, roleInstance);
             });
+
+        log.Debug($"Not assigning these roles again: {string.Join(", ", forcedRoles)}");
 
         // ASSIGN IMPOSTOR ROLES
         log.Debug("Assigning Impostor Roles");
