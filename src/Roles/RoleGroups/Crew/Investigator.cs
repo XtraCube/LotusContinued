@@ -64,7 +64,8 @@ public class Investigator : Crewmate, IRoleUI
             .Value(v => v.Text(GeneralOptionTranslations.CustomText).Value(2).Color(new Color(0.73f, 0.58f, 1f)).Build())
             .ShowSubOptionPredicate(i => (int)i == 2))
     };
-    public static List<int> RoleTypeSettings = new() { 0, 0, 0 };
+
+    public static List<int> RoleTypeSettings = [0, 0, 0, 0];
 
     // 2 = Color red, 1 = Color green
     public static Dictionary<Type, int> RoleColoringDictionary = new();
