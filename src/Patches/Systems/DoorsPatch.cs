@@ -1,8 +1,14 @@
+using System.Linq;
 using HarmonyLib;
 using Lotus.API.Odyssey;
+using Lotus.API.Player;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using Lotus.API.Vanilla.Sabotages;
+using Lotus.Chat;
+using Lotus.Options;
+using Lotus.Roles;
+using Lotus.Roles.Interfaces;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
@@ -16,6 +22,16 @@ public class DoorsPatch
     {
         if (!AmongUsClient.Instance.AmHost) return true;
         if (Game.CurrentGameMode.BlockedActions().HasFlag(GameModes.BlockableGameAction.CloseDoors)) return false;
+        if (GeneralOptions.GameplayOptions.BlockDeadFromSabotaging &&
+            GeneralOptions.GameplayOptions.BlockDoorsWhenAllSabotagersAreDead)
+        {
+            if (Players.GetAliveRoles().All(r =>
+                    r.RoleAbilityFlags.HasFlag(RoleAbilityFlag.CannotSabotage) ||
+                    r is not ISabotagerRole || r is ISabotagerRole sabotagerRole && !sabotagerRole.CanSabotage()))
+                // was thinking of sending a message to the player but then I forgot we don't know WHO is sabotaging.
+                return false;
+
+        }
         ISabotage sabotage = new DoorSabotage(room);
 
         ActionHandle handle = RoleOperations.Current.Trigger(LotusActionType.SabotageStarted, null, sabotage, PlayerControl.LocalPlayer);

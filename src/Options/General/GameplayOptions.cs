@@ -25,6 +25,9 @@ public class GameplayOptions
     public bool DisableTaskWin;
     public bool GhostsSeeInfo;
 
+    public bool BlockDeadFromSabotaging;
+    public bool BlockDoorsWhenAllSabotagersAreDead;
+
     public int LadderDeathChance = -1;
     public bool EnableLadderDeath => LadderDeathChance > 0;
 
@@ -138,6 +141,18 @@ public class GameplayOptions
             .BindInt(i => LadderDeathChance = i)
             .Build());
 
+        AllOptions.Add(Builder("Block Dead From Sabotaging")
+            .Name(GameplayOptionTranslations.BlockDeadFromSabotaging)
+            .AddBoolean(false)
+            .BindBool(b => BlockDeadFromSabotaging = b)
+            .ShowSubOptionPredicate(v => (bool)v)
+            .SubOption(sub => sub
+                .KeyName("Block Closing Doors when All Sabotagers are Dead", GameplayOptionTranslations.BlockDoorsWhenAllSabotagersAreDead)
+                .AddBoolean()
+                .BindBool(b => BlockDoorsWhenAllSabotagersAreDead = b)
+                .Build())
+            .Build());
+
         AllOptions.Add(new GameOptionBuilder()
             .Builder("Modifier Text Mode", _optionColor)
             .Name(GameplayOptionTranslations.ModifierTextMode)
@@ -234,6 +249,12 @@ public class GameplayOptions
 
         [Localized(nameof(FirstValue))]
         public static string FirstValue = "First";
+
+        [Localized(nameof(BlockDeadFromSabotaging))]
+        public static string BlockDeadFromSabotaging = "Block Dead From Sabotaging";
+
+        [Localized(nameof(BlockDoorsWhenAllSabotagersAreDead))]
+        public static string BlockDoorsWhenAllSabotagersAreDead = "Block Closing Doors When All Sabotagers Are Dead";
     }
 }
 
