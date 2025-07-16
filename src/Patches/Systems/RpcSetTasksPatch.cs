@@ -136,13 +136,61 @@ public class RpcSetTasksPatch
     {
         switch (task.TaskType)
         {
-            case TaskTypes.SubmitScan when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.MedScan):
-            case TaskTypes.UnlockSafe when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.UnlockSafe):
-            case TaskTypes.UploadData when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.UploadData):
-            case TaskTypes.StartReactor when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.StartReactor):
-            case TaskTypes.ResetBreakers when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.ResetBreaker):
-            case TaskTypes.SwipeCard when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.CardSwipe):
-            case TaskTypes.FixWiring when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.FixWiring):
+            case TaskTypes.SwipeCard when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.SwipeCard):
+            case TaskTypes.FixWiring when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.FixWiring):
+            case TaskTypes.EnterIdCode when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.EnterIdCode):
+            case TaskTypes.ScanBoardingPass when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.ScanBoardingPass):
+            case TaskTypes.InsertKeys when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.InsertKeys):
+
+            case TaskTypes.AlignTelescope when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.AlignTelescope):
+            case TaskTypes.AssembleArtifact when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.AssembleArtifact):
+            case TaskTypes.BuyBeverage when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.BuyBeverage):
+            case TaskTypes.CalibrateDistributor when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.CalibrateDistributor):
+            case TaskTypes.ChartCourse when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.ChartCourse):
+            case TaskTypes.CleanO2Filter when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.CleanO2Filter):
+            case TaskTypes.CleanToilet when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.CleanToilet):
+            case TaskTypes.VentCleaning when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.CleanVent):
+            case TaskTypes.ClearAsteroids when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.ClearAsteroids):
+            case TaskTypes.Decontaminate when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.Decontaminate):
+            case TaskTypes.DivertPower when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.DivertPower):
+            case TaskTypes.DressMannequin when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.DressMannequin):
+            case TaskTypes.FixShower when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.FixShower):
+            case TaskTypes.MakeBurger when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.MakeBurger):
+            case TaskTypes.MeasureWeather when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.MeasureWeather):
+            case TaskTypes.MonitorOxygen when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.MonitorOxygen):
+            case TaskTypes.PickUpTowels when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PickUpTowels):
+            case TaskTypes.PolishRuby when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PolishRuby):
+            case TaskTypes.PrimeShields when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PrimeShields):
+            case TaskTypes.ProcessData when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.ProcessData):
+            case TaskTypes.PutAwayPistols when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PutAwayPistols):
+            case TaskTypes.PutAwayRifles when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PutAwayRifles):
+            case TaskTypes.RecordTemperature when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.RecordTemperature):
+            case TaskTypes.RepairDrill when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.RepairDrill):
+            case TaskTypes.RunDiagnostics when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.RunDiagnostics):
+            case TaskTypes.SortRecords when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.SortRecords):
+            case TaskTypes.SortSamples when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.SortSamples):
+            case TaskTypes.StabilizeSteering when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.StabilizeSteering):
+            case TaskTypes.StoreArtifacts when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.StoreArtifacts):
+            case TaskTypes.UnlockManifolds when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.UnlockManifolds):
+
+
+            case TaskTypes.AlignEngineOutput when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.AlignEngineOutput):
+            case TaskTypes.DevelopPhotos when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.DevelopPhotos):
+            case TaskTypes.EmptyGarbage when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.EmptyGarbage):
+            case TaskTypes.EmptyChute when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.EmptyGarbage): // variation of EmptyGarbage
+            case TaskTypes.FuelEngines when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.FuelEngines):
+            case TaskTypes.ExtractFuel when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.FuelEngines): // variation of FuelEngines?
+            case TaskTypes.InspectSample when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.InspectSample):
+            case TaskTypes.RebootWifi when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.RebootWifi):
+            case TaskTypes.ReplaceWaterJug when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.ReplaceWaterJug):
+            case TaskTypes.ResetBreakers when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.ResetBreaker):
+            case TaskTypes.RewindTapes when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.RewindTapes):
+            case TaskTypes.StartFans when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.StartFans):
+            case TaskTypes.SubmitScan when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledLongTask.SubmitScan):
+            case TaskTypes.StartReactor when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.StartReactor):
+            case TaskTypes.UnlockSafe when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.UnlockSafe):
+            case TaskTypes.UploadData when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.UploadData):
+            case TaskTypes.WaterPlants when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.WaterPlants):
                 return true;
             default:
                 return false;
@@ -159,11 +207,53 @@ public class RpcSetTasksPatch
             switch (taskById.TaskType)
             {
                 // long and short tasks
-                case TaskTypes.SubmitScan when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.MedScan):
-                case TaskTypes.UnlockSafe when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.UnlockSafe):
-                case TaskTypes.UploadData when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.UploadData):
-                case TaskTypes.StartReactor when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.StartReactor):
-                case TaskTypes.ResetBreakers when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.ResetBreaker):
+                case TaskTypes.AlignTelescope when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.AlignTelescope):
+                case TaskTypes.AssembleArtifact when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.AssembleArtifact):
+                case TaskTypes.BuyBeverage when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.BuyBeverage):
+                case TaskTypes.CalibrateDistributor when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.CalibrateDistributor):
+                case TaskTypes.ChartCourse when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.ChartCourse):
+                case TaskTypes.CleanO2Filter when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.CleanO2Filter):
+                case TaskTypes.CleanToilet when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.CleanToilet):
+                case TaskTypes.VentCleaning when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.CleanVent):
+                case TaskTypes.ClearAsteroids when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.ClearAsteroids):
+                case TaskTypes.Decontaminate when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.Decontaminate):
+                case TaskTypes.DivertPower when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.DivertPower):
+                case TaskTypes.DressMannequin when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.DressMannequin):
+                case TaskTypes.FixShower when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.FixShower):
+                case TaskTypes.MakeBurger when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.MakeBurger):
+                case TaskTypes.MeasureWeather when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.MeasureWeather):
+                case TaskTypes.MonitorOxygen when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.MonitorOxygen):
+                case TaskTypes.PickUpTowels when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PickUpTowels):
+                case TaskTypes.PolishRuby when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PolishRuby):
+                case TaskTypes.PrimeShields when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PrimeShields):
+                case TaskTypes.ProcessData when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.ProcessData):
+                case TaskTypes.PutAwayPistols when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PutAwayPistols):
+                case TaskTypes.PutAwayRifles when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.PutAwayRifles):
+                case TaskTypes.RecordTemperature when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.RecordTemperature):
+                case TaskTypes.RepairDrill when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.RepairDrill):
+                case TaskTypes.RunDiagnostics when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.RunDiagnostics):
+                case TaskTypes.SortRecords when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.SortRecords):
+                case TaskTypes.SortSamples when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.SortSamples):
+                case TaskTypes.StabilizeSteering when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.StabilizeSteering):
+                case TaskTypes.StoreArtifacts when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.StoreArtifacts):
+                case TaskTypes.UnlockManifolds when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledShortTask.UnlockManifolds):
+
+                case TaskTypes.AlignEngineOutput when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.AlignEngineOutput):
+                case TaskTypes.DevelopPhotos when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.DevelopPhotos):
+                case TaskTypes.EmptyGarbage when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.EmptyGarbage):
+                case TaskTypes.EmptyChute when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.EmptyGarbage): // variation of EmptyGarbage
+                case TaskTypes.FuelEngines when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.FuelEngines):
+                case TaskTypes.InspectSample when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.InspectSample):
+                case TaskTypes.RebootWifi when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.RebootWifi):
+                case TaskTypes.ReplaceWaterJug when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.ReplaceWaterJug):
+                case TaskTypes.ResetBreakers when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.ResetBreaker):
+                case TaskTypes.RewindTapes when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.RewindTapes):
+                case TaskTypes.StartFans when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.StartFans):
+                case TaskTypes.SubmitScan when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.SubmitScan):
+                case TaskTypes.StartReactor when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.StartReactor):
+                case TaskTypes.UnlockSafe when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.UnlockSafe):
+                case TaskTypes.UploadData when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.UploadData):
+                case TaskTypes.WaterPlants when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.WaterPlants):
                     switch (taskById.Length)
                     {
                         case NormalPlayerTask.TaskLength.Long:
@@ -181,8 +271,11 @@ public class RpcSetTasksPatch
                     }
                     break;
                 // common tasks are a bit more in depth. as we need to align with everyone else's tasks
-                case TaskTypes.SwipeCard when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.CardSwipe):
-                case TaskTypes.FixWiring when GeneralOptions.GameplayOptions.DisabledTaskFlag.HasFlag(DisabledTask.FixWiring):
+                case TaskTypes.SwipeCard when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.SwipeCard):
+                case TaskTypes.FixWiring when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.FixWiring):
+                case TaskTypes.EnterIdCode when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.EnterIdCode):
+                case TaskTypes.ScanBoardingPass when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.ScanBoardingPass):
+                case TaskTypes.InsertKeys when GeneralOptions.GameplayOptions.DisabledCommonTaskFlag.HasFlag(DisabledCommonTask.InsertKeys):
                     if (ReplacedCommonTasks.TryGetValue(idx, out byte replacedTaskId)) newTasks.Add(replacedTaskId);
                     else
                     {
