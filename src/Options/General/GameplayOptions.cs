@@ -302,6 +302,11 @@ public class GameplayOptions
                     .AddBoolean()
                     .Build())
                 .SubOption(sub => sub
+                    .KeyName("Disable Open Waterways", GameplayOptionTranslations.DisableTasksOptionTranslations.DisableOpenWaterways)
+                    .BindBool(FlagSetter(DisabledLongTask.OpenWaterways))
+                    .AddBoolean()
+                    .Build())
+                .SubOption(sub => sub
                     .KeyName("Disable Reboot Wifi", GameplayOptionTranslations.DisableTasksOptionTranslations.DisableRebootWifi)
                     .BindBool(FlagSetter(DisabledLongTask.RebootWifi))
                     .AddBoolean()
@@ -615,6 +620,9 @@ public class GameplayOptions
             [Localized(nameof(DisableRebootWifi))]
             public static string DisableRebootWifi = "Disable Reboot Wifi";
 
+            [Localized(nameof(DisableOpenWaterways))]
+            public static string DisableOpenWaterways = "Disable Open Waterways";
+
             [Localized(nameof(DisableReplaceWaterJug))]
             public static string DisableReplaceWaterJug = "Disable Replace Water Jug";
 
@@ -692,16 +700,17 @@ public enum DisabledLongTask : long
     EmptyGarbage = 1L << 2,
     FuelEngines = 1L << 3,
     InspectSample = 1L << 4,
-    RebootWifi = 1L << 5,
-    ReplaceWaterJug = 1L << 6,
-    ResetBreaker = 1L << 7,
-    RewindTapes = 1L << 8,
-    StartFans = 1L << 9,
-    StartReactor = 1L << 10,
-    SubmitScan = 1L << 11,
-    UnlockSafe = 1L << 12,
-    UploadData = 1L << 13,
-    WaterPlants = 1L << 14
+    OpenWaterways = 1L << 5,
+    RebootWifi = 1L << 6,
+    ReplaceWaterJug = 1L << 7,
+    ResetBreaker = 1L << 8,
+    RewindTapes = 1L << 9,
+    StartFans = 1L << 10,
+    StartReactor = 1L << 11,
+    SubmitScan = 1L << 12,
+    UnlockSafe = 1L << 13,
+    UploadData = 1L << 14,
+    WaterPlants = 1L << 15
 }
 
 public enum FirstKillCooldown
