@@ -31,9 +31,12 @@ public class Medic : Crewmate, IInfoResender
     private static readonly Color CrossColor = new(0.2f, 0.49f, 0f);
     private GuardMode mode;
     private byte guardedPlayer = byte.MaxValue;
+    private byte lastGuardedPlayer = byte.MaxValue;
 
     private bool targetLockedIn;
     private bool confirmedVote;
+
+    private bool mustSelectNewTarget;
 
     private Remote<IndicatorComponent>? protectedIndicator;
 
@@ -49,6 +52,12 @@ public class Medic : Crewmate, IInfoResender
     private void RoundEndMessage()
     {
         confirmedVote = false;
+        if (mustSelectNewTarget)
+        {
+            lastGuardedPlayer = guardedPlayer;
+            guardedPlayer = byte.MaxValue;
+            targetLockedIn = false;
+        }
         ResendMessages();
     }
 
@@ -89,6 +98,12 @@ public class Medic : Crewmate, IInfoResender
         {
             targetLockedIn = true;
             CHandler(ReturnToNormalVoting.Formatted(Players.FindPlayerById(guardedPlayer)?.name)).Send(MyPlayer);
+            return;
+        }
+
+        if (lastGuardedPlayer == player && mustSelectNewTarget)
+        {
+            CHandler(MustSelectNewTarget.Formatted(Players.FindPlayerById(guardedPlayer)?.name)).Send(MyPlayer);
             return;
         }
 
@@ -137,6 +152,11 @@ public class Medic : Crewmate, IInfoResender
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub
+                .KeyName("Change Target Every Round", MedicOptionTranslations.ChangeGuardedPlayer)
+                .AddBoolean()
+                .BindBool(b => mustSelectNewTarget = b)
+                .Build())
+            .SubOption(sub => sub
                 .KeyName("Change Guarded Player", MedicOptionTranslations.ChangeGuardedPlayer)
                 .Value(v => v.Text(MedicOptionTranslations.OnDeathValue).Value(2).Build())
                 .Value(v => v.Text(MedicOptionTranslations.MeetingsValue).Value(1).Build())
@@ -152,7 +172,7 @@ public class Medic : Crewmate, IInfoResender
     }
 
     [Localized(nameof(Medic))]
-    internal static class MedicTranslations
+    public static class MedicTranslations
     {
         [Localized(nameof(ProtectingMessage))]
         public static string ProtectingMessage = "You are currently protecting: {0}";
@@ -166,9 +186,15 @@ public class Medic : Crewmate, IInfoResender
         [Localized(nameof(ReturnToNormalVoting))]
         public static string ReturnToNormalVoting = "You are now protecting {0}. Your next vote works as normal.";
 
+        [Localized(nameof(MustSelectNewTarget))]
+        public static string MustSelectNewTarget = "You protected {0} last round. You must select a different target this round";
+
         [Localized(ModConstants.Options)]
         public static class MedicOptionTranslations
         {
+            [Localized(nameof(CanProtectSamePlayer))]
+            public static string CanProtectSamePlayer = "Can Protect Same Player Twice in a Row";
+
             [Localized(nameof(ChangeGuardedPlayer))]
             public static string ChangeGuardedPlayer = "Change Guarded Player";
 

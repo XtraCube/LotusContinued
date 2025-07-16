@@ -16,7 +16,10 @@ using VentLib.Utilities.Attributes;
 using Hazel;
 using Lotus.Roles.Operations;
 using InnerNet;
+using Lotus.Chat;
+using Lotus.Options;
 using UnityEngine.ProBuilder;
+using VentLib.Localization;
 
 namespace Lotus.Patches.Systems;
 
@@ -50,6 +53,12 @@ public static class SabotagePatch
                 if (player.PrimaryRole() is not ISabotagerRole sabotager || !sabotager.CanSabotage()) return false;
                 if (player.PrimaryRole().RoleAbilityFlags.HasFlag(RoleAbilityFlag.CannotSabotage)) return false;
                 if (MeetingPrep.Prepped) return false;
+
+                if (!player.IsAlive() && GeneralOptions.GameplayOptions.BlockDeadFromSabotaging)
+                {
+                    ChatHandlers.NotPermitted(Localizer.Translate("Announcements.CannotSabotageMessage")).Send(player);
+                    return false;
+                }
 
                 SabotageCountdown = -1;
                 SabotageType sabotage = (SystemTypes)amount switch
