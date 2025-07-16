@@ -187,7 +187,7 @@ public class RpcSetTasksPatch
             case TaskTypes.ResetBreakers when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.ResetBreaker):
             case TaskTypes.RewindTapes when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.RewindTapes):
             case TaskTypes.StartFans when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.StartFans):
-            case TaskTypes.SubmitScan when GeneralOptions.GameplayOptions.DisabledShortTaskFlag.HasFlag(DisabledLongTask.SubmitScan):
+            case TaskTypes.SubmitScan when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.SubmitScan):
             case TaskTypes.StartReactor when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.StartReactor):
             case TaskTypes.UnlockSafe when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.UnlockSafe):
             case TaskTypes.UploadData when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.UploadData):
