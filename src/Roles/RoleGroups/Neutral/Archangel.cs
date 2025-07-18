@@ -144,8 +144,10 @@ public class Archangel : CustomRole, IRoleUI
         handle.Cancel();
     }
 
+
+    [RoleAction(LotusActionType.Exiled, ActionFlag.GlobalDetector)]
     [RoleAction(LotusActionType.PlayerDeath, ActionFlag.GlobalDetector)]
-    private void PlayerDeath(PlayerControl killed, PlayerControl killer)
+    private void PlayerDeath(PlayerControl killed)
     {
         if (!MyPlayer.IsAlive() || target == null || target.PlayerId != killed.PlayerId) return;
         target = null;
