@@ -163,7 +163,7 @@ public class Copycat : CustomRole
             .RoleFlags(RoleFlag.CannotWinAlone)
             .RoleAbilityFlags(RoleAbilityFlag.CannotSabotage)
             .SpecialType(SpecialType.Neutral)
-            .IntroSound(AmongUs.GameOptions.RoleTypes.Shapeshifter)
+            .IntroSound(AmongUs.GameOptions.RoleTypes.Crewmate)
             .OptionOverride(Override.ShapeshiftCooldown, 30f);
 
     [Localized(nameof(Copycat))]
