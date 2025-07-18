@@ -37,5 +37,6 @@ public enum ModCalls : uint
     UpdateFireworks,
     UpdateJanitor,
     UpdateSheriff,
-    UpdateGlitch
+    UpdateGlitch,
+    UpdateVeteran
 }

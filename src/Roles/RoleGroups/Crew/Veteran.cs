@@ -14,14 +14,20 @@ using Lotus.Utilities;
 using Lotus.API;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Veteran : Crewmate
+public class Veteran : Crewmate, IRoleUI
 {
     [UIComponent(UI.Cooldown)]
     private Cooldown veteranCooldown = null!;
@@ -39,6 +45,12 @@ public class Veteran : Crewmate
         remainingAlerts = totalAlerts;
     }
 
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .BindCooldown(veteranCooldown)
+        .SetText(Translations.ButtonText)
+        .BindUses(() => remainingAlerts)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/veteran_alert.png", 130, true));
+
     [UIComponent(UI.Counter)]
     private string VeteranAlertCounter() => RoleUtils.Counter(remainingAlerts, totalAlerts);
 
@@ -50,8 +62,15 @@ public class Veteran : Crewmate
     {
         if (remainingAlerts <= 0 || veteranCooldown.NotReady() || veteranDuration.NotReady()) return;
         VeteranAlertCounter().DebugLog("Veteran Alert Counter: ");
-        veteranDuration.StartThenRun(() => veteranCooldown.Start());
+        veteranDuration.StartThenRun(() =>
+        {
+            veteranCooldown.Start();
+            if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(veteranCooldown);
+            else if  (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateVeteran)?.Send([MyPlayer.OwnerId], remainingAlerts, true);
+        });
         remainingAlerts--;
+        if (MyPlayer.AmOwner) UIManager.PetButton.BindCooldown(veteranDuration);
+        else if  (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateVeteran)?.Send([MyPlayer.OwnerId], remainingAlerts, false);
     }
 
     [RoleAction(LotusActionType.Interaction)]
@@ -80,7 +99,8 @@ public class Veteran : Crewmate
             .SubOption(sub => sub
                 .KeyName("Number of Alerts", Translations.Options.TotalAlerts)
                 .Bind(v => totalAlerts = (int)v)
-                .AddIntRange(1, 10, 1, 9).Build())
+                .AddIntRange(1, 10, 1, 9)
+                .Build())
             .SubOption(sub => sub
                 .KeyName("Alert Cooldown", Translations.Options.AlertCooldown)
                 .Bind(v => veteranCooldown.Duration = (float)v)
@@ -109,6 +129,17 @@ public class Veteran : Crewmate
             .RoleColor(new Color(0.6f, 0.5f, 0.25f))
             .RoleAbilityFlags(RoleAbilityFlag.UsesPet & RoleAbilityFlag.IsAbleToKill);
 
+    [ModRPC((uint)ModCalls.UpdateVeteran, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateVeteran(int alertsRemaining, bool useCooldown)
+    {
+        Veteran? veteran = PlayerControl.LocalPlayer.PrimaryRole<Veteran>();
+        if (veteran == null) return;
+        veteran.remainingAlerts = alertsRemaining;
+        Cooldown targetCooldown = useCooldown ? veteran.veteranCooldown : veteran.veteranDuration;
+        veteran.UIManager.PetButton.BindCooldown(targetCooldown);
+        targetCooldown.Start();
+    }
+
     private class VettedEvent : KillEvent, IRoleEvent
     {
         public VettedEvent(PlayerControl killer, PlayerControl victim) : base(killer, victim)
@@ -119,6 +150,8 @@ public class Veteran : Crewmate
     [Localized(nameof(Veteran))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Alert";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {
