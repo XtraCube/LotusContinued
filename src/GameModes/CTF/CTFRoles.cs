@@ -1,6 +1,8 @@
+extern alias JBAnnotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.Roles;
 using Lotus.Roles.RoleGroups.CTF;
 
@@ -32,6 +34,7 @@ public class CTFRoles : RoleHolder
         AllRoles.ForEach(r => r.Solidify());
     }
 
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public class StaticRoles
     {
         public Striker Striker = new();

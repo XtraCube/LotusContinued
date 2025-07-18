@@ -18,6 +18,7 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Extensions;
 using Lotus.Factions.Interfaces;
+using Lotus.Factions.Neutrals;
 using Lotus.GameModes.Standard;
 using Lotus.Managers;
 using Lotus.Roles.RoleGroups.Crew;
@@ -105,7 +106,9 @@ public class Rogue : Subrole
 
     public override bool IsAssignableTo(PlayerControl player)
     {
-        Type myFaction = player.PrimaryRole().Faction.GetType();
+        IFaction playerFaction = player.PrimaryRole().Faction;
+        if (playerFaction is INeutralFaction) playerFaction = FactionInstances.Neutral;
+        Type myFaction = playerFaction.GetType();
 
         // Check if their faction already has the max amount of allowed players.
         // If they are maxed out, we don't even call base and just immediately exit.
@@ -159,7 +162,7 @@ public class Rogue : Subrole
         AddRestrictToCrew(base.RegisterOptions(optionStream))
             .SubOption(sub => sub.KeyName("Restrict to Compatible Roles", Translations.Options.RestrictToCompatbileRoles)
                 .BindBool(b => restrictedToCompatibleRoles = b)
-                .AddOnOffValues()
+                .AddBoolean()
                 .Build());
 
     protected override RoleModifier Modify(RoleModifier roleModifier) => base.Modify(roleModifier)
