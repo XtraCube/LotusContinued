@@ -28,7 +28,7 @@ public class ProtectedRpc
             Optional<CustomNetObject> netObject = CustomNetObject.ObjectFromPlayer(target);
             if (netObject.Exists())
             {
-                log.Trace($"Kill was cancled because they are trying to kill a CustomNetObject.");
+                log.Trace($"Kill was canceled because they are trying to kill a CustomNetObject.");
                 return;
             }
         }
@@ -37,6 +37,7 @@ public class ProtectedRpc
         {
             killer.RpcVaporize(target);
             RpcV3.Immediate(killer.NetId, RpcCalls.MurderPlayer).Write(target).Write((int)MurderResultFlags.Succeeded).Send(target.GetClientId());
+            target.Data.IsDead = true;
             return;
         }
 
