@@ -27,8 +27,9 @@ internal class TUAllRoles
 
         string FactionName(CustomRole roleDefinition)
         {
-            if (roleDefinition.Metadata.GetOrEmpty(RoleProperties.Key).Compare(r => r.HasProperty(RoleProperty.IsModifier))) return FactionTranslations.Modifiers.Name;
-            if (roleDefinition.Faction is not INeutralFaction) return roleDefinition.Faction.Name();
+            if (roleDefinition.Metadata.GetOrEmpty(RoleProperties.Key).Compare(r => r.HasProperty(RoleProperty.IsModifier))
+                || roleDefinition.RoleFlags.HasFlag(RoleFlag.IsSubrole)) return FactionTranslations.Modifiers.Name;
+            if (roleDefinition.Faction is not INeutralFaction && roleDefinition.Faction is not Neutral) return roleDefinition.Faction.Name();
 
             SpecialType specialType = roleDefinition.Metadata.GetOrDefault(LotusKeys.AuxiliaryRoleType, SpecialType.None);
 
