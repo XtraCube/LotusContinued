@@ -196,9 +196,11 @@ class SplashPatch
         enterCodeButtons.GetComponent<AspectPosition>().Destroy();
         enterCodeButtons.transform.SetParent(playBG.transform);
 
-        var onlineButtons = __instance.FindChild<Transform>("OnlineButtons", true).gameObject;
+        var onlineButtons = __instance.onlineButtons;
         onlineButtons.GetComponent<AspectPosition>().Destroy();
         onlineButtons.transform.SetParent(playBG.transform);
+
+        __instance.onlineButtons = playBG;
 
         SpriteRenderer onlineDivider = onlineButtons.FindChild<SpriteRenderer>("Divider");
         onlineDivider.transform.localPosition = new(0, 1.84f, 0f);
@@ -229,14 +231,16 @@ class SplashPatch
             });
         }
 
-        onlineBgActive = false;
         __instance.playButton.Modify(() =>
         {
             __instance.ResetScreen();
-            onlineBgActive = !onlineBgActive;
-            playBG.gameObject.SetActive(onlineBgActive);
-            onlineButtons.gameObject.SetActive(true);
-            enterCodeButtons.gameObject.SetActive(false);
+            Async.Schedule(() =>
+            {
+                onlineBgActive = !onlineBgActive;
+                playBG.gameObject.SetActive(onlineBgActive);
+                onlineButtons.gameObject.SetActive(true);
+                enterCodeButtons.gameObject.SetActive(false);
+            }, .01f);
         });
         Async.Schedule(() => __instance.playButton.buttonText.text = "Play Online", 0.001f);
 

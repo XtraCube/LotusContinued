@@ -1,6 +1,8 @@
+extern alias JBAnnotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.Roles;
 using Lotus.Roles.RoleGroups.Colorwars;
 
@@ -33,6 +35,7 @@ public class ColorwarsRoles : RoleHolder
         AllRoles.ForEach(r => r.Solidify());
     }
 
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public class StaticRoles
     {
         public Painter Painter = new();

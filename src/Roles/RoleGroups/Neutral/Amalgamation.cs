@@ -81,7 +81,7 @@ public class Amalgamation : CustomRole
         {
             assignedRole = true;
             CustomRole myPlayerRole = MyPlayer.PrimaryRole();
-            Game.AssignRole(MyPlayer, newRole);
+            this.ChangeRoleTo(newRole, false);
             MyPlayer.GetSubroles().Add(myPlayerRole);
             textRemote?.Delete();
             textRemote = MyPlayer.NameModel().GCH<TextHolder>().Add(new TextComponent(new LiveString(newRole.RoleName, myPlayerRole.RoleColor), Game.InGameStates, ViewMode.Overriden, MyPlayer));
@@ -102,7 +102,7 @@ public class Amalgamation : CustomRole
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Has Arrows To Bodies", Amnesiac.Translations.Options.HasArrowsToBody)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .BindBool(b => hasArrowsToBodies = b)
                 .Build())
             .SubOption(sub => sub.KeyName("Win Condition Determiner", Translations.Options.WinConditionDeterminer)
@@ -116,7 +116,7 @@ public class Amalgamation : CustomRole
                 .BindInt(i => maxRoles = i)
                 .Build())
             .SubOption(sub => sub.KeyName("Absorbs Modifiers", Translations.Options.AbsorbModifiers)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .BindBool(b => absorbModifiers = b)
                 .Build());
 

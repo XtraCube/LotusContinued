@@ -76,7 +76,7 @@ public class Snitch : Crewmate
         CustomRole role = player.PrimaryRole();
         if (role.Faction is ImpostorFaction) return true;
         if (!SnitchCanTrackNk) return false;
-        return role.Faction is not Crewmates && role.RealRole.IsImpostor();
+        return role.Faction is not Crewmates && role.RealRole.IsImpostor() && role.RoleAbilityFlags.HasFlag(RoleAbilityFlag.IsAbleToKill);
     }
 
     protected override RoleModifier Modify(RoleModifier roleModifier) => base.Modify(roleModifier).RoleColor(new Color(0.72f, 0.98f, 0.31f));

@@ -255,6 +255,8 @@ public static class PlayerControlExtensions
                 ? new SuicideEvent(player)
                 : new DeathEvent(target, player)
             );
+        Game.MatchData.GameHistory.SetCauseOfDeath(target.PlayerId, deathEvent);
+        Game.MatchData.GameHistory.AddEvent(deathEvent);
 
         ActionHandle ignored = ActionHandle.NoInit();
         Optional<FrozenPlayer> fp = Optional<FrozenPlayer>.Of(Game.MatchData.GetFrozenPlayer(player));

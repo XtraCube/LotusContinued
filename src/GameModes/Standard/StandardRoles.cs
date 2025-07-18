@@ -1,6 +1,8 @@
+extern alias JBAnnotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JBAnnotations::JetBrains.Annotations;
 using Lotus.Roles;
 using Lotus.Roles.Builtins;
 using Lotus.Roles.RoleGroups.Crew;
@@ -82,6 +84,8 @@ public class StandardRoles : RoleHolder
         role.Solidify();
         StandardGameMode.Instance.RoleManager.RegisterRole(role);
     }
+
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public class StaticRoles
     {
         /// Impostors
@@ -209,6 +213,7 @@ public class StandardRoles : RoleHolder
         public Vulture Vulture = new();
     }
 
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public class Modifiers
     {
         public Bait Bait = new();
@@ -220,6 +225,7 @@ public class StandardRoles : RoleHolder
         public LastResort LastResort = new();
         public Nimble Nimble = new();
         public Oblivious Oblivious = new();
+        public Rebellious Rebellious = new();
         public Rogue Rogue = new();
         public Romantic Romantic = new();
         public Sleuth Sleuth = new();
@@ -230,6 +236,7 @@ public class StandardRoles : RoleHolder
         public Workhorse Workhorse = new();
     }
 
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public class ExtraRoles
     {
         public IllegalRole IllegalRole = new();

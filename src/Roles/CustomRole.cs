@@ -68,7 +68,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
 
     public virtual Relation Relationship(CustomRole role)
     {
-        if (this.Faction is INeutralFaction && role.Faction is INeutralFaction)
+        if (this.Faction is Neutral && role.Faction is Neutral)
             return Options.RoleOptions.NeutralOptions.NeutralTeamingMode switch
             {
                 NeutralTeaming.All => Relation.FullAllies,
@@ -245,7 +245,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         }
     }
 
-    public virtual void ChangeRoleTo(CustomRole newRole, bool getCleanRole = true)
+    public virtual CustomRole ChangeRoleTo(CustomRole newRole, bool getCleanRole = true)
     {
         log.Debug($"Changing {MyPlayer.name}'s role from {EnglishRoleName} to {newRole.EnglishRoleName}. (a role called this method.)");
         if (getCleanRole) newRole = IRoleManager.Current.GetCleanRole(newRole);
@@ -293,6 +293,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
             MyPlayer.RpcSetRoleDesync(impRole, player);
         });
         ShowRoleToTeammates(newAllies.Select(Utils.PlayerById).Where(op => op.Exists()).Select(op => op.Get()));
+        return newRole;
     }
 
     public virtual void Revive()

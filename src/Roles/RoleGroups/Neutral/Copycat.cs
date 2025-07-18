@@ -99,10 +99,9 @@ public class Copycat : CustomRole
         CustomRole role = copyRoleProgress ? attackerRole : ProjectLotus.GameModeManager.CurrentGameMode.RoleManager.GetCleanRole(attackerRole);
 
         log.Trace($"Copycat ({MyPlayer.name}) copying role of {attacker.name} : {role.RoleName}", "Copycat::AssignRole");
-        StandardGameMode.Instance.Assign(MyPlayer, role);
         turnedAttacker = attacker;
 
-        role = MyPlayer.PrimaryRole();
+        role = ChangeRoleTo(role, false);
         role.RoleColor = RoleColor;
 
         role.OverridenRoleName = Translations.CopyCatFactionChangeName.Formatted(role.RoleName);
@@ -149,11 +148,11 @@ public class Copycat : CustomRole
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub2 => sub2.KeyName("Copy Role's Progress", Translations.Options.CopyRoleProgress)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .BindBool(b => copyRoleProgress = b)
                 .Build())
             .SubOption(sub => sub.KeyName("Killer Knows Copycat", TranslationUtil.Colorize(Translations.Options.KillerKnowsCopycat, RoleColor))
-                .AddOnOffValues()
+                .AddBoolean()
                 .BindBool(b => KillerKnowsCopycat = b)
                 .Build());
 
@@ -164,7 +163,7 @@ public class Copycat : CustomRole
             .RoleFlags(RoleFlag.CannotWinAlone)
             .RoleAbilityFlags(RoleAbilityFlag.CannotSabotage)
             .SpecialType(SpecialType.Neutral)
-            .IntroSound(AmongUs.GameOptions.RoleTypes.Shapeshifter)
+            .IntroSound(AmongUs.GameOptions.RoleTypes.Crewmate)
             .OptionOverride(Override.ShapeshiftCooldown, 30f);
 
     [Localized(nameof(Copycat))]
