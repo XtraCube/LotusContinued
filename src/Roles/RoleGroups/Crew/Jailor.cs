@@ -138,8 +138,9 @@ public class Jailor: Crewmate, IRoleUI
 
                 curExecutionTimes--;
                 jailedPlayer = byte.MaxValue;
+                bool playerIsCrew = jailed.Relationship(FactionInstances.Crewmates) is Relation.FullAllies;
                 MyPlayer.InteractWith(jailed, new UnblockedInteraction(new FatalIntent(true, () => new ExecutedDeathEvent(jailed,MyPlayer)), this));
-                if (jailed.Relationship(FactionInstances.Crewmates) is Relation.FullAllies)
+                if (playerIsCrew)
                 {
                     canExecute = false;
                     if (suicideOnCrewmateExecuted)
