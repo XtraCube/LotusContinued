@@ -51,7 +51,7 @@ public class PetPatch
 
         Async.Schedule(() => ClearPetHold(player, timesPet), NetUtils.DeriveDelay(0.5f, 0.005f));
 
-        log.Trace($"{player.name} => Pet");
+        log.Trace($"{player.GetNameWithRole()} => Pet");
         if (player.PrimaryRole().GetType() == IRoleManager.Current.FallbackRole().GetType()) return; // no role.
         if (timesPet == 1)
             RoleOperations.Current.Trigger(LotusActionType.OnPet, player);
