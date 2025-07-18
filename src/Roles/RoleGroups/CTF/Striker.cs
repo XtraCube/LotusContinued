@@ -86,7 +86,11 @@ public class Striker : NeutralKillingBase
     }
 
     [RoleAction(LotusActionType.Attack)]
-    public override bool TryKill(PlayerControl target) => base.TryKill(target);
+    public override bool TryKill(PlayerControl target)
+    {
+        if (MyPlayer.inVent || MyPlayer.walkingToVent) return false;
+        return base.TryKill(target);
+    }
 
     [RoleAction(LotusActionType.Interaction)]
     private void FakeDie(ActionHandle handle)
@@ -103,6 +107,7 @@ public class Striker : NeutralKillingBase
     [RoleAction(LotusActionType.OnPet)]
     private void OnTouchFlag()
     {
+        if (MyPlayer.inVent || MyPlayer.walkingToVent) return;
         bool atRedFlag = RoleUtils.GetPlayersWithinDistance(CTFGamemode.SpawnLocations[0], 2f).Any(p => p.PlayerId == MyPlayer.PlayerId);
         bool atBlueFlag = RoleUtils.GetPlayersWithinDistance(CTFGamemode.SpawnLocations[1], 2f).Any(p => p.PlayerId == MyPlayer.PlayerId);
         if (!atRedFlag && !atBlueFlag) return;
@@ -135,8 +140,7 @@ public class Striker : NeutralKillingBase
     {
         if (ExtraGamemodeOptions.CaptureOptions.CarryingCanVent) return;
 
-        if (CTFGamemode.Team0FlagCarrier == MyPlayer.PlayerId) handle.Cancel();
-        else if (CTFGamemode.Team1FlagCarrier == MyPlayer.PlayerId) handle.Cancel();
+        if (CTFGamemode.Team0FlagCarrier == MyPlayer.PlayerId || CTFGamemode.Team1FlagCarrier == MyPlayer.PlayerId) handle.Cancel();
     }
 
     private void RevivePlayer()
