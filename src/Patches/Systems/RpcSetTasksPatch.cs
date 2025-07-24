@@ -244,6 +244,7 @@ public class RpcSetTasksPatch
                 case TaskTypes.EmptyChute when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.EmptyGarbage): // variation of EmptyGarbage
                 case TaskTypes.FuelEngines when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.FuelEngines):
                 case TaskTypes.InspectSample when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.InspectSample):
+                case TaskTypes.OpenWaterways when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.OpenWaterways):
                 case TaskTypes.RebootWifi when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.RebootWifi):
                 case TaskTypes.ReplaceWaterJug when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.ReplaceWaterJug):
                 case TaskTypes.ResetBreakers when GeneralOptions.GameplayOptions.DisabledLongTaskFlag.HasFlag(DisabledLongTask.ResetBreaker):
