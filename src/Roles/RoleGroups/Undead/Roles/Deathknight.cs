@@ -37,7 +37,7 @@ public class Deathknight : UndeadRole
     protected override void Setup(PlayerControl player)
     {
         base.Setup(player);
-        LiveString liveString = new(() => inRangePlayers.Count > 0 ? "★" : "", Color.white);
+        LiveString liveString = new(() => inRangePlayers.Count > 0 ? "★" : "", UndeadColor);
         player.NameModel().GetComponentHolder<IndicatorHolder>().Add(new IndicatorComponent(liveString, GameState.Roaming, viewers: player));
     }
 
@@ -49,8 +49,8 @@ public class Deathknight : UndeadRole
         inRangePlayers.Clear();
         if (influenceCooldown.NotReady()) return;
         inRangePlayers = (influenceRange < 0
-            ? MyPlayer.GetPlayersInAbilityRangeSorted().Where(IsUnconvertedUndead)
-            : RoleUtils.GetPlayersWithinDistance(MyPlayer, influenceRange).Where(IsUnconvertedUndead))
+            ? MyPlayer.GetPlayersInAbilityRangeSorted().Where(p => !IsConvertedUndead(p) && !IsUnconvertedUndead(p))
+            : RoleUtils.GetPlayersWithinDistance(MyPlayer, influenceRange).Where(p => !IsConvertedUndead(p) && !IsUnconvertedUndead(p)))
             .ToList();
     }
     [RoleAction(LotusActionType.OnPet, priority: Priority.First)]
