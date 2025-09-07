@@ -33,7 +33,7 @@ public class VanillaImpostorWin : IFactionWinCondition
                 aliveOthers++;
                 if (role.RoleFlags.HasFlag(RoleFlag.CannotWinAlone)) continue;
                 if (role.Faction.Relationship(FactionInstances.Crewmates) is Relation.FullAllies) continue;
-                if (role.MyPlayer.GetVanillaRole().IsImpostor()) aliveKillers++;
+                if (role.MyPlayer.GetVanillaRole().IsImpostor()||role.RoleAbilityFlags.HasFlag(RoleAbilityFlag.IsAbleToKill)) aliveKillers++;
             }
         }
 
