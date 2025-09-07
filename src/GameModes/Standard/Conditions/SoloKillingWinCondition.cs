@@ -32,7 +32,7 @@ public class SoloKillingWinCondition : IWinCondition
             if (r.RoleFlags.HasFlag(RoleFlag.CannotWinAlone)) return;
             if (r.RoleAbilityFlags.HasFlag(RoleAbilityFlag.IsAbleToKill)) aliveThatCanKill++;
             if (r.Faction is not Neutral) return;
-            if (!r.MyPlayer.GetVanillaRole().IsImpostor()) return;
+            //if (!r.MyPlayer.GetVanillaRole().IsImpostor()) return;
             aliveKillers.Add(r);
         });
 
