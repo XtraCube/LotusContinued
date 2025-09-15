@@ -3,6 +3,7 @@ using System.Linq;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.Extensions;
+using Lotus.GUI;
 using Lotus.Roles.Events;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Interfaces;
@@ -12,6 +13,8 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities;
@@ -19,12 +22,16 @@ using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Vampire : Impostor, IVariableRole
+public class Vampire : Impostor, IVariableRole, IRoleUI
 {
     private static Vampiress _vampiress = new();
 
     private float killDelay;
     [NewOnSetup] private HashSet<byte> bitten = null!;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/vampire_bite.png", 130, true));
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
@@ -69,12 +76,12 @@ public class Vampire : Impostor, IVariableRole
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub
-                .KeyName("Kill Delay", VampireTranslations.Options.KillDelay)
+                .KeyName("Kill Delay", Translations.Options.KillDelay)
                 .Bind(v => killDelay = (float)v)
                 .AddFloatRange(2.5f, 60f, 2.5f, 2, GeneralOptionTranslations.SecondsSuffix)
                 .Build());
 
-    public override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat(new List<CustomRole>() { _vampiress }).ToList();
+    public override List<CustomRole> LinkedRoles() => base.LinkedRoles().Concat([_vampiress]).ToList();
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
@@ -82,8 +89,11 @@ public class Vampire : Impostor, IVariableRole
             .IntroSound(AmongUs.GameOptions.RoleTypes.Shapeshifter);
 
     [Localized(nameof(Vampire))]
-    public static class VampireTranslations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Bite";
+
         [Localized(nameof(Options))]
         public static class Options
         {

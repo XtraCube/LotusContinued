@@ -33,6 +33,8 @@ public class GameplayOptions
     public bool BlockDeadFromSabotaging;
     public bool BlockDoorsWhenAllSabotagersAreDead;
 
+    public bool CrewCanSoloKillers;
+
     public int LadderDeathChance = -1;
     public bool EnableLadderDeath => LadderDeathChance > 0;
 
@@ -87,7 +89,7 @@ public class GameplayOptions
             .AddBoolean(false)
             .BindBool(b => DisableTasks = b)
             .ShowSubOptionPredicate(b => (bool)b)
-            .SubOption(sub => sub
+            .SubOption(sub2 => sub2
                 .KeyName("Disable Common Tasks", GameplayOptionTranslations.DisableCommonTasks)
                 .AddBoolean(false)
                 .BindBool(b => DisableCommonTasks = b)
@@ -118,7 +120,7 @@ public class GameplayOptions
                     .BindBool(FlagSetter(DisabledCommonTask.InsertKeys))
                     .Build())
             .Build())
-            .SubOption(sub => sub
+            .SubOption(sub2 => sub2
                 .KeyName("Disable Short Tasks", GameplayOptionTranslations.DisableShortTasks)
                 .AddBoolean(false)
                 .ShowSubOptionPredicate(b => (bool)b)
@@ -274,7 +276,7 @@ public class GameplayOptions
                     .AddBoolean(false)
                     .Build())
             .Build())
-            .SubOption(sub => sub
+            .SubOption(sub2 => sub2
                 .KeyName("Disable Long Tasks", GameplayOptionTranslations.DisableLongTasks)
                 .AddBoolean(false)
                 .ShowSubOptionPredicate(b => (bool)b)
@@ -396,6 +398,12 @@ public class GameplayOptions
                 .Build())
             .Build());
 
+        AllOptions.Add(Builder("Crew Can 1v1 Killers")
+            .Name(GameplayOptionTranslations.CrewCanSoloKillers)
+            .AddBoolean(false)
+            .BindBool(b => CrewCanSoloKillers = b)
+            .Build());
+
         AllOptions.Add(new GameOptionBuilder()
             .Builder("Modifier Text Mode", _optionColor)
             .Name(GameplayOptionTranslations.ModifierTextMode)
@@ -508,6 +516,9 @@ public class GameplayOptions
 
         [Localized(nameof(BlockDoorsWhenAllSabotagersAreDead))]
         public static string BlockDoorsWhenAllSabotagersAreDead = "Block Closing Doors When All Sabotagers Are Dead";
+
+        [Localized(nameof(CrewCanSoloKillers))]
+        public static string CrewCanSoloKillers = "Killing Crew Can 1v1 Imp/NK";
 
         [Localized("DisabledTasks")]
         public static class DisableTasksOptionTranslations

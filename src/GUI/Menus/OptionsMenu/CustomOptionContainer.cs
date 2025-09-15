@@ -254,7 +254,7 @@ public class CustomOptionContainer : MonoBehaviour
                         .OrElseGet(() => Font.GetPathsToOSFonts().Count > 0 ? Font.GetPathsToOSFonts()[0] : null)
                 );
 
-            return path == null ? Resources.LoadAll("Fonts & Materials").ToArray().Select(t => t.TryCast<TMP_FontAsset>()).Last(t => t != null)! : TMP_FontAsset.CreateFontAsset(new Font(path));
+            return path == null ? Resources.LoadAll<UnityEngine.Object>("Fonts & Materials").Select(t => t.TryCast<TMP_FontAsset>()).Last(t => t != null)! : TMP_FontAsset.CreateFontAsset(new Font(path));
         });
     }
 }

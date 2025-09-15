@@ -52,7 +52,7 @@ public class Medic : Crewmate, IInfoResender
     private void RoundEndMessage()
     {
         confirmedVote = false;
-        if (mustSelectNewTarget)
+        if (mustSelectNewTarget && mode is GuardMode.AnyMeeting)
         {
             lastGuardedPlayer = guardedPlayer;
             guardedPlayer = byte.MaxValue;
@@ -152,16 +152,17 @@ public class Medic : Crewmate, IInfoResender
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub
-                .KeyName("Change Target Every Round", MedicOptionTranslations.ChangeGuardedPlayer)
-                .AddBoolean()
-                .BindBool(b => mustSelectNewTarget = b)
-                .Build())
-            .SubOption(sub => sub
                 .KeyName("Change Guarded Player", MedicOptionTranslations.ChangeGuardedPlayer)
                 .Value(v => v.Text(MedicOptionTranslations.OnDeathValue).Value(2).Build())
                 .Value(v => v.Text(MedicOptionTranslations.MeetingsValue).Value(1).Build())
                 .Value(v => v.Text(MedicOptionTranslations.NeverValue).Value(0).Build())
                 .BindInt(o => mode = (GuardMode)o)
+                .ShowSubOptionPredicate(v => (int)v == 1)
+                .SubOption(sub2 => sub2
+                    .KeyName("Change Target Every Round", MedicOptionTranslations.CanProtectSamePlayer)
+                    .AddBoolean()
+                    .BindBool(b => mustSelectNewTarget = b)
+                    .Build())
                 .Build());
 
     protected enum GuardMode

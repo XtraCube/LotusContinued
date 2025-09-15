@@ -11,6 +11,7 @@ using Lotus.Extensions;
 using Lotus.Factions;
 using Lotus.Factions.Interfaces;
 using Lotus.Factions.Neutrals;
+using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name.Holders;
@@ -18,12 +19,15 @@ using Lotus.Managers.History.Events;
 using Lotus.Options;
 using Lotus.Patches.Actions;
 using Lotus.Patches.Systems;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Interfaces;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Overrides;
+using Lotus.Roles.RoleGroups.Impostors;
 using Lotus.Utilities;
 using Lotus.Victory;
 using Lotus.Victory.Conditions;
@@ -37,7 +41,7 @@ using VentLib.Utilities.Optionals;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
-public class Turncoat: CustomRole, IInfoResender
+public class Turncoat: CustomRole, IInfoResender, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Turncoat));
 
@@ -59,6 +63,10 @@ public class Turncoat: CustomRole, IInfoResender
     private bool isImpostor = true;
     private bool hasRevealed;
     private bool canWin;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Witch.Translations.CursingButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/turncoat_curse.png", 130, true));
 
     public void ResendMessages() => CHandler().Message(hasRevealed | targetPlayer == byte.MaxValue ? BasicCommands.NoInfoMessage : Translations.TurncoatHint).Send(MyPlayer);
 

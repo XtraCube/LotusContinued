@@ -24,51 +24,75 @@ using Lotus.Roles.Subroles;
 using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name.Holders;
 using System.Collections.Generic;
+using System.Text;
+using Lotus.API;
+using Lotus.Factions.Interfaces;
+using Lotus.GUI;
+using Lotus.GUI.Name;
+using Lotus.Managers.History.Events;
+using Lotus.Roles.Interfaces;
+using Lotus.RPC.CustomObjects.Interfaces;
+using Lotus.Utilities;
+using UnityEngine;
+using VentLib.Utilities.Collections;
+using static Lotus.Roles.Subroles.Guesser;
+using CollectionExtensions = HarmonyLib.CollectionExtensions;
 
 namespace Lotus.Roles.Builtins;
 
-public class GuesserRole : CustomRole
+public class GuesserRole : CustomRole, IInfoResender
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(GuesserRole));
 
     private int guessesPerMeeting;
     private bool followGuesserSettings;
 
-    private bool hasMadeGuess;
     private byte guessingPlayer = byte.MaxValue;
     private bool skippedVote;
     private CustomRole? guessedRole;
     private int guessesThisMeeting;
 
-    protected int CorrectGuesses;
-    protected string? GuesserMessage;
+    private bool currentlyGuessing;
+    private bool isShapeshifterRole;
+    private bool wasShiftingRole;
+    private bool meetingEnded;
+    private int currentPageNum;
 
-    protected MeetingPlayerSelector voteSelector = null!;
+    private RoleTypes? originalRoleType;
 
-    protected override void PostSetup()
+    private IFaction lastFaction;
+    public Cooldown shiftTimer;
+
+    [NewOnSetup(true)] private MeetingPlayerSelector voteSelector = new();
+    [NewOnSetup] private List<GuesserShapeshifterObject> shapeshifterObjects = [];
+    [NewOnSetup] private List<CustomRole> guessableRoles = [];
+
+    public void ResendMessages()
     {
-        voteSelector = new();
-        base.PostSetup();
+        GuesserMessage(Translations.HintMessage.Formatted(guessesThisMeeting)).Send(MyPlayer);
     }
 
-    [RoleAction(LotusActionType.RoundStart)]
+
     [RoleAction(LotusActionType.RoundEnd)]
     public void ResetPreppedPlayer()
     {
-        hasMadeGuess = false;
         voteSelector.Reset();
         guessingPlayer = byte.MaxValue;
         skippedVote = false;
+        meetingEnded = false;
+        currentlyGuessing = false;
         guessedRole = null;
-        GuesserMessage = null;
-        guessesThisMeeting = 0;
+        guessesThisMeeting = guessesPerMeeting;
+        if (lastFaction != Faction) ResetGuessableRoles();
+        ResendMessages();
     }
 
-    [RoleAction(LotusActionType.Vote)]
+    [RoleAction(LotusActionType.Vote, priority:Priority.VeryHigh)]
     public void SelectPlayerToGuess(Optional<PlayerControl> player, MeetingDelegate _, ActionHandle handle)
     {
-        if (skippedVote || hasMadeGuess) return;
+        if (skippedVote || guessesThisMeeting <= 0 || meetingEnded) return;
         handle.Cancel();
+        if (currentlyGuessing) return;
         VoteResult result = voteSelector.CastVote(player);
         switch (result.VoteResultType)
         {
@@ -76,128 +100,298 @@ public class GuesserRole : CustomRole
                 break;
             case VoteResultType.Skipped:
                 skippedVote = true;
+                GuesserMessage(Translations.SkippedGuessing).Send(MyPlayer);
                 break;
             case VoteResultType.Selected:
-                guessingPlayer = result.Selected;
                 PlayerControl? targetPlayer = Players.FindPlayerById(result.Selected);
                 if (targetPlayer != null)
                 {
                     CancelGuessReason reason = CanGuessPlayer(targetPlayer);
-                    if (reason is CancelGuessReason.None) GuesserHandler(Guesser.Translations.PickedPlayerText.Formatted(targetPlayer.name)).Send(MyPlayer);
+                    if (reason is CancelGuessReason.None) StartGuessingPlayer(targetPlayer);
                     else
-                    {
-                        GuesserHandler(reason switch
+                        GuesserMessage(reason switch
                         {
-                            CancelGuessReason.RoleSpecificReason => Guesser.Translations.CantGuessBecauseOfRole.Formatted(targetPlayer.name),
-                            CancelGuessReason.Teammate => Guesser.Translations.CantGuessTeammate.Formatted(targetPlayer.name),
-                            CancelGuessReason.CanSeeRole => Guesser.Translations.CanSeeRole.Formatted(targetPlayer.name),
-                            _ => Guesser.Translations.ErrorCompletingGuess
+                            CancelGuessReason.RoleSpecificReason => Translations.CantGuessBecauseOfRole.Formatted(targetPlayer.name),
+                            CancelGuessReason.Teammate => Translations.CantGuessTeammate.Formatted(targetPlayer.name),
+                            CancelGuessReason.CanSeeRole => Translations.CantGuessKnownRole.Formatted(targetPlayer.name),
+                            _ => throw new ArgumentOutOfRangeException()
                         }).Send(MyPlayer);
-                        guessingPlayer = byte.MaxValue;
-                    }
+
                 }
-                else guessingPlayer = byte.MaxValue;
                 break;
             case VoteResultType.Confirmed:
                 if (guessedRole == null)
                 {
                     voteSelector.Reset();
-                    voteSelector.CastVote(player);
+                    SelectPlayerToGuess(player, _, handle);
+                    return;
                 }
-                else hasMadeGuess = true;
+
+                PlayerControl? guessed = Players.FindPlayerById(guessingPlayer);
+                if (guessed == null) return;
+
+                guessesThisMeeting -= 1;
+                if (guessesThisMeeting <= 0) GuesserMessage(Translations.NoGuessesLeft).Send(MyPlayer);
+
+                guessingPlayer = byte.MaxValue;
+                voteSelector.Reset();
+
+                bool successfulGuess = guessed.PrimaryRole().GetType() == guessedRole.GetType() ||
+                                       guessed.GetSubroles().Any(s => s.GetType() == guessedRole.GetType());
+                guessedRole = null;
+
+                if (successfulGuess) HandleCorrectGuess(guessed, guessedRole!);
+                else HandleBadGuess();
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
 
-        if (!hasMadeGuess) return;
+    [RoleAction(LotusActionType.Shapeshift, priority:Priority.VeryHigh)]
+    public void SelectRoleToGuess(PlayerControl target, ActionHandle handle)
+    {
+        if (MeetingHud.Instance) handle.Cancel(ActionHandle.CancelType.Soft);
+        if (!currentlyGuessing || !isShapeshifterRole) return;
 
-        if (++guessesThisMeeting < guessesPerMeeting)
+        var firstObject = shapeshifterObjects.FirstOrDefault(o => o.RealPlayer?.NetId == target.NetId || o.NetObject?.playerControl.NetId == target.NetId);
+        if (firstObject == null) return;
+        HandleShapeshifterChoice(firstObject);
+    }
+
+    [RoleAction(LotusActionType.Disconnect, ActionFlag.GlobalDetector)]
+    public void FillDisconnects(PlayerControl target)
+    {
+        if (target.PlayerId == MyPlayer.PlayerId)
         {
-            hasMadeGuess = false;
-            voteSelector.Reset();
-        }
-
-        PlayerControl? guessed = Players.FindPlayerById(guessingPlayer);
-        if (guessed == null || guessedRole == null)
-        {
-            GuesserHandler(Guesser.Translations.ErrorCompletingGuess).Send(MyPlayer);
-            ResetPreppedPlayer();
+            shiftTimer.Finish(true);
+            DeleteAllShapeshifterObjects();
             return;
         }
 
-        if (guessed.PrimaryRole().GetType() == guessedRole.GetType() || guessed.GetSubroles().Any(s => s.GetType() == guessedRole.GetType()))
-        {
-            GuesserMessage = Guesser.Translations.GuessAnnouncementMessage.Formatted(guessed.name);
-            MyPlayer.InteractWith(guessed, LotusInteraction.FatalInteraction.Create(this));
-            CorrectGuesses++;
-        }
-        else HandleBadGuess();
+        var firstObject = shapeshifterObjects.FirstOrDefault(o => o.RealPlayer?.NetId == target.NetId || o.NetObject?.playerControl.NetId == target.NetId);
+        if (firstObject == null) return;
+        shiftTimer.Finish();
     }
 
     [RoleAction(LotusActionType.MeetingEnd, ActionFlag.WorksAfterDeath)]
     public void CheckRevive()
     {
-        if (GuesserMessage != null) GuesserHandler(GuesserMessage).Send();
+        shiftTimer.Finish(true);
+        meetingEnded = true;
+        if (wasShiftingRole)
+        {
+            wasShiftingRole = false;
+            isShapeshifterRole = false;
+            DesyncRole = originalRoleType;
+            RoleTypes targetRole = RealRole;
+            if (!MyPlayer.IsAlive()) targetRole = targetRole.GhostEquivalent();
+            MyPlayer.RpcSetRoleDesync(targetRole, MyPlayer);
+            originalRoleType = null;
+        }
+        DeleteAllShapeshifterObjects();
     }
 
-    [RoleAction(LotusActionType.Chat)]
-    public void DoGuesserVoting(string message, GameState state, bool isAlive)
+    private void StartGuessingPlayer(PlayerControl targetPlayer)
     {
-        if (!isAlive) return;
-        if (state is not GameState.InMeeting) return;
-        log.Debug($"Message: {message} - Guessing player: {guessingPlayer}");
-        if (guessingPlayer == byte.MaxValue) return;
-        if (!(message.StartsWith("/role") || message.StartsWith("/r"))) return;
-        string[] split = message.Replace("/role", "/r").Split(" ");
-        if (split.Length == 1)
+        GuesserMessage(Translations.PickedPlayerText.Formatted(targetPlayer.name)).Send(MyPlayer);
+        guessingPlayer = targetPlayer.PlayerId;
+        currentlyGuessing = true;
+        isShapeshifterRole = true;
+        currentPageNum = 1;
+
+        if (!wasShiftingRole)
         {
-            GuesserHandler(Guesser.Translations.TypeRText).Send(MyPlayer);
-            return;
+            wasShiftingRole = true;
+            if (DesyncRole.HasValue) originalRoleType = DesyncRole.Value;
+            else originalRoleType = null;
+
+            DesyncRole = RoleTypes.Shapeshifter;
         }
 
-        string roleName = split[1..].Fuse(" ").Trim();
-        var allRoles = StandardRoles.Instance.AllRoles.Where(r => (r.Count > 0 | r.RoleFlags.HasFlag(RoleFlag.RemoveRoleMaximum)) && r.Chance > 0 || r.RoleFlags.HasFlag(RoleFlag.VariationRole)
-            || r.RoleFlags.HasFlag(RoleFlag.TransformationRole));
-        Optional<CustomRole> role = allRoles.FirstOrOptional(r => r.RoleName.ToLower().Contains(roleName.ToLower()))
-            .CoalesceEmpty(() => allRoles.FirstOrOptional(r => r.Aliases.Contains(roleName)));
-        log.Debug($"c4 - exists: {role.Exists()} name: {(role.Exists() ? role.Get().RoleName : roleName)}");
-        if (!role.Exists())
+        ResetShapeshfiterObjects();
+        MyPlayer.RpcSetRoleDesync(RoleTypes.Shapeshifter, MyPlayer);
+        if (!shiftTimer.IsCoroutine)
         {
-            GuesserHandler(Guesser.Translations.UnknownRole.Formatted(roleName)).Send(MyPlayer);
-            return;
+            shiftTimer.IsCoroutine = true;
+            CooldownManager.SubmitCooldown(shiftTimer);
+        }
+        shiftTimer.StartThenRun(CancelGuessingTimerDelay, ShiftTimer);
+        SendCnoRows();
+    }
+
+    private void CancelGuessingTimerDelay()
+    {
+        isShapeshifterRole = false;
+        guessedRole = null;
+        voteSelector.Reset();
+        currentlyGuessing = false;
+        guessingPlayer = byte.MaxValue;
+        MyPlayer.RpcSetRoleDesync(RoleTypes.Crewmate, MyPlayer);
+        GuesserMessage(Translations.KickedFromGuessing).Send(MyPlayer);
+        DeleteAllShapeshifterObjects();
+    }
+
+    private void ResetGuessableRoles()
+    {
+        lastFaction = Faction;
+        guessableRoles = [];
+
+        guessableRoles = StandardRoles.Instance.AllRoles
+            .Where(r => HostTurnedRoleOn(r)
+                        || r.GetRoleType() is RoleType.DontShow && r.LinkedRoles().Any(HostTurnedRoleOn)
+                        || r.RoleFlags.HasFlag(RoleFlag.VariationRole) && r.LinkedRoles().Any(HostTurnedRoleOn)
+                        || r.RoleFlags.HasFlag(RoleFlag.TransformationRole) && r.LinkedRoles().Any(HostTurnedRoleOn))
+            .Where(r =>
+            {
+                bool roleAllowsGuess = CanGuessRole(r);
+                if (!roleAllowsGuess || !followGuesserSettings) return roleAllowsGuess;
+                int setting = -1;
+                RoleTypeBuilders.FirstOrOptional(b => b.predicate(r))
+                    .IfPresent(rtb => setting = RoleTypeSettings[RoleTypeBuilders.IndexOf(rtb)]);
+                return setting == -1 || setting == 2 ? CanGuessDictionary.GetValueOrDefault(r.GetType(), -1) == 1 : setting == 1;
+            })
+            .ToList();
+
+        bool HostTurnedRoleOn(CustomRole r) => (r.Count > 0 || r.RoleFlags.HasFlag(RoleFlag.RemoveRoleMaximum)) &&
+                                               (r.Chance > 0 || r.RoleFlags.HasFlag(RoleFlag.RemoveRolePercent));
+    }
+
+    private void ResetShapeshfiterObjects()
+    {
+        DeleteAllShapeshifterObjects();
+
+        int playerIndex = 0;
+        foreach (PlayerControl player in Players.GetAlivePlayers())
+        {
+            if (player.PlayerId == MyPlayer.PlayerId) continue;
+            shapeshifterObjects.Add(new GuesserShapeshifterObject(MyPlayer, playerIndex, GetNameFromIndex(playerIndex), player));
+            playerIndex += 1;
         }
 
-        guessedRole = role.Get();
+        int leftOverPlayers = 15 - playerIndex;
+        for (int i = 0; i < leftOverPlayers; i++)
+        {
+            // Create a NET OBJECT instead of using a player.
+            shapeshifterObjects.Add(new GuesserShapeshifterObject(MyPlayer, playerIndex, GetNameFromIndex(playerIndex), null));
+            playerIndex += 1;
+        }
 
-        if (!CanGuessRole(guessedRole))
-        {
-            GuesserHandler(Guesser.Translations.CantGuessRoleBecauseOfRole.Formatted(guessedRole.RoleName)).Send(MyPlayer);
-            guessedRole = null;
-            return;
-        }
-        if (!followGuesserSettings)
-        {
-            GuesserHandler(Guesser.Translations.PickedRoleText.Formatted(Players.FindPlayerById(guessingPlayer)?.name, guessedRole.RoleName)).Send(MyPlayer);
-            return;
-        }
-        int setting = -1;
-        Guesser.RoleTypeBuilders.FirstOrOptional(b => b.predicate(guessedRole)).IfPresent(rtb => setting = Guesser.RoleTypeSettings[Guesser.RoleTypeBuilders.IndexOf(rtb)]);
-        if (setting == -1 || setting == 2) setting = Guesser.CanGuessDictionary.GetValueOrDefault(guessedRole.GetType(), -1);
+        return;
 
-        if (setting == 1) GuesserHandler(Guesser.Translations.PickedRoleText.Formatted(Players.FindPlayerById(guessingPlayer)?.name, guessedRole.RoleName)).Send(MyPlayer);
-        else
+        string GetNameFromIndex(int thisIndex)
         {
-            GuesserHandler(Guesser.Translations.CantGuessRole.Formatted(guessedRole.RoleName)).Send(MyPlayer);
-            guessedRole = null;
+            switch (thisIndex)
+            {
+                case 0:
+                    return Color.white.Colorize(LeftArrow);
+                case 1:
+                    return Color.white.Colorize(Translations.PageIndex.Formatted(currentPageNum, Mathf.CeilToInt(guessableRoles.Count / 12f)));
+                case 2:
+                    return Color.white.Colorize(RightArrow);
+                default:
+                    int listIndex = thisIndex - 3;
+                    listIndex = (currentPageNum - 1) * 12 + listIndex;
+                    if (listIndex >= guessableRoles.Count) return NoRoleHere;
+                    return guessableRoles[listIndex].ColoredRoleName();
+            }
         }
+    }
+
+    private void DeleteAllShapeshifterObjects()
+    {
+        shapeshifterObjects.ForEach(o => o.Delete());
+        shapeshifterObjects = [];
+    }
+
+    private void HandleShapeshifterChoice(GuesserShapeshifterObject shiftableObject)
+    {
+        switch (shiftableObject.PlayerIndex)
+        {
+            case 0: // left
+                int startPageNum = currentPageNum;
+                currentPageNum -= 1;
+                if (currentPageNum < 1) currentPageNum = Mathf.CeilToInt(guessableRoles.Count / 12f);
+                shiftTimer.StartThenRun(CancelGuessingTimerDelay, ShiftTimer);
+                GuesserMessage(Translations.MoreTimeGiven).Send(MyPlayer);
+                if (startPageNum != currentPageNum) ResetShapeshfiterObjects();
+                SendCnoRows();
+                break;
+            case 1: // pressing page icon.
+                break;
+            case 2: // right
+                int startPageNumRight = currentPageNum;
+                currentPageNum += 1;
+                int maxPages  = Mathf.CeilToInt(guessableRoles.Count / 12f);
+                if (currentPageNum > maxPages) currentPageNum = 1;
+                shiftTimer.StartThenRun(CancelGuessingTimerDelay, ShiftTimer);
+                GuesserMessage(Translations.MoreTimeGiven).Send(MyPlayer);
+                if (startPageNumRight != currentPageNum) ResetShapeshfiterObjects();
+                SendCnoRows();
+                break;
+            default:
+                int playerIndex = shiftableObject.PlayerIndex;
+                if (playerIndex > 14) return; // crowded detection.
+                int listIndex = playerIndex - 3;
+                listIndex = (currentPageNum - 1) * 12 + listIndex;
+                if (listIndex >= guessableRoles.Count) return;
+                shiftTimer.Finish(true);
+                DeleteAllShapeshifterObjects();
+                guessedRole = guessableRoles[listIndex];
+                isShapeshifterRole = false;
+                currentlyGuessing = false;
+                MyPlayer.RpcSetRoleDesync(RoleTypes.Crewmate, MyPlayer);
+                GuesserMessage(Translations.PickedRoleText.Formatted(Players.FindPlayerById(guessingPlayer)?.name ?? "???", guessedRole.ColoredRoleName())).Send(MyPlayer);
+                break;
+        }
+    }
+
+    private void SendCnoRows()
+    {
+        if (MyPlayer.AmOwner) return;
+        StringBuilder stringBuilder = new();
+        stringBuilder.Append(Translations.ShifterMenuHelpText);
+        stringBuilder.AppendLine();
+
+        int lastRow = -1;
+        bool firstRole = true;
+        shapeshifterObjects.ForEach(obj =>
+        {
+            if (!obj.IsCno()) return;
+            int curRow = Mathf.CeilToInt((float)(obj.PlayerIndex + 1) / 3f);
+            if (curRow != lastRow)
+            {
+                stringBuilder.AppendLine();
+                stringBuilder.Append(Translations.RowText.Formatted(curRow));
+                firstRole = true;
+            }
+            lastRow = curRow;
+            if (!firstRole) stringBuilder.Append(", ");
+            stringBuilder.Append(curRow == 1 ? obj.GetText().RemoveHtmlTags() : obj.GetText());
+            firstRole = false;
+        });
+        if (lastRow == -1) return;
+        GuesserMessage(stringBuilder.ToString()).Send(MyPlayer);
     }
 
     protected virtual void HandleBadGuess()
     {
-        GuesserMessage = Guesser.Translations.GuessAnnouncementMessage.Formatted(MyPlayer.name);
-        MyPlayer.InteractWith(MyPlayer, LotusInteraction.FatalInteraction.Create(this));
+        GuesserMessage(Translations.GuessDeathAnnouncement.Formatted(MyPlayer.name)).Send();
+        MyPlayer.InteractWith(MyPlayer, new UnblockedInteraction(
+            new FatalIntent(true,
+                () => new CustomDeathEvent(MyPlayer, MyPlayer, ModConstants.DeathNames.Guessed))
+            , this));
     }
+
+    protected virtual void HandleCorrectGuess(PlayerControl guessedPlayer, CustomRole guessedRole)
+    {
+        GuesserMessage(Translations.GuessDeathAnnouncement.Formatted(guessedPlayer.name)).Send();
+        MyPlayer.InteractWith(guessedPlayer, new UnblockedInteraction(
+            new FatalIntent(true,
+                () => new CustomDeathEvent(guessedPlayer, MyPlayer, ModConstants.DeathNames.Guessed))
+            , this));
+    }
+
     protected virtual CancelGuessReason CanGuessPlayer(PlayerControl targetPlayer)
     {
         bool canSeeRole = false;
@@ -218,8 +412,91 @@ public class GuesserRole : CustomRole
                 .BindBool(b => followGuesserSettings = b)
                 .Build());
 
-    protected ChatHandler GuesserHandler(string message) => ChatHandler.Of(message, RoleColor.Colorize(Guesser.Translations.GuesserTitle)).LeftAlign();
-
     protected override RoleModifier Modify(RoleModifier roleModifier) => roleModifier
         .VanillaRole(RoleTypes.Crewmate);
+
+    protected ChatHandler GuesserMessage(string message) => ChatHandler.Of(message, RoleColor.Colorize(Translations.GuesserTitle)).LeftAlign();
+
+    private class GuesserShapeshifterObject
+    {
+        public GuesserShiftableObject? NetObject;
+        public PlayerControl? RealPlayer;
+        public int PlayerIndex;
+
+        private PlayerControl guesser;
+        private string currentName;
+        private bool isCno;
+
+        private Remote<NameComponent>? overridenName;
+        private Remote<IndicatorComponent>? overridenIndicator;
+        private Remote<RoleComponent>? overridenRole;
+        private Remote<CounterComponent>? overridenCounter;
+        private Remote<TextComponent>? overridenText;
+
+        public GuesserShapeshifterObject(PlayerControl guesser, int index, string currentName, PlayerControl? vanillaPlayer)
+        {
+            PlayerIndex = index;
+            this.guesser  = guesser;
+            this.currentName = currentName;
+            if (vanillaPlayer == null)
+            {
+                isCno = true;
+                NetObject = new GuesserShiftableObject(currentName, new Vector2(100000, 10000), guesser.PlayerId);
+                return;
+            }
+            RealPlayer = vanillaPlayer;
+
+            var nameModel = vanillaPlayer.NameModel();
+            overridenName = nameModel.GetComponentHolder<NameHolder>().Add(new NameComponent(new LiveString(() => currentName), GameState.InMeeting, ViewMode.Absolute, viewers:guesser));
+            overridenIndicator = nameModel.GetComponentHolder<IndicatorHolder>().Add(new IndicatorComponent(new LiveString(string.Empty), GameState.InMeeting, ViewMode.Absolute, viewers: guesser));
+            overridenRole = nameModel.GetComponentHolder<RoleHolder>().Add(new RoleComponent(new LiveString(string.Empty), [GameState.InMeeting], ViewMode.Absolute, viewers:guesser));
+            overridenCounter = nameModel.GetComponentHolder<CounterHolder>().Add(new CounterComponent(new LiveString(string.Empty), [GameState.InMeeting], ViewMode.Absolute, viewers: guesser));
+            overridenText = nameModel.GetComponentHolder<TextHolder>().Add(new TextComponent(new LiveString(string.Empty), GameState.InMeeting, ViewMode.Absolute, viewers: guesser));
+
+            if (guesser.AmOwner) nameModel.RenderFor(guesser);
+            // send at a DELAY so that guesser message doesn't clear the name.
+            else Async.Schedule(() => nameModel.RenderFor(guesser, force: true), NetUtils.DeriveDelay(1f));
+
+        }
+
+        public void ChangeName(string newName)
+        {
+            currentName = newName;
+            NetObject?.RpcChangeSprite(newName);
+            RealPlayer?.NameModel().RenderFor(guesser);
+        }
+
+        public bool IsCno() => isCno;
+        public string GetText() => currentName;
+
+        public void Delete()
+        {
+            NetObject?.Despawn();
+            overridenName?.Delete();
+            overridenIndicator?.Delete();
+            overridenCounter?.Delete();
+            overridenText?.Delete();
+            overridenRole?.Delete();
+            if (RealPlayer != null) RealPlayer.SetChatName(RealPlayer.name);
+        }
+    }
+
+    private class GuesserShiftableObject : ShiftableNetObject
+    {
+        public GuesserShiftableObject(string objectName, Vector2 position, byte visibleTo = byte.MaxValue) : base(
+            objectName, position, visibleTo)
+        {
+
+        }
+
+        public override void SetupOutfit()
+        {
+            PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].PlayerName = Sprite;
+            PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].ColorId = 0;
+            PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].HatId = "";
+            PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].SkinId = "";
+            PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].PetId = "";
+            PlayerControl.LocalPlayer.Data.Outfits[PlayerOutfitType.Default].VisorId = "";
+        }
+    }
 }

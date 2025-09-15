@@ -36,7 +36,7 @@ public class RoleActionAttribute : LotusActionAttribute
 public static class LotusActionTypeMethods
 {
     // ReSharper disable once CollectionNeverUpdated.Global
-    public static readonly HashSet<LotusActionType> PlayerActions = new();
+    public static readonly HashSet<LotusActionType> PlayerActions = [];
 
     public static bool IsPlayerAction(this LotusActionType actionType)
     {

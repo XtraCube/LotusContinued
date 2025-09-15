@@ -245,7 +245,7 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
         }
     }
 
-    public virtual CustomRole ChangeRoleTo(CustomRole newRole, bool getCleanRole = true)
+    public virtual CustomRole ChangeRoleTo(CustomRole newRole, bool getCleanRole = true, bool revertUI = true)
     {
         log.Debug($"Changing {MyPlayer.name}'s role from {EnglishRoleName} to {newRole.EnglishRoleName}. (a role called this method.)");
         if (getCleanRole) newRole = IRoleManager.Current.GetCleanRole(newRole);
@@ -256,15 +256,21 @@ public abstract class CustomRole : AbstractBaseRole, IRpcSendable<CustomRole>
             .Select(p => p.PlayerId)
             .ToHashSet();
 
-        if (MyPlayer.AmOwner) UIManager.RevertEverything();
-        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)RoleRPC.RevertRoleUI)!.Send([MyPlayer.OwnerId]);
+        if (revertUI)
+        {
+            if (MyPlayer.AmOwner) UIManager.RevertEverything();
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)RoleRPC.RevertRoleUI)!.Send([MyPlayer.OwnerId]);
+        }
         Game.CurrentGameMode.Assign(MyPlayer, newRole);
         newRole = MyPlayer.PrimaryRole();
         newRole.Assign(true);
         Game.MatchData.GameHistory.AddEvent(new RoleChangeEvent(MyPlayer, newRole, this));
 
-        if (MyPlayer.AmOwner) newRole.UIManager.ForceUpdate();
-        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)RoleRPC.ForceRoleUIUpdate)!.Send([MyPlayer.OwnerId]);
+        if (revertUI)
+        {
+            if (MyPlayer.AmOwner) newRole.UIManager.ForceUpdate();
+            else if (MyPlayer.IsModded()) Vents.FindRPC((uint)RoleRPC.ForceRoleUIUpdate)!.Send([MyPlayer.OwnerId]);
+        }
 
         HashSet<byte> newAllies = Players.GetAllPlayers()
             .Where(p => newRole.Relationship(p) is Relation.FullAllies)

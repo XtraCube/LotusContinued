@@ -6,6 +6,7 @@ using Lotus.Factions;
 using Lotus.Factions.Interfaces;
 using Lotus.Roles;
 using Lotus.Extensions;
+using Lotus.Options;
 
 namespace Lotus.Victory.Conditions;
 
@@ -32,8 +33,8 @@ public class VanillaImpostorWin : IFactionWinCondition
             {
                 aliveOthers++;
                 if (role.RoleFlags.HasFlag(RoleFlag.CannotWinAlone)) continue;
-                if (role.Faction.Relationship(FactionInstances.Crewmates) is Relation.FullAllies) continue;
-                if (role.MyPlayer.GetVanillaRole().IsImpostor()||role.RoleAbilityFlags.HasFlag(RoleAbilityFlag.IsAbleToKill)) aliveKillers++;
+                if (role.Faction.Relationship(FactionInstances.Crewmates) is Relation.FullAllies && !GeneralOptions.GameplayOptions.CrewCanSoloKillers) continue;
+                if (role.MyPlayer.GetVanillaRole().IsImpostor() || role.RoleAbilityFlags.HasFlag(RoleAbilityFlag.IsAbleToKill)) aliveKillers++;
             }
         }
 

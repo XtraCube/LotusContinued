@@ -13,6 +13,8 @@ using VentLib.Utilities;
 using Priority = HarmonyLib.Priority;
 using Lotus.Roles;
 using Lotus.API.Player;
+using Lotus.RPC.CustomObjects;
+using Lotus.RPC.CustomObjects.Interfaces;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.Patches.Actions;
@@ -28,35 +30,36 @@ public static class ShapeshiftPatch
         log.Debug($"(ShapeshiftEvent) Shapeshift Cause (Invoker): {invokerName}");
         if (invokerName is "RpcShapeshiftV2" or "RpcRevertShapeshiftV2" or "<Shapeshift>b__0" or "<RevertShapeshift>b__0") return true;
         if (invokerName is "CRpcShapeshift" or "CRpcRevertShapeshift" or "<Shapeshift>b__0" or "<RevertShapeshift>b__0") return true;
-        if (Game.State is GameState.InMeeting)
-        {
-            log.Debug("Game.State is Meeting so we do not send a role action.");
-            return true;
-        }
+        // if (Game.State is GameState.InMeeting)
+        // {
+        //     log.Debug("Game.State is Meeting so we do not send a role action.");
+        //     return true;
+        // }
         log.Info($"{__instance?.GetNameWithRole()} => {target?.GetNameWithRole()}", "Shapeshift");
         if (!AmongUsClient.Instance.AmHost) return true;
 
         var shapeshifter = __instance;
         var shapeshifting = shapeshifter.PlayerId != target.PlayerId;
 
-        // we do not check if the role is not ss because of desync roles.
-        // yes this can be exploited for hackers, but we'll tackle that problem when we get there.
         if (!target || target.Data == null || shapeshifter.Data.IsDead || shapeshifter.Data.Disconnected)
         {
-            int num = target ? ((int)target.PlayerId) : -1;
-            log.Warn(string.Format("Bad shapeshift from {0} to {1}", shapeshifter.name, num));
-            shapeshifter.RpcRejectShapeshift();
-            return false;
+            bool cancel = true;
+            if (target.Data == null)
+                CustomNetObject.ObjectFromPlayer(target).IfPresent(cno =>
+                {
+                    cancel = cno is not ShiftableNetObject;
+                });
+            if (cancel)
+            {
+                int num = target ? ((int)target.PlayerId) : -1;
+                log.Warn(string.Format("Bad shapeshift from {0} to {1}", shapeshifter.name, num));
+                shapeshifter.RpcRejectShapeshift();
+                return false;
+            }
         }
         if (target.IsMushroomMixupActive() && shouldAnimate)
         {
             log.Warn($"Tried to shapeshift while mushroom mixup was active {shapeshifter.name}");
-            shapeshifter.RpcRejectShapeshift();
-            return false;
-        }
-        if (MeetingHud.Instance && shouldAnimate)
-        {
-            log.Warn($"Tried to shapeshift while a meeting was starting. {shapeshifter.name}");
             shapeshifter.RpcRejectShapeshift();
             return false;
         }
@@ -81,6 +84,19 @@ public static class ShapeshiftPatch
                 if (shapeshifting) shapeshifter.RpcShapeshift(shapeshifter, false);
                 else shapeshifter.RpcShapeshift(Players.FindPlayerById(ShapeshiftFixPatch.GetShapeshifted(shapeshifter)), false);
             }
+            return false;
+        }
+
+        if (Game.State is GameState.InMeeting)
+        {
+            log.Warn($"Tried to shapeshift while a meeting was starting. {shapeshifter.name}");
+            shapeshifter.RpcRejectShapeshift();
+            return false;
+        }
+
+        if (CustomNetObject.ObjectFromPlayer(target).Exists())
+        {
+            shapeshifter.RpcRejectShapeshift();
             return false;
         }
 

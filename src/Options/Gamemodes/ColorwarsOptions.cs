@@ -23,6 +23,11 @@ public class ColorwarsOptions
     public bool CustomTeams;
     public bool CanVent;
 
+    public bool SuddenDeath;
+    public int RemainingTeams;
+    public bool DisableVents;
+    public bool EnableArrows;
+
     public GameOption CustomTeamsOption;
 
     public List<GameOption> AllOptions = new();
@@ -54,6 +59,28 @@ public class ColorwarsOptions
            .AddFloatRange(0, 30, 1f, 5, GeneralOptionTranslations.SecondsSuffix)
            .BindFloat(v => GracePeriod = v)
            .Build());
+
+        AllOptions.Add(new GameOptionBuilder()
+            .KeyName("Sudden Death", CaptureOptions.Translations.SuddenDeath)
+            .AddBoolean(false)
+            .BindBool(b => SuddenDeath = b)
+            .ShowSubOptionPredicate(v => (bool)v)
+            .SubOption(sub2 => sub2
+                .KeyName("Enable at X Teams Left", Translations.EnablesWithXTeamsLeft)
+                .AddIntRange(2, 15, 1)
+                .BindInt(i => RemainingTeams = i)
+                .Build())
+            .SubOption(sub2 => sub2
+                .KeyName("Disable Vents", Translations.DisableVents)
+                .AddBoolean()
+                .BindBool(b => DisableVents = b)
+                .Build())
+            .SubOption(sub2 => sub2
+                .KeyName("Enable Arrows", Translations.EnableArrows)
+                .AddBoolean()
+                .BindBool(b => EnableArrows = b)
+                .Build())
+            .Build());
 
         AllOptions.Add(new GameOptionBuilder()
             .KeyName("Prefer Small", Translations.PreferSmall)
@@ -103,6 +130,10 @@ public class ColorwarsOptions
         [Localized(nameof(ConvertColorMode))] public static string ConvertColorMode = "Convert Color Mode";
         [Localized(nameof(GracePeriod))] public static string GracePeriod = "Grace Period";
         [Localized(nameof(CustomTeams))] public static string CustomTeams = "Custom Teams";
+
+        [Localized(nameof(EnablesWithXTeamsLeft))] public static string EnablesWithXTeamsLeft = "Enables at # Teams Remaining";
+        [Localized(nameof(DisableVents))] public static string DisableVents = "Disable Vents";
+        [Localized(nameof(EnableArrows))] public static string EnableArrows = "Reveal Locations of Alive Players";
 
         [Localized(nameof(TeamOption))] public static string TeamOption = "Team {0}";
     }

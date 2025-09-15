@@ -115,6 +115,12 @@ public class GameOptionOverride
             case Override.PhantomVanishDuration:
                 options.SetFloat(FloatOptionNames.PhantomDuration, (float)(value ?? AUSettings.PhantomDuration()));
                 break;
+            case Override.DetectiveSuspectsPerCase:
+                options.SetFloat(FloatOptionNames.DetectiveSuspectLimit, (float)(value ?? AUSettings.DetectiveSuspectsPerCase()));
+                break;
+            case Override.ViperDissolveTime:
+                options.SetFloat(FloatOptionNames.ViperDissolveTime, (float)(value ?? AUSettings.ViperDissolveTime()));
+                break;
             case Override.CanUseVent:
             default:
                 log.Warn($"Invalid Option Override: {this}", "ApplyOverride");

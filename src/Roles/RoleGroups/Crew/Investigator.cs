@@ -101,10 +101,11 @@ public class Investigator : Crewmate, IRoleUI
 
         int setting = -1;
         RoleTypeBuilders.FirstOrOptional(b => b.predicate(role)).IfPresent(rtb => setting = RoleTypeSettings[RoleTypeBuilders.IndexOf(rtb)]);
-        if (setting == -1 || setting == 2) setting = RoleColoringDictionary.GetValueOrDefault(role.GetType(), -1);
-        if (setting == -1) setting = role.Faction.GetType() == typeof(ImpostorFaction) ? 1 : 2;
 
-        Color color = setting == 2 ? Color.green : Color.red;
+        if (setting is -1 or 2) setting = RoleColoringDictionary.GetValueOrDefault(role.GetType(), -1);
+        if (setting is -1) setting = role.Faction.GetType() == typeof(ImpostorFaction) ? 1 : 0;
+
+        Color color = setting == 0 ? Color.green : Color.red;
 
         NameComponent nameComponent = new(new LiveString(player.name, color), Game.InGameStates, ViewMode.Replace, MyPlayer);
         player.NameModel().GetComponentHolder<NameHolder>().Add(nameComponent);
@@ -181,5 +182,4 @@ public class Investigator : Crewmate, IRoleUI
             public static string CrewKillingRed = "Crewmate Killing::1 Are Red::0";
         }
     }
-
 }

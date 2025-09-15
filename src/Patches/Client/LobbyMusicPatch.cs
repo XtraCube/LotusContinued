@@ -24,10 +24,12 @@ class LobbyMusicPatch
     };
     public static void Prefix(LobbyBehaviour __instance)
     {
+        if (Game.State is GameState.Roaming or GameState.InMeeting) return; // fixes this patch running when a CNO spawns.
         MusicDictionary.GetOrCompute(ClientOptions.SoundOptions.CurrentSoundType, () => _ => { })(__instance);
     }
     public static void Postfix(LobbyBehaviour __instance)
     {
+        if (Game.State is GameState.Roaming or GameState.InMeeting) return; // fixes this patch running when a CNO spawns.
         DevLogger.Log(ClientOptions.SoundOptions.CurrentSoundType.ToString());
         PostfixMusicDictionary.GetOrCompute(ClientOptions.SoundOptions.CurrentSoundType, () => _ => { })(__instance);
     }

@@ -46,6 +46,8 @@ public static class AUSettings
     public static float NoisemakerAlertDuration() => StaticOptions.GetFloat(FloatOptionNames.NoisemakerAlertDuration);
     public static float PhantomCooldown() => StaticOptions.GetFloat(FloatOptionNames.PhantomCooldown);
     public static float PhantomDuration() => StaticOptions.GetFloat(FloatOptionNames.PhantomDuration);
+    public static float DetectiveSuspectsPerCase() => StaticOptions.GetFloat(FloatOptionNames.DetectiveSuspectLimit);
+    public static float ViperDissolveTime() => StaticOptions.GetFloat(FloatOptionNames.ViperDissolveTime);
 
     public static int NumImpostors() => StaticOptions.GetInt(Int32OptionNames.NumImpostors);
     public static int KillDistance() => StaticOptions.GetInt(Int32OptionNames.KillDistance);

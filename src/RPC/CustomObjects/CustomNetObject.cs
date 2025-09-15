@@ -167,6 +167,7 @@ public class CustomNetObject
         log.Info($" Hide Custom Net Object {GetType().Name} (ID {Id}) from {player.GetNameWithRole()}");
 
         HiddenList.Add(player.PlayerId);
+        if (playerControl == null) return;
 
         if (player.AmOwner)
         {
@@ -204,7 +205,7 @@ public class CustomNetObject
         }
     }
 
-    protected void CreateNetObject(string sprite, Vector2 position)
+    protected virtual void CreateNetObject(string sprite, Vector2 position)
     {
         if (!AmongUsClient.Instance.AmHost) return;
         log.Info($"Create Custom Net Object {GetType().Name} (ID {MaxId + 1}) at {position}");
@@ -379,6 +380,11 @@ public class CustomNetObject
                 writer.Recycle();
             }, 0.1f);
         }
+
+        foreach (PlayerControl pc in Players.GetAllPlayers())
+            if (HiddenList.Contains(pc.PlayerId))
+                Hide(pc);
+
 
         Async.Schedule(() => playerControl.transform.FindChild("Names").FindChild("NameText_TMP").gameObject.SetActive(true), 0.1f); // Fix for Host
         // Async.Schedule(() => Vents.FindRPC((uint)ModCalls.FixModdedClientCNO).Send([player.GetClientId()], playerControl), 0.4f); // Fix for Non-Host Modded

@@ -11,19 +11,24 @@ using Lotus.GUI.Name.Components;
 using Lotus.GUI.Name.Holders;
 using Lotus.GUI.Name.Interfaces;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;
+using Lotus.RPC;
 using UnityEngine;
+using VentLib;
 using VentLib.Localization.Attributes;
 using VentLib.Networking.RPC;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 
-public class Herbalist : Crewmate
+public class Herbalist : Crewmate, IRoleUI
 {
     private static IAccumulativeStatistic<int> _bloomsGrown = Statistic<int>.CreateAccumulative($"Roles.{nameof(Herbalist)}.BloomsGrown", () => Translations.BloomsGrownStatistic);
     private static IAccumulativeStatistic<int> _rolesRevealed = Statistic<int>.CreateAccumulative($"Roles.{nameof(Herbalist)}.RolesRevealed", () => Translations.RolesRevealedStatistic);
@@ -43,6 +48,11 @@ public class Herbalist : Crewmate
     [UIComponent(UI.Cooldown)]
     private Cooldown bloomCooldown;
 
+    public RoleButton PetButton(IRoleButtonEditor editor) => editor
+        .BindCooldown(bloomCooldown)
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Crew/herbalist_bloom.png", 130, true));
+
     [RoleAction(LotusActionType.OnPet)]
     public void PutBloomOnPlayer()
     {
@@ -51,6 +61,7 @@ public class Herbalist : Crewmate
         if (closestPlayer == null) return;
         if (blooming.Contains(closestPlayer.PlayerId)) return;
         bloomCooldown.Start();
+        if (!MyPlayer.AmOwner && MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateHerbalist)?.Send([MyPlayer.OwnerId]);
 
         if (bloomCounts.GetValueOrDefault(closestPlayer.PlayerId) >= bloomsBeforeReveal)
         {
@@ -101,6 +112,14 @@ public class Herbalist : Crewmate
         revealedPlayers.GetOrCompute(player.PlayerId, () => new List<byte>()).Add(MyPlayer.PlayerId);
     }
 
+    [ModRPC(ModCalls.UpdateHerbalist, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateHerbalist()
+    {
+        Herbalist? herbalist = PlayerControl.LocalPlayer.PrimaryRole<Herbalist>();
+        if (herbalist == null) return;
+        herbalist.bloomCooldown.Start();
+    }
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub.KeyName("Time until Bloom", Translations.Options.TimeUntilBloom)
@@ -127,6 +146,8 @@ public class Herbalist : Crewmate
     [Localized(nameof(Herbalist))]
     private static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Plant";
+
         [Localized(nameof(BloomsGrownStatistic))]
         public static string BloomsGrownStatistic = "Blooms Grown";
 

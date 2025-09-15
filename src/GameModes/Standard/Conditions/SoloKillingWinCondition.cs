@@ -10,6 +10,8 @@ using Lotus.Extensions;
 using VentLib.Localization.Attributes;
 using VentLib.Utilities.Extensions;
 using Lotus.API.Player;
+using Lotus.Options;
+using Lotus.Roles.Internals.Enums;
 
 namespace Lotus.GameModes.Standard.Conditions;
 
@@ -24,20 +26,22 @@ public class SoloKillingWinCondition : IWinCondition
 
         int aliveThatCanKill = 0;
         int alivePlayers = 0;
-        List<CustomRole> aliveKillers = new();
+        List<CustomRole> aliveKillers = [];
 
         Players.GetAliveRoles().ForEach(r =>
         {
             alivePlayers++;
             if (r.RoleFlags.HasFlag(RoleFlag.CannotWinAlone)) return;
-            if (r.RoleAbilityFlags.HasFlag(RoleAbilityFlag.IsAbleToKill)) aliveThatCanKill++;
+            if (r.RoleAbilityFlags.HasFlag(RoleAbilityFlag.IsAbleToKill))
+            {
+                if (r.Faction.Relationship(FactionInstances.Crewmates) is Relation.FullAllies && !GeneralOptions.GameplayOptions.CrewCanSoloKillers) return;
+                aliveThatCanKill++;
+            }
             if (r.Faction is not Neutral) return;
-            //if (!r.MyPlayer.GetVanillaRole().IsImpostor()) return;
+            if (r.SpecialType != SpecialType.NeutralKilling) return;
             aliveKillers.Add(r);
         });
 
-        /*DevLogger.Log($"{alivePlayers - aliveKillers.Count > 1} || {aliveThatCanKill - aliveKillers.Count >= 1} || {aliveKillers.Count}");
-        DevLogger.Log($"{alivePlayers} && {aliveThatCanKill} && {aliveKillers.Count}");*/
         if (alivePlayers - aliveKillers.Count > 1 || aliveThatCanKill - aliveKillers.Count >= 1 || aliveKillers.Count == 0) return false;
 
         foreach (CustomRole killer in aliveKillers)

@@ -41,6 +41,7 @@ public class Mastermind : Impostor, IRoleUI
     private int manipulatedPlayerLimit;
     private bool impostorsCanSeeManipulated;
     private Cooldown timeToKill = null!;
+    private float killCooldownAfterManipulate;
 
     [NewOnSetup] private HashSet<byte> manipulatedPlayers = null!;
     [NewOnSetup] private Dictionary<byte, Remote<TextComponent>?[]> remotes = null!;
@@ -117,7 +118,7 @@ public class Mastermind : Impostor, IRoleUI
     private void DoManipulationKill(PlayerControl emitter, PlayerControl target)
     {
         CustomRole emitterRole = emitter.PrimaryRole();
-        Remote<GameOptionOverride> killCooldown = Game.MatchData.Roles.AddOverride(emitter.PlayerId, new GameOptionOverride(Override.KillCooldown, 0f));
+        Remote<GameOptionOverride> killCooldown = Game.MatchData.Roles.AddOverride(emitter.PlayerId, new GameOptionOverride(Override.KillCooldown, killCooldownAfterManipulate));
         emitterRole.SyncOptions();
         Async.Schedule(() =>
         {
@@ -207,6 +208,10 @@ public class Mastermind : Impostor, IRoleUI
                 .Value(1f)
                 .AddFloatRange(2.5f, 120, 2.5f, 5, GeneralOptionTranslations.SecondsSuffix)
                 .BindFloat(timeToKill.SetDuration)
+                .Build())
+            .SubOption(sub => sub.KeyName("Killer CD After Manipulate", KillerCDAfterManipulate)
+                .AddFloatRange(0f, 30f, 2.5f, 4,  GeneralOptionTranslations.SecondsSuffix)
+                .BindFloat(f => killCooldownAfterManipulate = f)
                 .Build());
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
@@ -241,6 +246,9 @@ public class Mastermind : Impostor, IRoleUI
 
             [Localized(nameof(TimeUntilSuicide))]
             public static string TimeUntilSuicide = "Time Until Suicide";
+
+            [Localized(nameof(KillerCDAfterManipulate))]
+            public static string KillerCDAfterManipulate = "Killer CD after Manipulate";
         }
     }
 }

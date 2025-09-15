@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lotus.API.Odyssey;
 using Lotus.API.Reactive;
 using Lotus.Extensions;
 using Lotus.Logging;
@@ -128,6 +129,7 @@ public class HM2 : MonoBehaviour
     [QuickPostfix(typeof(LobbyBehaviour), nameof(LobbyBehaviour.Start))]
     public static void CreateButton(LobbyBehaviour __instance)
     {
+        if (Game.State is GameState.Roaming or GameState.InMeeting) return; // fixes this patch running when a CNO spawns.
         HudManager Instance = DestroyableSingleton<HudManager>.Instance;
         HM2 historyMenu = Instance.gameObject.AddComponent<HM2>();
         historyMenu.PassHudManager(Instance);

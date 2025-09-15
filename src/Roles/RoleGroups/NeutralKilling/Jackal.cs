@@ -12,20 +12,25 @@ using Lotus.GUI.Name.Holders;
 using Lotus.Managers.History.Events;
 using Lotus.Options;
 using Lotus.Roles.Factions;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals;
 using Lotus.Roles.Managers.Interfaces;
+using Lotus.RPC;
 using Lotus.Utilities;
 using UnityEngine;
+using VentLib;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
-public class Jackal : NeutralKillingBase
+public class Jackal : NeutralKillingBase, IRoleUI
 {
     public static readonly Color JackalColor = new(0f, 0.71f, 0.92f);
 
@@ -52,22 +57,35 @@ public class Jackal : NeutralKillingBase
     [UIComponent(UI.Text)]
     private string CanRecruitText() => CanRecruit && !hasRecruited && currentKills >= killsForRecruit ? JackalColor.Colorize(Translations.NextKillIsRecruit) : "";
 
+    public RoleButton KillButton(IRoleButtonEditor killButton) => CanRecruit
+        ? (killsForRecruit == 0
+            ? UpdateKillButton(true)
+            : killButton.Default(false))
+        : killButton.Default(false);
+
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
     {
         if (!CanRecruit) return base.TryKill(target);
 
         if (!hasRecruited)
-        {
-            if (killsForRecruit >= currentKills)
+            if (currentKills >= killsForRecruit)
             {
                 TryRecruit(target);
                 return false;
             }
-        }
+
 
         bool flag = base.TryKill(target);
-        if (flag) currentKills++;
+        if (flag)
+        {
+            currentKills++;
+            if (killsForRecruit == currentKills)
+            {
+                if (MyPlayer.AmOwner) UpdateKillButton(true);
+                else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateJackal)?.Send([MyPlayer.OwnerId], true);
+            }
+        }
         return flag;
     }
 
@@ -125,6 +143,25 @@ public class Jackal : NeutralKillingBase
         targetRole.MyPlayer.SyncAll();
 
         MyPlayer.NameModel().GetComponentHolder<RoleHolder>().ForEach(rc => rc.AddViewer(target));
+
+        if (MyPlayer.AmOwner) UpdateKillButton(false);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateJackal)?.Send([MyPlayer.OwnerId], false);
+    }
+
+    private RoleButton UpdateKillButton(bool showRecruit) => showRecruit
+        ? UIManager.KillButton
+            .SetText(Translations.Recruit)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/jackal_recruit.png", 130, true))
+        : UIManager.KillButton
+            .RevertSprite()
+            .RevertText();
+
+    [ModRPC((uint)ModCalls.UpdateJackal, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateJackal(bool showRecruit)
+    {
+        Jackal? jackal = PlayerControl.LocalPlayer.PrimaryRole<Jackal>();
+        if (jackal == null) return;
+        jackal.UpdateKillButton(showRecruit);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>

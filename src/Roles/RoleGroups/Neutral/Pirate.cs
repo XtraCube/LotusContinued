@@ -22,13 +22,15 @@ public class Pirate : GuesserRole
     private int pirateGuessesToWin;
     private bool pirateDiesOnMissguess;
 
+    private int correctGuesses;
+
     [UIComponent(UI.Counter, ViewMode.Additive, GameState.Roaming, GameState.InMeeting)]
-    public string ShowGuessTotal() => RoleUtils.Counter(CorrectGuesses, pirateGuessesToWin, RoleColor);
+    public string ShowGuessTotal() => RoleUtils.Counter(correctGuesses, pirateGuessesToWin, RoleColor);
 
     [RoleAction(LotusActionType.RoundStart)]
     public void RoundStartCheckWinCondition()
     {
-        if (pirateGuessesToWin != CorrectGuesses) return;
+        if (correctGuesses < pirateGuessesToWin) return;
         ManualWin.Activate(MyPlayer, ReasonType.RoleSpecificWin, 999);
     }
 
@@ -36,10 +38,16 @@ public class Pirate : GuesserRole
     {
         if (!pirateDiesOnMissguess)
         {
-            base.GuesserHandler(Guesser.Translations.GuessAnnouncementMessage.Formatted("No one")).Send(MyPlayer);
+            // base.GuesserHandler(Guesser.Translations.GuessAnnouncementMessage.Formatted("No one")).Send(MyPlayer);
             return;
         }
         base.HandleBadGuess();
+    }
+
+    protected override void HandleCorrectGuess(PlayerControl guessedPlayer, CustomRole guessedRole)
+    {
+        correctGuesses++;
+        base.HandleCorrectGuess(guessedPlayer, guessedRole);
     }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
