@@ -162,7 +162,8 @@ public class ChatHandler
                 .Write(title.Replace("@n", "\n"))
                 .End()
                 .Start(sender.NetId, RpcCalls.SendChat)
-                .Write((recipient.IsModded() | !ConnectionManager.IsVanillaServer) ? subMessage : subMessage.RemoveHtmlTags())
+                // .Write((recipient.IsModded() | !ConnectionManager.IsVanillaServer) ? subMessage : subMessage.RemoveHtmlTags())
+                .Write(subMessage)
                 .End()
                 .Send(recipient.GetClientId());
         }
@@ -176,7 +177,8 @@ public class ChatHandler
             .Write(title.Replace("@n", "\n"))
             .End()
             .Start(sender.NetId, RpcCalls.SendChat)
-            .Write((recipient.IsModded() | !ConnectionManager.IsVanillaServer) ? message : message.RemoveHtmlTags())
+            // .Write((recipient.IsModded() | !ConnectionManager.IsVanillaServer) ? message : message.RemoveHtmlTags())
+            .Write(message)
             .End();
         if (Game.State is not GameState.Roaming)
             massRpc.Start(sender.NetId, RpcCalls.SetName)
@@ -211,7 +213,8 @@ public class ChatHandler
                 .Write(subTitle)
                 .End()
                 .Start(sender.NetId, RpcCalls.SendChat)
-                .Write((recipient.IsModded() | !ConnectionManager.IsVanillaServer) ? message.Replace("@n", "\n") : message.RemoveHtmlTags().Replace("@n", "\n"))
+                // .Write((recipient.IsModded() | !ConnectionManager.IsVanillaServer) ? message.Replace("@n", "\n") : message.RemoveHtmlTags().Replace("@n", "\n"))
+                .Write(message.Replace("@n", "\n"))
                 .End()
                 .Send(recipient.GetClientId());
         }
@@ -224,7 +227,8 @@ public class ChatHandler
             .Write(title)
             .End()
             .Start(sender.NetId, RpcCalls.SendChat)
-            .Write((recipient.IsModded() | !ConnectionManager.IsVanillaServer) ? message.Replace("@n", "\n") : message.RemoveHtmlTags().Replace("@n", "\n"))
+            // .Write((recipient.IsModded() | !ConnectionManager.IsVanillaServer) ? message.Replace("@n", "\n") : message.RemoveHtmlTags().Replace("@n", "\n"))
+            .Write(message.Replace("@n", "\n"))
             .End();
 
         if (Game.State is not GameState.Roaming)

@@ -127,7 +127,7 @@ public class Veteran : Crewmate, IRoleUI
         base.Modify(roleModifier)
             .VanillaRole(RoleTypes.Crewmate)
             .RoleColor(new Color(0.6f, 0.5f, 0.25f))
-            .RoleAbilityFlags(RoleAbilityFlag.UsesPet & RoleAbilityFlag.IsAbleToKill);
+            .RoleAbilityFlags(RoleAbilityFlag.UsesPet | RoleAbilityFlag.IsAbleToKill);
 
     [ModRPC((uint)ModCalls.UpdateVeteran, RpcActors.Host, RpcActors.NonHosts)]
     private static void RpcUpdateVeteran(int alertsRemaining, bool useCooldown)

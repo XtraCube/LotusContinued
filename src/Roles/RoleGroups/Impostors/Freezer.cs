@@ -5,18 +5,25 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.Roles.RoleGroups.Vanilla;
 using VentLib.Options.UI;
 using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Freezer : Vanilla.Shapeshifter
+public class Freezer : Shapeshifter, IRoleUI
 {
     private PlayerControl? currentFreezerTarget;
 
     private Cooldown freezeDuration;
     private float freezeCooldown;
     private bool canVent;
+
+    public RoleButton AbilityButton(IRoleButtonEditor ssButton) => ssButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/freezer_freeze.png", 130, true));
 
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target) => base.TryKill(target);
@@ -56,6 +63,8 @@ public class Freezer : Vanilla.Shapeshifter
         currentFreezerTarget.PrimaryRole().SyncOptions(overrides);
     }
 
+    public override void HandleDisconnect() => ResetSpeed();
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
             .SubOption(sub => sub
@@ -82,6 +91,9 @@ public class Freezer : Vanilla.Shapeshifter
     [Localized(nameof(Freezer))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Freeze";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

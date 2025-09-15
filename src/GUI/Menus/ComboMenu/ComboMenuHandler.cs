@@ -1,4 +1,5 @@
-﻿using Lotus.API.Reactive;
+﻿using Lotus.API.Odyssey;
+using Lotus.API.Reactive;
 using Lotus.Utilities;
 using UnityEngine;
 using VentLib.Utilities.Attributes;
@@ -44,6 +45,7 @@ public class ComboMenuHandler: MonoBehaviour
     [QuickPostfix(typeof(LobbyBehaviour), nameof(LobbyBehaviour.Start))]
     public static void CreateButton(LobbyBehaviour __instance)
     {
+        if (Game.State is GameState.Roaming or GameState.InMeeting) return; // fixes this patch running when a CNO spawns.
         HudManager instance = HudManager.Instance;
         instance.gameObject.AddComponent<ComboMenuHandler>().Setup(instance);
     }

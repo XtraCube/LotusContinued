@@ -18,6 +18,9 @@ using Lotus.API.Player;
 using Lotus.Managers.History.Events;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
+using VentLib.Utilities.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
@@ -29,9 +32,10 @@ public class Sniper : Shapeshifter, IRoleUI
 
     private int totalBulletCount;
     private int currentBulletCount;
-    private Vector2 startingLocation;
+    private Vector2? startingLocation;
 
     public RoleButton AbilityButton(IRoleButtonEditor button) => button
+        .BindUses(() => currentBulletCount)
         .SetText(SniperTranslations.ButtonText)
         .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/sniper_aim.png", 130, true));
 
@@ -48,7 +52,12 @@ public class Sniper : Shapeshifter, IRoleUI
     public override bool TryKill(PlayerControl target)
     {
         bool success = currentBulletCount == 0 && base.TryKill(target);
-        if (success && refundOnKill && currentBulletCount >= 0) currentBulletCount++;
+        if (success && refundOnKill && currentBulletCount >= 0)
+        {
+            currentBulletCount++;
+            if (!MyPlayer.AmOwner && MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateSniper)?.Send([MyPlayer.OwnerId], startingLocation == null, currentBulletCount);
+        }
+
         return success;
     }
 
@@ -56,16 +65,18 @@ public class Sniper : Shapeshifter, IRoleUI
     private void StartSniping()
     {
         startingLocation = MyPlayer.GetTruePosition();
+        if (MyPlayer.AmOwner) UpdateShapeshiftButton(true);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateSniper)?.Send([MyPlayer.OwnerId], true, currentBulletCount);
         // DevLogger.Log($"Starting position: {startingLocation}");
     }
 
     [RoleAction(LotusActionType.Unshapeshift)]
     private bool FireBullet()
     {
-        if (currentBulletCount == 0) return false;
+        if (currentBulletCount == 0 || startingLocation == null) return false;
         currentBulletCount--;
 
-        Vector2 targetPosition = (MyPlayer.GetTruePosition() - startingLocation).normalized;
+        Vector2 targetPosition = (MyPlayer.GetTruePosition() - startingLocation.Value).normalized;
         // DevLogger.Log($"Target Position: {targetPosition}");
         int kills = 0;
 
@@ -89,10 +100,24 @@ public class Sniper : Shapeshifter, IRoleUI
         }
 
         if (kills > 0 && refundOnKill) currentBulletCount++;
+        startingLocation = null;
+        if (MyPlayer.AmOwner) UpdateShapeshiftButton(false);
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateSniper)?.Send([MyPlayer.OwnerId], false, currentBulletCount);
 
         return kills > 0;
     }
 
+    private void UpdateShapeshiftButton(bool isShifted) => UIManager.AbilityButton.SetSprite(() => isShifted
+        ? LotusAssets.LoadSprite("Buttons/Imp/sniper_shoot.png", 130, true)
+        : LotusAssets.LoadSprite("Buttons/Imp/sniper_aim.png", 130, true));
+
+    private static void RpcUpdateSniper(bool isShifted, int bulletCount)
+    {
+        Sniper? sniper = PlayerControl.LocalPlayer.PrimaryRole<Sniper>();
+        if (sniper == null) return;
+        sniper.currentBulletCount = bulletCount;
+        sniper.UpdateShapeshiftButton(isShifted);
+    }
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         base.RegisterOptions(optionStream)
@@ -103,7 +128,7 @@ public class Sniper : Shapeshifter, IRoleUI
                 .SubOption(sub2 => sub2
                     .KeyName("Refund Bullet on Kills", SniperTranslations.Options.RefundBulletOnKill)
                     .BindBool(b => refundOnKill = b)
-                    .AddOnOffValues(false)
+                    .AddBoolean(false)
                     .Build())
                 .AddIntRange(1, 20, 1, 8)
                 .Build())
@@ -115,7 +140,7 @@ public class Sniper : Shapeshifter, IRoleUI
             .SubOption(sub => sub
                 .KeyName("Precise Shooting", SniperTranslations.Options.PreciseShooting)
                 .BindBool(v => preciseShooting = v)
-                .AddOnOffValues(false)
+                .AddBoolean(false)
                 .Build())
             .SubOption(sub => sub
                 .KeyName("Player Piercing", SniperTranslations.Options.PlayerPiercing)

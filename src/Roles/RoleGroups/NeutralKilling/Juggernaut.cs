@@ -27,10 +27,26 @@ public class Juggernaut : NeutralKillingBase
     [RoleAction(LotusActionType.Attack)]
     public override bool TryKill(PlayerControl target)
     {
-        if (!base.TryKill(target)) return false;
-        kills++;
+        if (MyPlayer.AmOwner)
+        {
+            kills++;
+            SyncOptions();
+        }
+        if (!base.TryKill(target))
+        {
+            if (MyPlayer.AmOwner)
+            {
+                kills--;
+                SyncOptions();
+            }
+            return false;
+        }
         log.Trace($"Juggernaut Kill Cooldown {KillCooldown - (decreaseBy * kills)}");
-        SyncOptions();
+        if (!MyPlayer.AmOwner)
+        {
+            kills++;
+            SyncOptions();
+        }
         return true;
     }
 

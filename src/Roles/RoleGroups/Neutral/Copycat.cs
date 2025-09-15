@@ -128,6 +128,7 @@ public class Copycat : CustomRole
             if (role.Faction == FactionInstances.Modifiers)
                 role.Faction = FactionInstances.Neutral;
             role.SpecialType = SpecialType.NeutralKilling;
+            role.DesyncRole = RoleTypes.Impostor;
         }
 
         if (role.GetActions(LotusActionType.Shapeshift).Any() || role.RealRole is RoleTypes.Shapeshifter) return;
@@ -156,15 +157,15 @@ public class Copycat : CustomRole
                 .BindBool(b => KillerKnowsCopycat = b)
                 .Build());
 
-    protected override RoleModifier Modify(RoleModifier roleModifier) =>
-        roleModifier.RoleColor(new Color(1f, 0.7f, 0.67f))
-            .DesyncRole(RoleTypes.Shapeshifter)
-            .Faction(FactionInstances.Neutral)
-            .RoleFlags(RoleFlag.CannotWinAlone)
-            .RoleAbilityFlags(RoleAbilityFlag.CannotSabotage)
-            .SpecialType(SpecialType.Neutral)
-            .IntroSound(AmongUs.GameOptions.RoleTypes.Crewmate)
-            .OptionOverride(Override.ShapeshiftCooldown, 30f);
+    protected override RoleModifier Modify(RoleModifier roleModifier) => roleModifier
+        .RoleColor(new Color(1f, 0.7f, 0.67f))
+        .VanillaRole(RoleTypes.Crewmate)
+        .Faction(FactionInstances.Neutral)
+        .RoleFlags(RoleFlag.CannotWinAlone)
+        .RoleAbilityFlags(RoleAbilityFlag.CannotSabotage)
+        .SpecialType(SpecialType.Neutral)
+        .IntroSound(RoleTypes.Shapeshifter)
+        .OptionOverride(Override.ShapeshiftCooldown, 30f);
 
     [Localized(nameof(Copycat))]
     public static class Translations

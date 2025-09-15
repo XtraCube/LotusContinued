@@ -123,6 +123,7 @@ public class StandardRoles : RoleHolder
         public TimeThief TimeThief = new();
         //traitor
         public Vampire Vampire = new();
+        public Viper Viper = new();
         public Warlock Warlock = new();
         public Witch Witch = new();
         public YinYanger YinYanger = new();
@@ -146,6 +147,7 @@ public class StandardRoles : RoleHolder
         public Crewmate Crewmate = new();
         public Crusader Crusader = new();
         public Demolitionist Demolitionist = new();
+        public Detective Detective = new();
         public Dictator Dictator = new();
         public Doctor Doctor = new();
         public Duplicator Duplicator = new();

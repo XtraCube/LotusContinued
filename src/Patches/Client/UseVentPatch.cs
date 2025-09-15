@@ -39,10 +39,8 @@ class UseVentPatch
 
         var ventitaltionSystem = ShipStatus.Instance.Systems[SystemTypes.Ventilation].Cast<VentilationSystem>();
 
-        if (ventitaltionSystem != null && ventitaltionSystem.IsVentCurrentlyBeingCleaned(__instance.Id))
-        {
-            couldUse = false;
-        }
+        if (ventitaltionSystem != null && ventitaltionSystem.IsVentCurrentlyBeingCleaned(__instance.Id)) couldUse = false;
+        if (playerControl.Data.Role.IsAffectedByComms && playerControl.Data.Role.CommsSabotaged) couldUse = false;
 
         canUse = couldUse;
 

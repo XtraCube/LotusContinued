@@ -65,7 +65,7 @@ class BeginCrewmatePatch
 
     public static AudioClip? GetIntroSound(RoleTypes roleType)
     {
-        return RoleManager.Instance.AllRoles.FirstOrDefault(role => role.Role == roleType)?.IntroSound;
+        return RoleManager.Instance.AllRoles.ToArray().FirstOrDefault(role => role.Role == roleType)?.IntroSound;
     }
 
     private static async void StartFadeIntro(IntroCutscene __instance, Color start, Color end)

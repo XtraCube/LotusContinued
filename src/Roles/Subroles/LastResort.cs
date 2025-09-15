@@ -50,7 +50,7 @@ public class LastResort : Subrole
 
     // variables
     private int additionalVotes;
-    private bool hasRevealed = false;
+    private bool hasRevealed;
 
     [RoleAction(LotusActionType.Vote, priority: Priority.High)]
     private void OnLocalPlayerVote(Optional<PlayerControl> voted, MeetingDelegate meetingDelegate, ActionHandle handle)
@@ -68,8 +68,12 @@ public class LastResort : Subrole
         MyPlayer.NameModel().GetComponentHolder<RoleHolder>().Components().ForEach(component => component.SetViewerSupplier(() => PlayerControl.AllPlayerControls.ToArray().ToList()));
     }
 
-    [RoleAction(LotusActionType.RoundEnd,  priority: API.Priority.Last)]
-    private void OnReportBody() => ChatHandler.Of(Translations.HintText, RoleName).LeftAlign(false).Send(MyPlayer);
+    [RoleAction(LotusActionType.RoundEnd)]
+    private void OnReportBody()
+    {
+        if (hasRevealed) return;
+        ChatHandler.Of(Translations.HintText, RoleName).LeftAlign(false).Send(MyPlayer);
+    }
 
     public override HashSet<Type>? RestrictedRoles()
     {

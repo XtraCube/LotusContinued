@@ -19,10 +19,13 @@ using VentLib.Options.UI;
 using VentLib.Utilities.Extensions;
 using static Lotus.Roles.RoleGroups.NeutralKilling.Pestilence.Translations.Options;
 using Lotus.API.Player;
+using Lotus.GUI;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
-public class Pestilence : NeutralKillingBase
+public class Pestilence : NeutralKillingBase, IRoleUI
 {
     /// <summary>
     /// A list of roles that the Pestilence is immune against, this should only be populated by external addons if they want to add an immunity to pestilence lazily
@@ -35,6 +38,10 @@ public class Pestilence : NeutralKillingBase
     private bool immuneToArsonist;
     private bool unblockableAttacks;
 
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/pestilence_kill.png", 130, true));
 
     public Pestilence()
     {
@@ -129,8 +136,11 @@ public class Pestilence : NeutralKillingBase
             .RoleFlags(RoleFlag.TransformationRole);
 
     [Localized(nameof(Pestilence))]
-    internal static class Translations
+    public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Kill";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

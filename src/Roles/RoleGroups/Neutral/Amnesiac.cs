@@ -27,11 +27,13 @@ using Lotus.Logging;
 using Lotus.GameModes.Standard;
 using System.Collections.Generic;
 using Lotus.Managers.History.Events;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using VentLib.Utilities.Optionals;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
-public class Amnesiac : CustomRole, IVariableRole
+public class Amnesiac : CustomRole, IVariableRole, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Amnesiac));
     private static Amalgamation _amalgamation = new();
@@ -40,6 +42,11 @@ public class Amnesiac : CustomRole, IVariableRole
     private bool hasArrowsToBodies;
 
     private Remote<IndicatorComponent>? arrowComponent;
+
+
+    public RoleButton ReportButton(IRoleButtonEditor reportButton) => reportButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/amnesiac_remember.png", 130, true));
 
     protected override void PostSetup()
     {
@@ -106,6 +113,9 @@ public class Amnesiac : CustomRole, IVariableRole
     [Localized(nameof(Amnesiac))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Remember";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

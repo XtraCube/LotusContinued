@@ -3,6 +3,7 @@ using AmongUs.Data;
 using HarmonyLib;
 using Lotus.Addons;
 using Lotus.API;
+using Lotus.API.Odyssey;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using Lotus.Managers;
@@ -23,6 +24,7 @@ class GameJoinPatch
         log.High($"Joining Lobby (GameID={__instance.GameId})", "GameJoin");
         SoundManager.Instance.ChangeMusicVolume(DataManager.Settings.Audio.MusicVolume);
         AddonManager.PlayerAddons = new();
+        Game.State = GameState.InLobby;
 
         GameJoinHookEvent gameJoinHookEvent = new(_lastGameId != __instance.GameId || ServerAuthPatch.IsLocal);
         Hooks.NetworkHooks.GameJoinHook.Propagate(gameJoinHookEvent);

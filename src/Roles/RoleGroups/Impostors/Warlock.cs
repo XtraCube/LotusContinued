@@ -12,13 +12,19 @@ using Lotus.Utilities;
 using Lotus.API;
 using Lotus.Extensions;
 using Lotus.Factions;
+using Lotus.GUI;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
+using Lotus.RPC;
+using VentLib;
 using VentLib.Options.UI;
 using VentLib.Utilities.Extensions;
 using VentLib.Localization.Attributes;
+using VentLib.Networking.RPC.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 
-public class Warlock : Shapeshifter
+public class Warlock : Shapeshifter, IRoleUI
 {
     private bool cursedPlayersKillImmediately;
     private bool limitedCurseKillRange;
@@ -27,8 +33,15 @@ public class Warlock : Shapeshifter
     [NewOnSetup] private FixedUpdateLock fixedUpdateLock = new(ModConstants.RoleFixedUpdateCooldown);
     public bool Shapeshifted;
 
+    public RoleButton KillButton(IRoleButtonEditor abilityButton) => UpdateAbilityButton();
+
     [RoleAction(LotusActionType.Unshapeshift)]
-    private void WarlockUnshapeshift() => Shapeshifted = false;
+    private void WarlockUnshapeshift()
+    {
+        Shapeshifted = false;
+        if (MyPlayer.AmOwner) UpdateAbilityButton();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWarlock)?.Send([MyPlayer.OwnerId], Shapeshifted);
+    }
 
     [RoleAction(LotusActionType.RoundEnd)]
     private void WarlockClearCursed() => cursedPlayers.Clear();
@@ -67,6 +80,8 @@ public class Warlock : Shapeshifter
             KillNearestPlayer(player, limitedCurseKillRange);
         }
         cursedPlayers.Clear();
+        if (MyPlayer.AmOwner) UpdateAbilityButton();
+        else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateWarlock)?.Send([MyPlayer.OwnerId], Shapeshifted);
     }
 
     private bool KillNearestPlayer(PlayerControl player, bool limitToRange)
@@ -87,15 +102,36 @@ public class Warlock : Shapeshifter
         return isDead;
     }
 
+
+    private RoleButton UpdateAbilityButton()
+    {
+        if (Shapeshifted) UIManager.KillButton
+            .RevertSprite()
+            .RevertText();
+        else UIManager.KillButton
+            .SetText(Translations.ButtonText)
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/warlock_curse.png", 130, true));
+        return UIManager.KillButton;
+    }
+
+    [ModRPC((uint)ModCalls.UpdateWarlock, RpcActors.Host, RpcActors.NonHosts)]
+    private static void RpcUpdateWarlock(bool isShifted)
+    {
+        Warlock? warlock = PlayerControl.LocalPlayer.PrimaryRole<Warlock>();
+        if (warlock == null) return;
+        warlock.Shapeshifted = isShifted;
+        warlock.UpdateAbilityButton();
+    }
+
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
         AddShapeshiftOptions(base.RegisterOptions(optionStream)
             .SubOption(sub => sub.Name("Cursed Players Kill Immediately")
                 .BindBool(b => cursedPlayersKillImmediately = b)
-                .AddOnOffValues()
+                .AddBoolean()
                 .ShowSubOptionPredicate(b => (bool)b)
                 .SubOption(sub2 => sub2.Name("Limited Cursed Kill Range")
                     .BindBool(b => limitedCurseKillRange = b)
-                    .AddOnOffValues(false)
+                    .AddBoolean(false)
                     .Build())
                 .Build()));
 
@@ -105,6 +141,9 @@ public class Warlock : Shapeshifter
     [Localized(nameof(Warlock))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Curse";
+
         [Localized(ModConstants.Options)]
         public static class Options
         {

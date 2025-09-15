@@ -24,10 +24,12 @@ using VentLib.Options.UI;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using Lotus.GameModes.Standard;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 
-public class PlagueBearer : NeutralKillingBase
+public class PlagueBearer : NeutralKillingBase, IRoleUI
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(PlagueBearer));
     private static readonly Pestilence Pestilence = new();
@@ -35,6 +37,10 @@ public class PlagueBearer : NeutralKillingBase
     [NewOnSetup] private List<Remote<IndicatorComponent>> indicatorRemotes = new();
     [NewOnSetup] private HashSet<byte> infectedPlayers = null!;
     private int alivePlayers;
+
+    public RoleButton KillButton(IRoleButtonEditor killButton) => killButton
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/plague_bearer_infect.png", 130, true));
 
     public override bool CanSabotage() => false;
 
@@ -117,6 +123,9 @@ public class PlagueBearer : NeutralKillingBase
     [Localized(nameof(PlagueBearer))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))]
+        public static string ButtonText = "Infect";
+
         [Localized(nameof(InfectedHistoryMessage))]
         public static string InfectedHistoryMessage = "{0}::0 infected {1}::1.";
 

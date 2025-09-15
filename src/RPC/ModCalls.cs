@@ -2,7 +2,7 @@ namespace Lotus.RPC;
 
 public enum ModCalls : uint
 {
-    RecieveAddons,
+    ReceiveAddons,
     SetCustomRole,
     AddSubrole,
     Debug,
@@ -38,5 +38,12 @@ public enum ModCalls : uint
     UpdateJanitor,
     UpdateSheriff,
     UpdateGlitch,
-    UpdateVeteran
+    UpdateVeteran,
+    UpdateHerbalist,
+    UpdateSniper,
+    UpdateVampiress,
+    UpdateWarlock,
+    UpdateArsonist,
+    UpdateJackal,
+    UpdateStriker
 }

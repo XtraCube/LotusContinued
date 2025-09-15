@@ -270,7 +270,7 @@ public class BasicCommands : CommandTranslations
                 List<PlayerControl> players = Players.GetAllPlayers().ToList();
 
                 log.Debug("Assigning roles...");
-                Optional<LastPlayerInfo> lastPlayerInfo = source.PrimaryRole().Assign(false);
+                Optional<LastPlayerInfo> lastPlayerInfo = target.PrimaryRole().Assign(false);
                 if (!lastPlayerInfo.Exists()) return;
                 log.Debug("Assigned everyone but the last player.");
 
@@ -293,7 +293,11 @@ public class BasicCommands : CommandTranslations
                 {
                     log.Debug("Sending the last player's role info...");
                     var info = lastPlayerInfo.Get();
-                    info.Target.RpcSetRoleDesync(info.TargetRoleForSeer, info.Seer);
+                    if (info.TargetRoleForSeer.GhostEquivalent() == info.TargetRoleForSeer)
+                    {
+                        info.Target.RpcSetRoleDesync(RoleTypes.Crewmate, info.Seer);
+                        Async.Schedule(() => info.Target.RpcSetRoleDesync(info.TargetRoleForSeer, info.Seer), .3f);
+                    } else info.Target.RpcSetRoleDesync(info.TargetRoleForSeer, info.Seer);
                     log.Debug("Sent! Cleaning up in a second...");
                     ChatHandler.Of("Step 2 finished.\n(they should see the \"shhhh\" screen now)").Send(source);
                 }, NetUtils.DeriveDelay(1f));

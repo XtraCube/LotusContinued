@@ -83,7 +83,7 @@ public class Ninja : Vanilla.Impostor, IRoleUI
     private void NinjaUnShapeShift()
     {
         if (activationType is not ActivationType.Shapeshift) return;
-        NinjaHuntAbility();
+        Async.Schedule(NinjaHuntAbility, .5f);
         Mode = NinjaMode.Killing;
         if (MyPlayer.AmOwner) UpdateAllButtons();
         else if (MyPlayer.IsModded()) Vents.FindRPC((uint)ModCalls.UpdateNinja)?.Send([MyPlayer.OwnerId], (int)Mode);
@@ -105,7 +105,7 @@ public class Ninja : Vanilla.Impostor, IRoleUI
     {
         if (activationType is not ActivationType.PetButton) return;
 
-        if (Mode is NinjaMode.Hunting) NinjaHuntAbility();
+        if (Mode is NinjaMode.Hunting) Async.Schedule(NinjaHuntAbility, .5f);
 
         Mode = Mode is NinjaMode.Killing ? NinjaMode.Hunting : NinjaMode.Killing;
         if (MyPlayer.AmOwner) UpdateAllButtons();

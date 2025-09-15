@@ -21,6 +21,10 @@ public class CaptureOptions
     public bool CanVent;
     public bool CarryingCanVent;
 
+    public bool OvertimeOnTies;
+    public int OvertimeLength;
+    public bool SuddenDeath;
+
     public List<GameOption> AllOptions = new();
 
     public CaptureOptions()
@@ -35,6 +39,23 @@ public class CaptureOptions
             .AddIntRange(60, 600, 15, 4, GeneralOptionTranslations.SecondsSuffix)
             .IsHeader(true)
             .BindInt(i => GameLength = i)
+            .Build());
+
+        AllOptions.Add(new GameOptionBuilder()
+            .KeyName("Overtime on Ties", Translations.OvertimeOnTies)
+            .AddBoolean(false)
+            .BindBool(b => OvertimeOnTies = b)
+            .ShowSubOptionPredicate(v => (bool)v)
+            .SubOption(sub2 => sub2
+                .KeyName("Overtime Length", Translations.OvertimeLength)
+                .AddIntRange(15, 60, 5, 0, GeneralOptionTranslations.SecondsSuffix)
+                .BindInt(i => OvertimeLength = i)
+                .Build())
+            .SubOption(sub2 => sub2
+                .KeyName("Sudden Death", Translations.SuddenDeath)
+                .AddBoolean()
+                .BindBool(b => SuddenDeath = b)
+                .Build())
             .Build());
 
         AllOptions.Add(new GameOptionBuilder()
@@ -77,5 +98,9 @@ public class CaptureOptions
         [Localized(nameof(ReviveDuration))] public static string ReviveDuration = "Revive Timeout";
         [Localized(nameof(CarryingSpeedMultiplier))] public static string CarryingSpeedMultiplier = "Carrying Speed Multiplier";
         [Localized(nameof(CarryingCanVent))] public static string CarryingCanVent = "Carrying Can Vent";
+
+        [Localized(nameof(OvertimeOnTies))] public static string OvertimeOnTies = "Overtime on Ties";
+        [Localized(nameof(OvertimeLength))] public static string OvertimeLength = "Overtime Duration";
+        [Localized(nameof(SuddenDeath))] public static string SuddenDeath = "Sudden Death";
     }
 }

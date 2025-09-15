@@ -7,6 +7,7 @@ using Lotus.Factions.Interfaces;
 using Lotus.Roles;
 using Lotus.Roles.Interfaces;
 using Lotus.Extensions;
+using Lotus.Options;
 using VentLib.Localization.Attributes;
 
 namespace Lotus.Victory.Conditions;
@@ -60,6 +61,7 @@ public class VanillaCrewmateWin : IFactionWinCondition
 
     private static bool CheckTaskCompletion()
     {
+        if (GeneralOptions.GameplayOptions.DisableTaskWin) return false;
         GameData.Instance.RecomputeTaskCounts();
         return GameData.Instance.TotalTasks <= GameData.Instance.CompletedTasks;
     }

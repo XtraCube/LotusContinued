@@ -172,7 +172,7 @@ public class Duplicator : Crewmate, IRoleUI
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
             .RoleColor(new Color(0.87f, 0.6f, 1f))
-            .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
+            .RoleAbilityFlags(RoleAbilityFlag.UsesPet | RoleAbilityFlag.IsAbleToKill);
 
     [Localized(nameof(Duplicator))]
     public static class Translations

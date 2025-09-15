@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AmongUs.GameOptions;
 using Lotus.API.Odyssey;
 using Lotus.GUI;
 using Lotus.GUI.Name;
@@ -12,6 +13,8 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.API;
 using Lotus.Extensions;
 using Lotus.Options;
+using Lotus.Roles.GUI;
+using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
 using VentLib.Logging;
 using VentLib.Options.UI;
@@ -19,9 +22,11 @@ using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Undead.Roles;
 
-public class Deathknight : UndeadRole
+public class Deathknight : UndeadRole, IRoleUI
 {
+    public static RoleTypes ReplacedRole = RoleTypes.Impostor;
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(Deathknight));
+
     public bool CanBecomeNecromancer;
     private float influenceRange;
     private bool multiInfluence;
@@ -34,10 +39,15 @@ public class Deathknight : UndeadRole
 
     private const float UpdateTimeout = 0.25f;
 
+    public RoleButton PetButton(IRoleButtonEditor petButton) => petButton
+        .BindCooldown(influenceCooldown)
+        .SetText(Translations.ButtonText)
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Neut/deathknight_convert.png", 130, true));
+
     protected override void Setup(PlayerControl player)
     {
         base.Setup(player);
-        LiveString liveString = new(() => inRangePlayers.Count > 0 ? "★" : "", Color.white);
+        LiveString liveString = new(() => inRangePlayers.Count > 0 ? "★" : "", UndeadColor);
         player.NameModel().GetComponentHolder<IndicatorHolder>().Add(new IndicatorComponent(liveString, GameState.Roaming, viewers: player));
     }
 
@@ -49,8 +59,8 @@ public class Deathknight : UndeadRole
         inRangePlayers.Clear();
         if (influenceCooldown.NotReady()) return;
         inRangePlayers = (influenceRange < 0
-            ? MyPlayer.GetPlayersInAbilityRangeSorted().Where(IsUnconvertedUndead)
-            : RoleUtils.GetPlayersWithinDistance(MyPlayer, influenceRange).Where(IsUnconvertedUndead))
+            ? MyPlayer.GetPlayersInAbilityRangeSorted().Where(p => !IsConvertedUndead(p) && !IsUnconvertedUndead(p))
+            : RoleUtils.GetPlayersWithinDistance(MyPlayer, influenceRange).Where(p => !IsConvertedUndead(p) && !IsUnconvertedUndead(p)))
             .ToList();
     }
     [RoleAction(LotusActionType.OnPet, priority: Priority.First)]
@@ -94,11 +104,13 @@ public class Deathknight : UndeadRole
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier).RoleColor(new Color(0.34f, 0.34f, 0.39f))
             .RoleFlags(RoleFlag.TransformationRole)
+            .VanillaRole(ReplacedRole)
             .RoleAbilityFlags(RoleAbilityFlag.UsesPet);
 
     [Localized(nameof(Deathknight))]
     public static class Translations
     {
+        [Localized(nameof(ButtonText))] public static string ButtonText = "Convert";
         [Localized(ModConstants.Options)]
         public static class Options
         {

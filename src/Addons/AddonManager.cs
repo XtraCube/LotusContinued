@@ -67,14 +67,14 @@ public class AddonManager
     {
         if (AmongUsClient.Instance.AmHost) return;
         List<AddonInfo> addonsToSend = Addons.Select(AddonInfo.From).ToList();
-        Vents.FindRPC((uint)ModCalls.RecieveAddons)!.Send(null, addonsToSend);
+        Vents.FindRPC((uint)ModCalls.ReceiveAddons)!.Send(null, addonsToSend);
     }
 
-    [ModRPC((uint)ModCalls.RecieveAddons, RpcActors.NonHosts, RpcActors.Host)]
+    [ModRPC((uint)ModCalls.ReceiveAddons, RpcActors.NonHosts, RpcActors.Host)]
     public static void VerifyClientAddons(List<AddonInfo> receivedAddons)
     {
         List<AddonInfo> hostInfo = Addons.Select(AddonInfo.From).ToList();
-        PlayerControl? senderControl = Vents.GetLastSender((uint)ModCalls.RecieveAddons);
+        PlayerControl? senderControl = Vents.GetLastSender((uint)ModCalls.ReceiveAddons);
         int senderId = senderControl?.GetClientId() ?? 999;
         log.Debug($"Last Sender: {senderId}");
 
@@ -110,7 +110,7 @@ public class AddonManager
         ReceiveAddonVerification(mismatchInfo.DistinctBy(addon => addon.Name).Where(addon => addon.Mismatches is not Mismatch.None).ToList(), senderId);
     }
 
-    [ModRPC((uint)ModCalls.RecieveAddons, RpcActors.Host, RpcActors.NonHosts, MethodInvocation.ExecuteAfter)]
+    [ModRPC((uint)ModCalls.ReceiveAddons, RpcActors.Host, RpcActors.NonHosts, MethodInvocation.ExecuteAfter)]
     public static void ReceiveAddonVerification(List<AddonInfo> mismatchedAddons, int senderId)
     {
         if (mismatchedAddons.Count == 0) return;

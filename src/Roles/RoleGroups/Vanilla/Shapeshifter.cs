@@ -8,6 +8,7 @@ using Lotus.Roles.Overrides;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
+using VentLib.Utilities;
 
 namespace Lotus.Roles.RoleGroups.Vanilla;
 
@@ -36,7 +37,7 @@ public class Shapeshifter : Impostor
     {
         try
         {
-            var callingMethod = new StackTrace().GetFrame(1)?.GetMethod();
+            var callingMethod = Mirror.GetCaller();
             var callingType = callingMethod?.DeclaringType;
 
             if (callingType == null)

@@ -34,9 +34,13 @@ public class IndirectKillCooldown: GameOptionOverride
         Hooks.GameStateHooks.RoundStartHook.Bind(hookKey, _ =>
         {
             doubled = false;
+            Async.Schedule(() => doubled = true, .5f);
+        }, true);
+        Hooks.GameStateHooks.RoundEndHook.Bind(hookKey, _ =>
+        {
+            doubled = false;
             Async.Schedule(() => doubled = false, .5f);
         }, true);
-        Hooks.GameStateHooks.RoundEndHook.Bind(hookKey, _ => doubled = false, true);
     }
 
     public override object? GetValue()

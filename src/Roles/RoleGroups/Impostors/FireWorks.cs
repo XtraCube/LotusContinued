@@ -48,13 +48,13 @@ public class FireWorks : Phantom, IRoleUI
     public RoleButton AbilityButton(IRoleButtonEditor button) => button
         .SetText(FireworksTranslations.ButtonText)
         .BindUses(() => maxFireworks == -1 ? -1 : maxFireworks - plantedFireworks)
-        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/fireworks_set_firework.png", 130, true));
+        .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/fireworks_plant.png", 130, true));
 
     public RoleButton PetButton(IRoleButtonEditor petButton) => detonateWhenLastImp
         ? petButton.Default(true)
         : petButton
             .SetText(Creeper.CreeperTranslations.ButtonText)
-            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/creeper_detonate.png", 130, true));
+            .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/fireworks_detonate.png", 130, true));
 
     protected override void PostSetup()
     {
@@ -136,7 +136,7 @@ public class FireWorks : Phantom, IRoleUI
         if (canDetonate)
             UIManager.AbilityButton
                 .SetText(Creeper.CreeperTranslations.ButtonText)
-                .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/creeper_detonate.png", 130, true));
+                .SetSprite(() => LotusAssets.LoadSprite("Buttons/Imp/fireworks_detonate.png", 130, true));
         else
             AbilityButton(UIManager.AbilityButton);
     }

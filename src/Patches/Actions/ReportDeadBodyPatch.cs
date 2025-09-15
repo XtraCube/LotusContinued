@@ -40,7 +40,13 @@ public class ReportDeadBodyPatch
 
             if (__instance.PlayerId == target.PlayerId) return false; // trying to report themselves
             if (Game.MatchData.UnreportableBodies.Contains(target.PlayerId)) return false; // trying to report an unreportable body
-            if (!Object.FindObjectsOfType<DeadBody>().Any(db => db.ParentId == target.PlayerId)) return false; // trying to report a local or non-existent body.
+            DeadBody? deadBody = Object.FindObjectsOfType<DeadBody>()
+                .FirstOrDefault(db => db.ParentId == target.PlayerId);
+            if (deadBody == null) return false; // trying to report a local or non-existent body.
+            if (deadBody.TryCast(out ViperDeadBody viperDeadBody))
+                if (viperDeadBody.dissolveCurrentTime <= 0)
+                    return false;
+
 
             log.Trace($"Triggering ReportBody with parameters: {__instance}, {handle}, {target}");
             RoleOperations.Current.Trigger(LotusActionType.ReportBody, __instance, handle, Optional<NetworkedPlayerInfo>.NonNull(target));

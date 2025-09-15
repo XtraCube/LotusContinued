@@ -43,6 +43,10 @@ public enum Override
 
     PhantomVanishDuration,
     PhantomVanishCooldown,
+
+    DetectiveSuspectsPerCase,
+
+    ViperDissolveTime
 }
 
 public static class OverrideExtensions
@@ -76,6 +80,8 @@ public static class OverrideExtensions
             Override.NoiseAlertDuration => gameOptions.GetFloat(FloatOptionNames.NoisemakerAlertDuration),
             Override.PhantomVanishDuration => gameOptions.GetFloat(FloatOptionNames.PhantomDuration),
             Override.PhantomVanishCooldown => gameOptions.GetFloat(FloatOptionNames.PhantomCooldown),
+            Override.DetectiveSuspectsPerCase => gameOptions.GetFloat(FloatOptionNames.DetectiveSuspectLimit),
+            Override.ViperDissolveTime => gameOptions.GetFloat(FloatOptionNames.ViperDissolveTime),
             _ => throw new ArgumentOutOfRangeException(nameof(__override), __override, null)
         };
     }
@@ -129,6 +135,8 @@ public static class OverrideExtensions
             Override.NoiseAlertDuration => SetFloatOption(FloatOptionNames.NoisemakerAlertDuration),
             Override.PhantomVanishDuration => SetFloatOption(FloatOptionNames.PhantomDuration),
             Override.PhantomVanishCooldown => SetFloatOption(FloatOptionNames.PhantomCooldown),
+            Override.DetectiveSuspectsPerCase => SetFloatOption(FloatOptionNames.DetectiveSuspectLimit),
+            Override.ViperDissolveTime => SetFloatOption(FloatOptionNames.ViperDissolveTime),
             _ => throw new ArgumentOutOfRangeException(nameof(__override), __override, null)
         };
     }

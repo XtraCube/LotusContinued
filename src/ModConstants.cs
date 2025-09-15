@@ -107,6 +107,9 @@ public static class ModConstants
 
         [Localized(nameof(Executed))]
         public static string Executed = "Executed";
+
+        [Localized(nameof(Guessed))]
+        public static string Guessed = "Guessed";
     }
 
     public static class Localization

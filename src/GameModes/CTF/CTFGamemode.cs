@@ -5,16 +5,19 @@ using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
+using Lotus.Chat;
 using Lotus.Chat.Commands;
 using Lotus.GameModes.CTF.Conditions;
 using Lotus.GameModes.CTF.Distributions;
 using Lotus.Options;
 using Lotus.Roles;
+using Lotus.Roles.RoleGroups.CTF;
 using Lotus.RPC.CustomObjects.Builtin;
 using Lotus.Utilities;
 using Lotus.Victory;
 using UnityEngine;
 using VentLib.Options.UI.Tabs;
+using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.GameModes.CTF;
@@ -141,14 +144,12 @@ public class CTFGamemode : GameMode
             FrozenPlayer? fp = Game.MatchData.FrozenPlayers.GetValueOrDefault(player.GetGameID());
             if (fp != null) DeathCommand.ShowMyDeath(player, fp);
         }
+
         Players.GetAllPlayers().Where(p => p.PlayerId != player.PlayerId)
-            .SelectMany(p => p.NameModel().ComponentHolders())
-            .ForEach(holders =>
-                {
-                    holders.AddListener(component => component.AddViewer(player));
-                    holders.Components().ForEach(components => components.AddViewer(player));
-                }
-            );
+            .Select(p => p.NameModel().GetComponentHolder<GUI.Name.Holders.RoleHolder>())
+            .ForEach(h => h.Components().ForEach(components => components.AddViewer(player)));
+
+        ChatHandler.Of(Striker.Translations.OvertimeDeathMessage, Color.red.Colorize(Striker.Translations.OvertimeTitle)).Send(player);
 
         player.NameModel().Render(force: true);
     }

@@ -28,11 +28,11 @@ public class Noisemaker : Crewmate
         if (interaction.Intent is not IKillingIntent || handle.IsCanceled) return;
         // we assume that this player IS going to die
         // last should only be used for kind of postfix code since stuff should've been canceled before this
-        List<Remote<GameOptionOverride>> remoteOverrides = new();
+        List<Remote<GameOptionOverride>> remoteOverrides = [];
         Players.GetAllPlayers().ForEach(p => remoteOverrides.Add(Game.MatchData.Roles.AddOverride(p.PlayerId, new GameOptionOverride(Override.NoiseImpGetAlert, ImpostorsGetAlert))));
         Players.GetAllPlayers().ForEach(p => remoteOverrides.Add(Game.MatchData.Roles.AddOverride(p.PlayerId, new GameOptionOverride(Override.NoiseAlertDuration, AlertDuration))));
         Game.SyncAll();
-        Async.Schedule(() => remoteOverrides.RemoveAll(remote => remote.Delete()), 0.5f);
+        Async.Schedule(() => remoteOverrides.RemoveAll(remote => remote.Delete()), NetUtils.DeriveDelay(0.5f));
     }
 
     protected GameOptionBuilder AddNoisemakerOptions(GameOptionBuilder builder)
@@ -71,9 +71,7 @@ public class Noisemaker : Crewmate
 
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier)
-            .VanillaRole(RoleTypes.Noisemaker)
-            .OptionOverride(Override.NoiseAlertDuration, () => AlertDuration)
-            .OptionOverride(Override.NoiseImpGetAlert, () => ImpostorsGetAlert);
+            .VanillaRole(RoleTypes.Noisemaker);
 
     [Localized(nameof(Noisemaker))]
     public static class NoisemakerTranslations

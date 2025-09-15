@@ -16,11 +16,14 @@ using Lotus.Roles.Overrides;
 using Lotus.Extensions;
 using Lotus.GUI;
 using Lotus.Logging;
+using Lotus.Options;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
 using Lotus.Utilities;
 using UnityEngine;
 using VentLib.Localization.Attributes;
+using VentLib.Options.UI;
+using VentLib.Utilities;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 
@@ -32,6 +35,7 @@ public class Puppeteer : Vanilla.Impostor, IRoleUI
     [NewOnSetup] private Dictionary<byte, Remote<IndicatorComponent>> playerRemotes = null!;
 
     private FixedUpdateLock fixedUpdateLock = new();
+    private float killerCdAfterPuppet;
 
     public RoleButton KillButton(IRoleButtonEditor editor) => editor
         .SetText(Translations.ButtonText)
@@ -73,10 +77,20 @@ public class Puppeteer : Vanilla.Impostor, IRoleUI
             List<PlayerControl> inRangePlayers = player.GetPlayersInAbilityRangeSorted().Where(p => p.Relationship(MyPlayer) is not Relation.FullAllies).ToList();
             if (inRangePlayers.Count == 0) continue;
             PlayerControl target = inRangePlayers.GetRandom();
-            ManipulatedPlayerDeathEvent playerDeathEvent = new(target, player);
-            FatalIntent fatalIntent = new(false, () => playerDeathEvent);
-            bool isDead = player.InteractWith(target, new ManipulatedInteraction(fatalIntent, player.PrimaryRole(), MyPlayer)) is InteractionResult.Proceed;
-            Game.MatchData.GameHistory.AddEvent(new ManipulatedPlayerKillEvent(player, target, MyPlayer, isDead));
+
+
+            CustomRole playerRole = player.PrimaryRole();
+            Remote<GameOptionOverride> killCooldown = Game.MatchData.Roles.AddOverride(player.PlayerId, new GameOptionOverride(Override.KillCooldown, killerCdAfterPuppet));
+            playerRole.SyncOptions();
+            Async.Schedule(() =>
+            {
+                ManipulatedPlayerDeathEvent playerDeathEvent = new(target, player);
+                FatalIntent fatalIntent = new(false, () => playerDeathEvent);
+                bool isDead = player.InteractWith(target, new ManipulatedInteraction(fatalIntent, player.PrimaryRole(), MyPlayer)) is InteractionResult.Proceed;
+                killCooldown.Delete();
+                playerRole.SyncOptions();
+                Game.MatchData.GameHistory.AddEvent(new ManipulatedPlayerKillEvent(player, target, MyPlayer, isDead));
+            }, NetUtils.DeriveDelay(0.05f));
             RemovePuppet(player);
         }
 
@@ -101,6 +115,14 @@ public class Puppeteer : Vanilla.Impostor, IRoleUI
         cursedPlayers.RemoveAll(p => p.PlayerId == puppet.PlayerId);
     }
 
+
+    protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
+        AddKillCooldownOptions(base.RegisterOptions(optionStream), key: "Puppet Cooldown", name: Translations.Options.PuppetCooldown)
+            .SubOption(sub => sub.KeyName("Killer CD After Manipulate", Translations.Options.KillerCDAfterPuppet)
+                .AddFloatRange(0f, 30f, 2.5f, 4,  GeneralOptionTranslations.SecondsSuffix)
+                .BindFloat(f => killerCdAfterPuppet = f)
+                .Build());
+
     protected override RoleModifier Modify(RoleModifier roleModifier) =>
         base.Modify(roleModifier).OptionOverride(new IndirectKillCooldown(KillCooldown));
 
@@ -108,5 +130,15 @@ public class Puppeteer : Vanilla.Impostor, IRoleUI
     public static class Translations
     {
         [Localized(nameof(ButtonText))] public static string ButtonText = "Puppet";
+
+        [Localized(ModConstants.Options)]
+        public static class Options
+        {
+            [Localized(nameof(PuppetCooldown))]
+            public static string PuppetCooldown = "Puppet Cooldown";
+
+            [Localized(nameof(KillerCDAfterPuppet))]
+            public static string KillerCDAfterPuppet = "Killer CD after Puppet";
+        }
     }
 }

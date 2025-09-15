@@ -46,7 +46,7 @@ public static class Players
             int playerClientId = p.GetClientId();
             if (clientId != -1 && playerClientId != clientId) return;
 
-            MessageWriter messageWriter = MessageWriter.Get(SendOption.None);
+            MessageWriter messageWriter = MessageWriter.Get(SendOption.Reliable);
             messageWriter.StartMessage(6);
             messageWriter.Write(AmongUsClient.Instance.GameId);
             messageWriter.WritePacked(playerClientId);
