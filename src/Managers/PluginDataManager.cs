@@ -5,6 +5,7 @@ using Lotus.Managers.Combo;
 using Lotus.Managers.Friends;
 using Lotus.Managers.Templates;
 using Lotus.Managers.Titles;
+using UnityEngine;
 using VentLib.Utilities.Attributes;
 using VentLib.Utilities.Extensions;
 
@@ -16,10 +17,10 @@ public static class PluginDataManager
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(PluginDataManager));
 
-    private const string ModifiableDataDirectoryPath = "./LOTUS_DATA";
-    private const string ModifiableDataDirectoryPathOld = "./TOHTOR_DATA";
-    private static readonly string ModifiableHiddenDataDirectoryPath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "/ProjectLotus");
-    private static readonly string LegacyHiddenDataDirectoryPath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "/TownOfHostTheOtherRoles");
+    private static readonly string ModifiableDataDirectoryPath = Path.Combine(Application.persistentDataPath, "LOTUS_DATA");
+    private static readonly string ModifiableDataDirectoryPathOld = Path.Combine(Application.persistentDataPath, "TOHTOR_DATA");
+    private static readonly string ModifiableHiddenDataDirectoryPath = Path.Combine(Application.persistentDataPath, "ProjectLotus");
+    private static readonly string LegacyHiddenDataDirectoryPath = Path.Combine(Application.persistentDataPath, "TownOfHostTheOtherRoles");
     private const string TitleDirectory = "Titles";
 
     private const string ReadAnnouncementsFile = "ReadAnnouncements.yaml";

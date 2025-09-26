@@ -7,13 +7,10 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
 using Lotus.Roles.Overrides;
 using Lotus.Victory;
-using Lotus.Roles.Managers.Interfaces;
-using VentLib.Options.UI;
 using VentLib.Options.UI.Tabs;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using VentLib.Options.UI.Controllers;
-using Rewired.Utils.Platforms.Windows;
 
 namespace Lotus.GameModes;
 
