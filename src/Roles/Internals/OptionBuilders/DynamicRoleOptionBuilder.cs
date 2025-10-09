@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JBAnnotations::JetBrains.Annotations;
 using Lotus.Extensions;
+using Lotus.GameModes;
 using Lotus.Options;
 using Lotus.Roles.Internals.Enums;
 using UnityEngine;
@@ -61,7 +62,7 @@ public class DynamicRoleOptionBuilder
         offText ??= GeneralOptionTranslations.OffText;
 
         Dictionary<DynamicOptionPredicate, GameOptionBuilder> builders = new();
-        ProjectLotus.GameModeManager.CurrentGameMode.RoleManager.AllCustomRoles().OrderBy(r => r.RoleName).ForEach(r =>
+        GameModeManager.Instance.CurrentGameMode.RoleManager.AllCustomRoles().OrderBy(r => r.RoleName).ForEach(r =>
         {
             Type roleType = r.GetType();
             predicates.FirstOrOptional(p => p.Predicate(r)).IfPresent(np =>

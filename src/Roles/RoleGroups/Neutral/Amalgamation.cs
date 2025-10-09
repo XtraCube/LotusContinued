@@ -6,6 +6,7 @@ using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
 using Lotus.Factions;
+using Lotus.GameModes;
 using Lotus.GameModes.Standard;
 using Lotus.GUI;
 using Lotus.GUI.Name;
@@ -27,6 +28,7 @@ using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using Object = UnityEngine.Object;
+using RoleHolder = Lotus.GUI.Name.Holders.RoleHolder;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
@@ -73,7 +75,7 @@ public class Amalgamation : CustomRole
 
         CustomRole targetRole = reported.Get().GetPrimaryRole()!;
         Copycat.FallbackTypes.GetOptional(targetRole.GetType()).IfPresent(r => targetRole = r());
-        CustomRole newRole = ProjectLotus.GameModeManager.CurrentGameMode.RoleManager.GetCleanRole(targetRole);
+        CustomRole newRole = GameModeManager.Instance.CurrentGameMode.RoleManager.GetCleanRole(targetRole);
 
         colorGradient.Add(newRole.RoleColor);
         RoleColorGradient = new ColorGradient(colorGradient.ToArray());

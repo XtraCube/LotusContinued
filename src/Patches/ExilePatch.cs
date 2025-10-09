@@ -10,6 +10,7 @@ using Lotus.Managers.History.Events;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
 using Lotus.API.Player;
+using Lotus.GameModes;
 using VentLib.Utilities.Extensions;
 using Lotus.RPC;
 using Lotus.Utilities;
@@ -134,7 +135,7 @@ static class ExileControllerWrapUpPatch
         ActionHandle handle = ActionHandle.NoInit();
         log.Debug("Triggering RoundStart Action!!");
         RoleOperations.Current.TriggerForAll(LotusActionType.RoundStart, null, handle, false);
-        Hooks.GameStateHooks.RoundStartHook.Propagate(new GameStateHookEvent(Game.MatchData, ProjectLotus.GameModeManager.CurrentGameMode));
+        Hooks.GameStateHooks.RoundStartHook.Propagate(new GameStateHookEvent(Game.MatchData, GameModeManager.Instance.CurrentGameMode));
         Game.SyncAll();
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lotus;
+using Lotus.GameModes;
 using Lotus.Roles;
 using Lotus.Roles.Operations;
 
@@ -10,7 +11,7 @@ namespace Lotus.Roles.Managers.Interfaces;
 
 public interface IRoleManager
 {
-    public static RoleManager Current => ProjectLotus.GameModeManager.CurrentGameMode.RoleManager;
+    public static RoleManager Current => GameModeManager.Instance.CurrentGameMode.RoleManager;
 
     public abstract CustomRole FallbackRole();
 

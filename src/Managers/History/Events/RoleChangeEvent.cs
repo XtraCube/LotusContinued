@@ -2,6 +2,7 @@ using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.Roles;
 using Lotus.Extensions;
+using Lotus.GameModes;
 using VentLib.Utilities;
 using VentLib.Utilities.Optionals;
 
@@ -32,7 +33,7 @@ public class RoleChangeEvent : IRoleChangeEvent
 
     public string Message()
     {
-        return $"{originalRole.OrElse(ProjectLotus.GameModeManager.CurrentGameMode.RoleManager.FallbackRole()).RoleColor.Colorize(Game.GetName(player))} transformed into {newRole.RoleColor.Colorize(newRole.RoleName)}";
+        return $"{originalRole.OrElse(GameModeManager.Instance.CurrentGameMode.RoleManager.FallbackRole()).RoleColor.Colorize(Game.GetName(player))} transformed into {newRole.RoleColor.Colorize(newRole.RoleName)}";
     }
 
     public CustomRole OriginalRole() => originalRole.Get();

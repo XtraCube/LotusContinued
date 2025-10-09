@@ -116,7 +116,6 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public static NormalGameOptionsV10 NormalOptions => GameOptionsManager.Instance.currentNormalGameOptions;
 
-    public static GameModeManager GameModeManager = null!;
     public static List<byte> ResetCamPlayerList = null!;
     public static ProjectLotus Instance = null!;
 
@@ -133,18 +132,16 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
         log.Info($"AmongUs Version - {Application.version}");
 
         SettingsOptionController.Enable();
-        GameModeManager = new GameModeManager();
 
-        log.Info("GitVersion - " + CurrentVersion.ToString());
+        log.Info("GitVersion - " + CurrentVersion);
 
         // Setup, order matters here
 
         _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-        new GlobalRoleManager();
-        GameModeManager.AddGamemodes();
+        GameModeManager.Instance.AddGamemodes();
         AddonManager.ImportAddons();
-        GameModeManager.Setup();
+        GameModeManager.Instance.Setup();
 
         RoleOptionController.Enable();
         RoleOptionController.RemoveBuiltInTabs();

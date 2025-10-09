@@ -7,7 +7,6 @@ using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.Factions;
 using Lotus.GUI.Name.Components;
-using Lotus.GUI.Name.Holders;
 using Lotus.Managers;
 using Lotus.Managers.History.Events;
 using Lotus.Roles.Interactions.Interfaces;
@@ -17,6 +16,7 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using Lotus.Roles.RoleGroups.NeutralKilling;
 using Lotus.Extensions;
+using Lotus.GameModes;
 using Lotus.GUI.Name;
 using Lotus.Roles.RoleGroups.Crew;
 using Lotus.Roles.RoleGroups.Impostors;
@@ -32,6 +32,7 @@ using MonoMod.Utils;
 using Lotus.GameModes.Standard;
 using Lotus.Logging;
 using Lotus.Victory;
+using RoleHolder = Lotus.GUI.Name.Holders.RoleHolder;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 
@@ -96,7 +97,7 @@ public class Copycat : CustomRole
             attackerRole = attacker.PrimaryRole();
         }
         FallbackTypes.GetOptional(attackerRole.GetType()).IfPresent(r => attackerRole = r());
-        CustomRole role = copyRoleProgress ? attackerRole : ProjectLotus.GameModeManager.CurrentGameMode.RoleManager.GetCleanRole(attackerRole);
+        CustomRole role = copyRoleProgress ? attackerRole : GameModeManager.Instance.CurrentGameMode.RoleManager.GetCleanRole(attackerRole);
 
         log.Trace($"Copycat ({MyPlayer.name}) copying role of {attacker.name} : {role.RoleName}", "Copycat::AssignRole");
         turnedAttacker = attacker;

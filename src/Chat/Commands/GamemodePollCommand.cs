@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Lotus.GameModes;
 using VentLib.Commands;
 using VentLib.Commands.Attributes;
 using VentLib.Commands.Interfaces;
@@ -76,7 +77,7 @@ public class GamemodePollCommand : ICommandReceiver
             return;
         }
 
-        if (gamemode < 0 || gamemode >= ProjectLotus.GameModeManager.GetGameModes().Count())
+        if (gamemode < 0 || gamemode >= GameModeManager.Instance.GetGameModes().Count())
         {
             ChatHandlers.InvalidCmdUsage(_invalidID + "\n" + GetGamemodeOptions()).Send(source);
             return;
@@ -86,7 +87,7 @@ public class GamemodePollCommand : ICommandReceiver
 
         playerVotes[source.PlayerId] = gamemode;
         gamemodeVotes[gamemode] = gamemodeVotes.ContainsKey(gamemode) ? gamemodeVotes[gamemode] + 1 : 1;
-        ChatHandler.Of(_voteMessage.Formatted(ProjectLotus.GameModeManager.GetGameMode(gamemode).Name)).Send(source);
+        ChatHandler.Of(_voteMessage.Formatted(GameModeManager.Instance.GetGameMode(gamemode).Name)).Send(source);
     }
 
     [Command("view")]
@@ -131,16 +132,16 @@ public class GamemodePollCommand : ICommandReceiver
         int winningGamemodeId = topGamemodes.GetRandom();
         int highestVotes = gamemodeVotes[winningGamemodeId];
 
-        ProjectLotus.GameModeManager.SetGameMode(winningGamemodeId);
-        if (isTie) ChatHandler.Of(_pollEndedTie.Formatted(ProjectLotus.GameModeManager.GetGameMode(winningGamemodeId).Name, highestVotes)).Send();
-        else ChatHandler.Of(_pollEnded.Formatted(ProjectLotus.GameModeManager.GetGameMode(winningGamemodeId).Name, highestVotes)).Send();
+        GameModeManager.Instance.SetGameMode(winningGamemodeId);
+        if (isTie) ChatHandler.Of(_pollEndedTie.Formatted(GameModeManager.Instance.GetGameMode(winningGamemodeId).Name, highestVotes)).Send();
+        else ChatHandler.Of(_pollEnded.Formatted(GameModeManager.Instance.GetGameMode(winningGamemodeId).Name, highestVotes)).Send();
 
         ResetPoll();
     }
 
     private string GetGamemodeOptions()
     {
-        var gamemodeManager = ProjectLotus.GameModeManager;
+        var gamemodeManager = GameModeManager.Instance;
         StringBuilder gamemodeOptions = new();
         for (int i = 0; i < gamemodeManager.GetGameModes().Count(); i++)
         {
@@ -153,7 +154,7 @@ public class GamemodePollCommand : ICommandReceiver
 
     private string GetStandingsList()
     {
-        var gamemodeManager = ProjectLotus.GameModeManager;
+        var gamemodeManager = GameModeManager.Instance;
         StringBuilder standings = new();
         foreach (var kvp in gamemodeVotes.OrderByDescending(kvp => kvp.Value))
         {

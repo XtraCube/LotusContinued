@@ -31,7 +31,7 @@ public static class Game
     public static Dictionary<byte, INameModel> NameModels = new();
     public static RandomSpawn RandomSpawn = null!;
     public static int RecursiveCallCheck;
-    public static IGameMode CurrentGameMode => ProjectLotus.GameModeManager.CurrentGameMode;
+    public static IGameMode CurrentGameMode => GameModeManager.Instance.CurrentGameMode;
 
     public static GameState State
     {
@@ -91,7 +91,7 @@ public static class Game
         GameIDs.ForEach(kv => GameIDs.Remove(kv.Key));
 
         Hooks.GameStateHooks.GameStartHook.Propagate(new GameStateHookEvent(MatchData, CurrentGameMode));
-        ProjectLotus.GameModeManager.StartGame(_winDelegate);
+        GameModeManager.Instance.StartGame(_winDelegate);
     }
 
     public static void Cleanup(bool newLobby = false)

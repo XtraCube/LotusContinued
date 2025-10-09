@@ -22,6 +22,9 @@ public class GameModeManager
 
     private const string GameModeManagerStartHook = nameof(GameModeManager);
 
+    private static GameModeManager? _instance;
+    public static GameModeManager Instance => _instance ??= new GameModeManager();
+
     internal readonly List<IGameMode> GameModes = new();
 
     public IGameMode CurrentGameMode
@@ -38,7 +41,7 @@ public class GameModeManager
     private IGameMode? currentGameMode;
     internal GameOption gamemodeOption = null!;
 
-    public GameModeManager()
+    private GameModeManager()
     {
         Hooks.GameStateHooks.GameStartHook.Bind(GameModeManagerStartHook, _ => CurrentGameMode.SetupWinConditions(Game.GetWinDelegate()));
     }

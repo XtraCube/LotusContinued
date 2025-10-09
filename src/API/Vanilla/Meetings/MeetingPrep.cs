@@ -13,6 +13,7 @@ using Lotus.GameModes.Standard;
 using Lotus.Options;
 using HarmonyLib;
 using Lotus.API.Reactive.HookEvents;
+using Lotus.GameModes;
 using Lotus.Patches.Actions;
 using Lotus.RPC;
 using Lotus.Patches.Meetings;
@@ -95,7 +96,7 @@ public class MeetingPrep
             }
         });
 
-        Hooks.GameStateHooks.RoundEndHook.Propagate(new GameStateHookEvent(Game.MatchData, ProjectLotus.GameModeManager.CurrentGameMode));
+        Hooks.GameStateHooks.RoundEndHook.Propagate(new GameStateHookEvent(Game.MatchData, GameModeManager.Instance.CurrentGameMode));
         Game.RenderAllForAll(GameState.InMeeting, true);
         Async.Schedule(FixChatNames, 5f);
 

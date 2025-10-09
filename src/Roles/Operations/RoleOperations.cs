@@ -21,7 +21,7 @@ namespace Lotus.Roles.Operations;
 // ReSharper disable once InconsistentNaming
 public interface RoleOperations : IRoleComponent
 {
-    public static RoleOperations Current => ProjectLotus.GameModeManager.CurrentGameMode.RoleOperations;
+    public static RoleOperations Current => GameModeManager.Instance.CurrentGameMode.RoleOperations;
     public abstract GameMode? ParentGameMode { get; }
 
     public Relation Relationship(CustomRole source, CustomRole comparison);

@@ -70,7 +70,7 @@ class IntroDestroyPatch
         RoleOperations.Current.TriggerForAll(LotusActionType.RoundStart, null, true);
         propSample.Stop();
 
-        Hooks.GameStateHooks.RoundStartHook.Propagate(new GameStateHookEvent(Game.MatchData, ProjectLotus.GameModeManager.CurrentGameMode));
+        Hooks.GameStateHooks.RoundStartHook.Propagate(new GameStateHookEvent(Game.MatchData, GameModeManager.Instance.CurrentGameMode));
         destroySample.Stop();
     }
 
