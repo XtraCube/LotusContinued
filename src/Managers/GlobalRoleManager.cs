@@ -22,11 +22,13 @@ public class GlobalRoleManager
 
     private readonly Dictionary<Assembly, Dictionary<ulong, CustomRole>> rolesbyAssembly = new();
     protected OrderedDictionary<string, CustomRole> OrderedCustomRoles { get; } = new();
-    public static GlobalRoleManager Instance = null!;
-    public GlobalRoleManager()
+
+    private static GlobalRoleManager? _instance;
+    public static GlobalRoleManager Instance => _instance ??= new GlobalRoleManager();
+
+    private GlobalRoleManager()
     {
         DevLogger.Log("Creating GlobalRoleManager.");
-        Instance = this;
     }
 
     public IEnumerable<CustomRole> AllCustomRoles() => OrderedCustomRoles.GetValues();
