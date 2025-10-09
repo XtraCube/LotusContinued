@@ -95,9 +95,12 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
         versionControl.AddVersionReceiver(ReceiveVersion);
         PluginDataManager.TemplateManager.RegisterTag("lobby-join", "Tag for the template shown to players joining the lobby.");
 
-        ModUpdater = ModUpdater.Default();
-        ModUpdater.EstablishConnection();
-        ModUpdater.RegisterReleaseCallback(BeginUpdate, true);
+        if (!Application.isMobilePlatform)
+        {
+            ModUpdater = ModUpdater.Default();
+            ModUpdater.EstablishConnection();
+            ModUpdater.RegisterReleaseCallback(BeginUpdate, true);
+        }
 
 #if !DEBUG
         Profilers.Global.SetActive(false);
