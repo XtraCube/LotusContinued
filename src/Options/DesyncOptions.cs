@@ -65,9 +65,9 @@ public static class DesyncOptions
         writer.StartMessage(0);
         writer.Write((byte)options.GameMode);
 
-        if (options.TryCast(out NormalGameOptionsV10? normalOpt))
+        if (options.TryCast<NormalGameOptionsV10>(out NormalGameOptionsV10? normalOpt))
             NormalGameOptionsV10.Serialize(writer, normalOpt);
-        else if (options.TryCast(out HideNSeekGameOptionsV10? hnsOpt))
+        else if (options.TryCast<HideNSeekGameOptionsV10>(out HideNSeekGameOptionsV10? hnsOpt))
             HideNSeekGameOptionsV10.Serialize(writer, hnsOpt);
         else
         {
@@ -77,9 +77,8 @@ public static class DesyncOptions
         writer.EndMessage();
 
         // Array & Send
-        var byteArray = new Il2CppStructArray<byte>((long)writer.Length - 1);
-        // MessageWriter.ToByteArray
-        Buffer.BlockCopy(writer.Buffer.CastFast<Array>(), 1, byteArray.CastFast<Array>(), 0, writer.Length - 1);
+        var byteArray = writer.ToByteArray(false);
+        writer.Recycle();
 
         try
         {
@@ -118,7 +117,6 @@ public static class DesyncOptions
             }
         }
         catch (Exception ex) { log.Fatal(ex.ToString()); }
-        writer.Recycle();
     }
 
     public static int GetTargetedClientId(string name)
