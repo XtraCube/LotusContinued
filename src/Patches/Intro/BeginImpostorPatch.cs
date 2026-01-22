@@ -9,6 +9,7 @@ using Lotus.Roles.Managers.Interfaces;
 using Lotus.API.Player;
 using System.Linq;
 using Lotus.Factions;
+using UnityEngine;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.Patches.Intro;
@@ -42,10 +43,17 @@ class BeginImpostorPatch
         }
 
         __instance.BeginCrewmate(yourTeam);
-        #if PC
-        __instance.overlayHandle.color = Palette.CrewmateBlue;
-        #endif
+        if (!Application.isMobilePlatform)
+        {
+            SetOverlayHandle(__instance);
+        }
         return false;
+    }
+
+    private static void SetOverlayHandle(IntroCutscene __instance)
+    {
+        // Android doesn't have overlay handle???
+        __instance.overlayHandle.color = Palette.CrewmateBlue;
     }
 
     public static void Postfix(IntroCutscene __instance, ref Il2CppSystem.Collections.Generic.List<PlayerControl> yourTeam)

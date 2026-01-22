@@ -99,11 +99,12 @@ public class GraphicsMenu : MonoBehaviour, IBaseOptionMenuComponent
             if (!opening) applyGameObject.SetActive(true);
         }));
         graphicsContent.slider.gameObject.SetActive(false);
-        #if ANDROID
-        resolutionSlider.gameObject.SetActive(false);
-        resolutionText.gameObject.SetActive(false);
-        #endif
 
+        if (Application.isMobilePlatform)
+        {
+            resolutionSlider.gameObject.SetActive(false);
+            resolutionText.gameObject.SetActive(false);
+        }
 
         fpsSlider = Instantiate(resolutionSlider, anchor.transform);
         fpsSlider.transform.localPosition = new Vector3(-2.62f, -1.12f, 0);

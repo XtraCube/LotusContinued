@@ -14,7 +14,7 @@ using Lotus.Extensions;
 using Lotus.GameModes.Standard;
 using Lotus.GameModes.Colorwars;
 using Lotus.GameModes.CTF;
-using Lotus.GameModes.Draft;
+//using Lotus.GameModes.Draft;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.GameModes;
@@ -64,7 +64,7 @@ public class GameModeManager
             new StandardGameMode(),
             new ColorwarsGamemode(),
             new CTFGamemode(),
-            new DraftGameMode()
+            //new DraftGameMode()
         ]);
 
     public void Setup()

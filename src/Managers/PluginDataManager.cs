@@ -17,17 +17,15 @@ public static class PluginDataManager
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(PluginDataManager));
 
-    #if ANDROID
-    private static readonly string ModifiableDataDirectoryPath = Path.Combine(Application.persistentDataPath, "LOTUS_DATA");
-    private static readonly string ModifiableDataDirectoryPathOld = Path.Combine(Application.persistentDataPath, "TOHTOR_DATA");
-    private static readonly string ModifiableHiddenDataDirectoryPath = Path.Combine(Application.persistentDataPath, "ProjectLotus");
-    private static readonly string LegacyHiddenDataDirectoryPath = Path.Combine(Application.persistentDataPath, "TownOfHostTheOtherRoles");
-    #else
-    private const string ModifiableDataDirectoryPath = "./LOTUS_DATA";
-    private const string ModifiableDataDirectoryPathOld = "./TOHTOR_DATA";
-    private static readonly string ModifiableHiddenDataDirectoryPath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "/ProjectLotus");
-    private static readonly string LegacyHiddenDataDirectoryPath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "/TownOfHostTheOtherRoles");
-    #endif
+    private static readonly string LocalAppData =
+        OperatingSystem.IsAndroid()
+            ? ProjectLotus.BasePath
+            : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+    private static readonly string ModifiableDataDirectoryPath = Path.Combine(ProjectLotus.BasePath, "LOTUS_DATA");
+    private static readonly string ModifiableDataDirectoryPathOld = Path.Combine(ProjectLotus.BasePath, "TOHTOR_DATA");
+    private static readonly string ModifiableHiddenDataDirectoryPath = Path.Combine(LocalAppData, "ProjectLotus");
+    private static readonly string LegacyHiddenDataDirectoryPath = Path.Combine(LocalAppData, "TownOfHostTheOtherRoles");
 
     private const string TitleDirectory = "Titles";
 
@@ -59,9 +57,11 @@ public static class PluginDataManager
         MigrateOldDirectory();
         MigrateOldHiddenDirectory();
 
-        #if ANDROID  // i don't want 2 folders for the same mod. just put it in lotus_data
-        ModifiableHiddenDataDirectoryPath = ModifiableDataDirectoryPath;
-        #endif
+        if (OperatingSystem.IsAndroid())
+        {
+            // i don't want 2 folders for the same mod. just put it in lotus_data
+            ModifiableHiddenDataDirectoryPath = ModifiableDataDirectoryPath;
+        }
 
         ModifiableDataDirectory = new DirectoryInfo(ModifiableDataDirectoryPath);
         HiddenDataDirectory = new DirectoryInfo(ModifiableHiddenDataDirectoryPath);

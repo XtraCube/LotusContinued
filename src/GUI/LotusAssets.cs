@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Lotus.Extensions;
 using Lotus.Logging;
@@ -18,11 +19,18 @@ public class LotusAssets
         {
             if (_loaded) return _assetBundle!;
             _loaded = true;
-            #if ANDROID
-            _assetBundle = AssetLoader.LoadAssetBundle("Lotus.assets.projectlotus_bundle-android");
-            #else
-            _assetBundle = AssetLoader.LoadAssetBundle("Lotus.assets.projectlotus_bundle-win");
-            #endif
+            if (OperatingSystem.IsAndroid())
+            {
+                _assetBundle = AssetLoader.LoadAssetBundle("Lotus.assets.projectlotus_bundle-android");
+            }
+            else if (OperatingSystem.IsWindows())
+            {
+                _assetBundle = AssetLoader.LoadAssetBundle("Lotus.assets.projectlotus_bundle-win");
+            }
+            else
+            {
+                throw new PlatformNotSupportedException("Unsupported platform for Lotus asset bundle loading.");
+            }
             return _assetBundle;
         }
     }

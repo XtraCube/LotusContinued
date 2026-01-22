@@ -25,28 +25,79 @@ using VentLib.Networking.RPC;
 using Lotus.GameModes.Standard;
 using System.Collections.Generic;
 using System;
+using System.Reflection;
+using Il2CppInterop.Runtime.InteropTypes;
 using Lotus.GameModes;
 
 namespace Lotus.Patches.Intro;
 
 
-#if ANDROID
-[HarmonyPatch(typeof(IntroCutscene._CoBegin_d__34), nameof(IntroCutscene._CoBegin_d__34.MoveNext))]
-#else
-[HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy))]
-#endif
+[HarmonyPatch]
 class IntroDestroyPatch
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(IntroDestroyPatch));
 
-    #if ANDROID
-    public static void Postfix(IntroCutscene._CoBegin_d__34 __instance)
+    private static MethodBase? GetStateMachineMoveNext<T>(string methodName)
     {
-        if (__instance.__1__state != -1) return;
-    #else
-    public static void Postfix(IntroCutscene __instance)
+        var typeName = typeof(T).FullName;
+        var showRoleStateMachine =
+            typeof(T)
+                .GetNestedTypes()
+                .FirstOrDefault(x=>x.Name.Contains(methodName));
+
+        if (showRoleStateMachine == null)
+        {
+            log.High($"Failed to find {methodName} state machine for {typeName}");
+            return null;
+        }
+
+        var moveNext = AccessTools.Method(showRoleStateMachine, "MoveNext");
+        if (moveNext == null)
+        {
+            log.High($"Failed to find MoveNext method for {typeName}.{methodName}");
+            return null;
+        }
+
+        log.Info($"Found {methodName}.MoveNext");
+        return moveNext;
+    }
+
+    private static MethodBase TargetMethod()
     {
-    #endif
+        var onDestroy = AccessTools.Method(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy));
+        if (onDestroy != null) return onDestroy;
+
+        return GetStateMachineMoveNext<IntroCutscene>("CoBegin")!;
+    }
+
+    public static void Postfix(Il2CppObjectBase __instance)
+    {
+        IntroCutscene? introCutscene;
+        if (!__instance.TryCast<IntroCutscene>(out introCutscene))
+        {
+            var state = AccessTools.Property(__instance.GetType(), "__1__state").GetValue(__instance);
+            if (state is -1)
+            {
+                var introCutsceneField = AccessTools.Property(__instance.GetType(), "__4__this");
+                if (introCutsceneField != null)
+                {
+                    introCutscene = introCutsceneField.GetValue(__instance) as IntroCutscene;
+                }
+            }
+        }
+
+        if (introCutscene != null)
+        {
+            ActualPostfix(introCutscene);
+        }
+        else
+        {
+            log.Warn("Failed to cast IntroCutscene in IntroDestroyPatch Postfix", "IntroCutscene");
+        }
+    }
+
+    public static void ActualPostfix(IntroCutscene __instance)
+    {
         Profiler.Sample destroySample = Global.Sampler.Sampled();
         if (!AmongUsClient.Instance.AmHost)
         {

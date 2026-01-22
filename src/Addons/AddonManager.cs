@@ -32,11 +32,7 @@ public class AddonManager
 
     internal static void ImportAddons()
     {
-        #if ANDROID
-        DirectoryInfo addonDirectory = new(Path.Combine(Application.persistentDataPath, "addons"));
-        #else
-        DirectoryInfo addonDirectory = new("./addons/");
-        #endif
+        DirectoryInfo addonDirectory = new(Path.Combine(ProjectLotus.BasePath, "addons"));
         if (!addonDirectory.Exists)
             addonDirectory.Create();
         addonDirectory.EnumerateFiles().Do(LoadAddon);

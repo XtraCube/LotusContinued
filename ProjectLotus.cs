@@ -53,6 +53,7 @@ namespace Lotus;
 [BepInProcess("Among Us.exe")]
 public class ProjectLotus : BasePlugin, IGitVersionEmitter
 {
+    public static string BasePath => OperatingSystem.IsAndroid() ? Application.persistentDataPath : Paths.GameRootPath;
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(ProjectLotus));
     private const string Id = "com.discussions.LotusContinued";
     public const string VisibleVersion = $"{MajorVersion}.{MinorVersion}.{PatchVersion}";
