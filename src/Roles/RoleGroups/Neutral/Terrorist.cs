@@ -3,7 +3,6 @@ using Lotus.Options;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Extensions;
-using Lotus.Roles.Internals;
 using Lotus.Victory.Conditions;
 using UnityEngine;
 using Lotus.Roles.Internals.Enums;

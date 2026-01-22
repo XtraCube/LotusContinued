@@ -1,7 +1,5 @@
 using Hazel;
 using UnityEngine;
-using VentLib.Networking.RPC;
-using VentLib.Utilities;
 
 namespace Lotus.RPC.CustomObjects.Builtin;
 public sealed class RedFlag : Flag

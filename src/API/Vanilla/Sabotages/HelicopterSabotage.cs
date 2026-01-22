@@ -1,5 +1,4 @@
-﻿using Lotus.API.Odyssey;
-using Lotus.API.Reactive;
+﻿using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using Lotus.Extensions;
 using Lotus.Patches.Systems;

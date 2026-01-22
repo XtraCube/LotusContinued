@@ -1,7 +1,5 @@
 using System.Linq;
 using Lotus.Factions.Impostors;
-using Lotus.Managers;
-using Lotus.Roles;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.GameModes.Standard.Lotteries;

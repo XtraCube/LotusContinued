@@ -3,7 +3,6 @@ using HarmonyLib;
 using UnityEngine;
 using VentLib.Utilities.Attributes;
 using VentLib.Utilities;
-using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using VentLib.Networking.RPC;
 using Lotus.Network;

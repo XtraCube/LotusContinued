@@ -1,6 +1,5 @@
 ﻿using AmongUs.Data.Player;
 using HarmonyLib;
-using Lotus.Logging;
 
 namespace Lotus.Patches.Client;
 

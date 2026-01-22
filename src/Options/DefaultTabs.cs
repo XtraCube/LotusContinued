@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using Lotus.GameModes;
 using Lotus.GUI;
-using Lotus.Utilities;
-using VentLib.Options.UI;
 using VentLib.Options.UI.Controllers;
 using VentLib.Options.UI.Tabs;
 using VentLib.Utilities.Attributes;

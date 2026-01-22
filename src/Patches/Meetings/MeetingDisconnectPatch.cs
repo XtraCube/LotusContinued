@@ -1,8 +1,4 @@
 using HarmonyLib;
-using Lotus.API;
-using Lotus.Utilities;
-using Lotus.Extensions;
-using UnityEngine;
 using System.Linq;
 
 namespace Lotus.Patches.Meetings;

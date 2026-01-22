@@ -20,7 +20,6 @@ using Lotus.Roles.Interfaces;
 using VentLib.Options;
 using Lotus.Managers;
 using Lotus.Roles.Subroles;
-using Lotus.Logging;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 

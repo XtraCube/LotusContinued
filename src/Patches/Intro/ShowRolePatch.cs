@@ -2,8 +2,6 @@ using HarmonyLib;
 using Lotus.Roles;
 using Lotus.Utilities;
 using Lotus.Extensions;
-using Lotus.Logging;
-using Lotus.Roles.Builtins;
 using VentLib.Utilities;
 using Lotus.Roles.Managers.Interfaces;
 

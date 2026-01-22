@@ -1,7 +1,5 @@
 using HarmonyLib;
 using Lotus.Extensions;
-using Lotus.Logging;
-using UnityEngine;
 using VentLib.Utilities.Harmony.Attributes;
 
 namespace Lotus.Chat.Patches;

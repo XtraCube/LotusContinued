@@ -4,9 +4,7 @@ using Lotus.Roles;
 using Lotus.Extensions;
 using AmongUs.GameOptions;
 using static AmongUs.GameOptions.GameModes;
-using Lotus.Logging;
 using System.Linq;
-using Lotus.Roles.Subroles;
 
 namespace Lotus.Patches.Client;
 

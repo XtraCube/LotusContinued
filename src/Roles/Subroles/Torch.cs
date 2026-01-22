@@ -9,7 +9,6 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using UnityEngine;
-using VentLib.Logging;
 using VentLib.Options.UI;
 using VentLib.Utilities;
 

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Lotus.Addons;
 using Lotus.API;
-using Lotus.Roles.Interfaces;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 

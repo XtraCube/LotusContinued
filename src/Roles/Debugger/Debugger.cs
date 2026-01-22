@@ -14,7 +14,6 @@ using Lotus.Roles.Overrides;
 using Lotus.Utilities;
 using UnityEngine;
 using VentLib.Options.UI;
-using VentLib.Utilities.Attributes;
 
 namespace Lotus.Roles.Debugger;
 

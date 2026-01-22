@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Lotus.API.Odyssey;
 using Lotus.Factions;
 using Lotus.Factions.Interfaces;
 using Lotus.Factions.Undead;

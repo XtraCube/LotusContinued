@@ -7,7 +7,6 @@ using Lotus.API.Reactive.HookEvents;
 using Lotus.Managers;
 using Lotus.Roles.Internals;
 using Lotus.Extensions;
-using Lotus.Logging;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
 using Lotus.Options;

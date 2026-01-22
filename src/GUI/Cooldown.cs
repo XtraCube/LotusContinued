@@ -1,6 +1,5 @@
 using System;
 using System.Globalization;
-using Lotus.Logging;
 using Lotus.Managers;
 using Lotus.Roles.Internals.Interfaces;
 using Lotus.Roles.Attributes;

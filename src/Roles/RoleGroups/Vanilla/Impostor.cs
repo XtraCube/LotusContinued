@@ -9,13 +9,10 @@ using Lotus.Options;
 using Lotus.Roles.Interactions;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Interfaces;
-using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;
 using UnityEngine;
 using VentLib.Options.UI;
-using Lotus.Logging;
-using System;
 using Lotus.Extensions;
 
 namespace Lotus.Roles.RoleGroups.Vanilla;

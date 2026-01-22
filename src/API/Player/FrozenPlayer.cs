@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Lotus.API.Odyssey;
-using Lotus.API.Reactive;
 using Lotus.Extensions;
 using Lotus.Managers.History;
 using Lotus.Managers.History.Events;

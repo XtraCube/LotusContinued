@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
-using HarmonyLib;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.API.Reactive;
@@ -10,7 +9,6 @@ using Lotus.API.Reactive.HookEvents;
 using Lotus.Extensions;
 using Lotus.Factions;
 using Lotus.Factions.Interfaces;
-using Lotus.Logging;
 using Lotus.Options;
 using Lotus.Roles;
 using Lotus.Roles.Interfaces;
@@ -21,7 +19,6 @@ using Lotus.Roles.Operations;
 using Lotus.Roles.Overrides;
 using VentLib.Networking.RPC;
 using VentLib.Utilities;
-using VentLib.Utilities.Extensions;
 
 namespace Lotus.GameModes.Standard;
 

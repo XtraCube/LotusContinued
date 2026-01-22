@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using AmongUs.GameOptions;
 using Lotus.Extensions;
 using Lotus.Options;

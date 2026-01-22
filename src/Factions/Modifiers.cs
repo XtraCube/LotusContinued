@@ -1,7 +1,6 @@
 ﻿using Lotus.Factions.Interfaces;
 using Lotus.Roles;
 using UnityEngine;
-using VentLib.Localization.Attributes;
 
 namespace Lotus.Factions;
 

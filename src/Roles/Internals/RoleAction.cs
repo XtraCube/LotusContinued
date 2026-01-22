@@ -2,7 +2,6 @@ using System;
 using System.Reflection;
 using Lotus.API.Reactive.Actions;
 using Lotus.Extensions;
-using Lotus.Logging;
 using Lotus.Roles.Internals.Attributes;
 
 namespace Lotus.Roles.Internals;

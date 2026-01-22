@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
-using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.Extensions;
@@ -13,10 +12,8 @@ using Lotus.Roles;
 using Lotus.Roles.Interfaces;
 using Lotus.Roles.Managers.Interfaces;
 using Lotus.Roles.Properties;
-using Lotus.Roles.Subroles;
 using VentLib.Commands;
 using VentLib.Commands.Attributes;
-using VentLib.Localization;
 using VentLib.Localization.Attributes;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;

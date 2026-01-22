@@ -14,7 +14,6 @@ using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities.Optionals;
-using Lotus.API.Player;
 using Lotus.Roles.Operations;
 
 namespace Lotus.Roles.Subroles;

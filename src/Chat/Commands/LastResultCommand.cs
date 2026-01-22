@@ -17,7 +17,6 @@ using VentLib.Commands.Attributes;
 using VentLib.Localization.Attributes;
 using VentLib.Utilities;
 using VentLib.Utilities.Attributes;
-using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using static Lotus.ModConstants.Palette;

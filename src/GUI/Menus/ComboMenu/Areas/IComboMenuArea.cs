@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using VentLib.Localization.Attributes;
 
 namespace Lotus.GUI.Menus.ComboMenu.Areas;
 

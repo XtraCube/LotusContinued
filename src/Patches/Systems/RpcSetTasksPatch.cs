@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using HarmonyLib;
-using Hazel;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Lotus.API;
 using Lotus.Roles;
@@ -12,7 +11,6 @@ using Lotus.Options;
 using VentLib.Utilities.Extensions;
 using Lotus.API.Odyssey;
 using Lotus.GameModes.Standard;
-using Sentry.Unity.NativeUtils;
 using System.Linq;
 using Lotus.GameModes.Draft;
 

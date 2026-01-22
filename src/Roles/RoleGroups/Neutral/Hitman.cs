@@ -8,7 +8,6 @@ using Lotus.Extensions;
 using Lotus.Factions;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Factions.Interfaces;
-using Lotus.Factions.Neutrals;
 using UnityEngine;
 using VentLib.Options.UI;
 using VentLib.Localization.Attributes;

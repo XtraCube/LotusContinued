@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using AmongUs.GameOptions;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;

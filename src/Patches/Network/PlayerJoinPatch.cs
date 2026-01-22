@@ -1,7 +1,6 @@
 using System;
 using HarmonyLib;
 using InnerNet;
-using Lotus.API.Odyssey;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using Lotus.Logging;
@@ -11,7 +10,6 @@ using Lotus.Options;
 using VentLib.Utilities;
 using VentLib.Utilities.Attributes;
 using VentLib.Utilities.Harmony.Attributes;
-using xCloud;
 using static Platforms;
 
 

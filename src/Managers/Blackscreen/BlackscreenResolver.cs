@@ -6,20 +6,13 @@ using Lotus.API.Player;
 using Lotus.API.Reactive;
 using Lotus.API.Vanilla.Meetings;
 using Lotus.Chat;
-using Lotus.RPC;
 using Lotus.Utilities;
-using Lotus.Victory;
-using Lotus.Extensions;
-using Lotus.Logging;
-using UnityEngine;
 using VentLib.Networking.RPC;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
-using AmongUs.GameOptions;
 using HarmonyLib;
 using Lotus.Managers.Blackscreen.Interfaces;
 using Lotus.Victory.Patches;
-using Sentry.Internal.Extensions;
 
 namespace Lotus.Managers.Blackscreen;
 

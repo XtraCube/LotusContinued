@@ -2,7 +2,6 @@ using HarmonyLib;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.API.Vanilla.Meetings;
-using Lotus.Server;
 using Lotus.Options;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;

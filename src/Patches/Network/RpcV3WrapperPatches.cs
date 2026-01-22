@@ -1,5 +1,4 @@
-﻿using Hazel;
-using VentLib.Networking.RPC;
+﻿using VentLib.Networking.RPC;
 using VentLib.Utilities.Attributes;
 using VentLib.Utilities.Harmony.Attributes;
 

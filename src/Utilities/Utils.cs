@@ -7,7 +7,6 @@ using System.Text.RegularExpressions;
 using Hazel;
 using Lotus.API.Odyssey;
 using Lotus.GUI.Name.Holders;
-using Lotus.Roles.Interfaces;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using Lotus.Extensions;

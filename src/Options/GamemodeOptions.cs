@@ -1,12 +1,6 @@
-using System.Collections.Generic;
-using Lotus.Options.General;
-using VentLib.Localization.Attributes;
-using VentLib.Options.UI;
 using VentLib.Utilities.Attributes;
 using VentLib.Options;
 using Lotus.Options.Gamemodes;
-using System.Linq;
-using VentLib.Utilities.Extensions;
 
 namespace Lotus.Options;
 

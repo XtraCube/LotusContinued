@@ -1,24 +1,18 @@
 extern alias JBAnnotations;
 using System.Collections.Generic;
-using Lotus.Roles.Distribution;
-using JBAnnotations::JetBrains.Annotations;
 using Lotus.Extensions;
 using Lotus.GameModes.Standard.Distributions;
 using Lotus.Options;
 using Lotus.Roles;
 using System.Linq;
-using Lotus.API.Odyssey;
-using Lotus.Utilities;
 using Lotus.Roles.RoleGroups.Vanilla;
 using VentLib.Utilities.Extensions;
 using Lotus.API.Player;
 using Lotus.GameModes.Standard.Lotteries;
 using Lotus.Roles.Interfaces;
 using Lotus.Factions.Impostors;
-using Lotus.Managers;
 using Lotus.Roles.Builtins;
 using Lotus.Roles.Subroles;
-using Lotus.Patches;
 
 namespace Lotus.GameModes.Draft.Distributions;
 

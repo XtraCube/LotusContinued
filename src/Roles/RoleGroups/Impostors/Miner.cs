@@ -6,7 +6,6 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Utilities;
 using UnityEngine;
-using VentLib.Logging;
 using VentLib.Options.UI;
 using VentLib.Localization.Attributes;
 using Lotus.Extensions;

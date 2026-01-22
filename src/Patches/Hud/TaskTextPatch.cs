@@ -4,7 +4,6 @@ using System.Linq;
 using HarmonyLib;
 using Lotus.Extensions;
 using Lotus.Roles;
-using Lotus.Victory;
 using Lotus.Victory.Patches;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;

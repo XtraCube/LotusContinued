@@ -12,7 +12,6 @@ using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using InnerNet;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
-using Lotus.Network;
 using Array = Il2CppSystem.Array;
 using Buffer = Il2CppSystem.Buffer;
 

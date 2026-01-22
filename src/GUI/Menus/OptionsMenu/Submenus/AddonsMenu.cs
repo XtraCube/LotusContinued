@@ -1,12 +1,8 @@
 using System;
-using System.Globalization;
 using TMPro;
 using Lotus.Utilities;
 using UnityEngine;
-using VentLib.Utilities;
 using VentLib.Utilities.Attributes;
-using Lotus.GUI.Menus.OptionsMenu.Components;
-using Lotus.Options;
 
 namespace Lotus.GUI.Menus.OptionsMenu.Submenus;
 

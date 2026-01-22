@@ -9,10 +9,8 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Managers.History.Events;
 using Lotus.Options;
 using Lotus.Roles.Interactions;
-using Lotus.Roles.Internals;
 using UnityEngine;
 using VentLib.Options.UI;
-using VentLib.Utilities;
 using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;

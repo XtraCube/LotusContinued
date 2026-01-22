@@ -24,7 +24,6 @@ using VentLib.Utilities.Collections;
 using VentLib.Utilities.Optionals;
 using Lotus.Roles.Managers.Interfaces;
 using System.Linq;
-using Lotus.Factions.Impostors;
 using VentLib;
 using Lotus.RPC;
 

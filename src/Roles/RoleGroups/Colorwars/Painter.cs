@@ -12,7 +12,6 @@ using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using Lotus.Options;
 using Lotus.Extensions;
-using VentLib.Options.UI;
 using Lotus.GameModes.Colorwars.Factions;
 using Lotus.GUI.Name;
 using Lotus.GUI.Name.Components;

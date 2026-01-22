@@ -1,5 +1,4 @@
 using Lotus.Roles.Internals;
-using Lotus.Extensions;
 using Lotus.Roles.Operations;
 
 namespace Lotus.API.Reactive.HookEvents;

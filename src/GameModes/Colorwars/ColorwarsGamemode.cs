@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -14,11 +13,9 @@ using Lotus.Options.Gamemodes;
 using Lotus.Roles;
 using Lotus.Victory;
 using UnityEngine;
-using VentLib.Localization.Attributes;
 using VentLib.Options;
 using VentLib.Options.Extensions;
 using VentLib.Options.UI;
-using VentLib.Options.UI.Controllers;
 using VentLib.Options.UI.Tabs;
 using VentLib.Ranges;
 using VentLib.Utilities;

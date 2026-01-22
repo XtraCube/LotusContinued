@@ -7,7 +7,6 @@ using Lotus.Extensions;
 using Lotus.Factions;
 using Lotus.Managers.History.Events;
 using Lotus.Roles.Interactions;
-using Lotus.Roles.Internals;
 using Lotus.Roles.Overrides;
 using Lotus.RPC;
 using VentLib.Localization.Attributes;
@@ -15,8 +14,6 @@ using VentLib.Options.UI;
 using VentLib.Utilities;
 using static Lotus.ModConstants.Palette;
 using static Lotus.Roles.RoleGroups.Impostors.IdentityThief.Translations.Options;
-using VentLib.Utilities.Optionals;
-using Lotus.API.Vanilla.Meetings;
 
 namespace Lotus.Roles.RoleGroups.Impostors;
 

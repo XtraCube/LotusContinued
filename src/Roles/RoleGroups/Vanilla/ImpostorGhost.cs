@@ -1,6 +1,4 @@
 using AmongUs.GameOptions;
-using Lotus.Logging;
-using VentLib.Logging;
 using VentLib.Options.UI;
 
 namespace Lotus.Roles.RoleGroups.Vanilla;

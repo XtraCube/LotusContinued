@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Il2CppSystem;
 using Lotus.Utilities;
 using TMPro;

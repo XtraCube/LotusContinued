@@ -5,7 +5,6 @@ using Lotus.API.Player;
 using Lotus.Factions;
 using Lotus.GUI;
 using Lotus.GUI.Name;
-using Lotus.Options;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Overrides;
@@ -17,7 +16,6 @@ using VentLib.Utilities;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 using Lotus.Extensions;
-using Lotus.Logging;
 using VentLib.Localization.Attributes;
 
 namespace Lotus.Roles.RoleGroups.Impostors;

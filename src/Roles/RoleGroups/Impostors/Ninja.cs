@@ -4,7 +4,6 @@ using AmongUs.GameOptions;
 using Lotus.GUI;
 using Lotus.GUI.Name;
 using Lotus.Roles.Interactions;
-using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Overrides;

@@ -2,11 +2,8 @@
 using System.Linq;
 using HarmonyLib;
 using Lotus.Extensions;
-using Lotus.Logging;
 using Lotus.Roles;
 using Lotus.Roles.GUI;
-using UnityEngine;
-using VentLib.Utilities.Extensions;
 
 namespace Lotus.GUI.Patches;
 

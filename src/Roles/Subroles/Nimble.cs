@@ -2,7 +2,6 @@
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
 using Lotus.Options;
-using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Overrides;
 using Lotus.Roles.RoleGroups.Vanilla;
 using UnityEngine;

@@ -13,7 +13,6 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.NeutralKilling;
 using Lotus.Utilities;
-using Lotus.API;
 using Lotus.Extensions;
 using Lotus.Options;
 using Lotus.Roles.Subroles;

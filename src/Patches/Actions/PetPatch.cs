@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using HarmonyLib;
 using Hazel;
 using Lotus.API.Odyssey;
-using Lotus.Roles.Internals;
 using Lotus.Extensions;
 using Lotus.Roles.Internals.Enums;
 using VentLib.Networking.RPC;
 using VentLib.Utilities;
 using VentLib.Utilities.Harmony.Attributes;
 using Lotus.Roles.Operations;
-using Lotus.Roles;
 using Lotus.Roles.Managers.Interfaces;
 
 namespace Lotus.Patches.Actions;

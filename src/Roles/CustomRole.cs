@@ -29,7 +29,6 @@ using VentLib.Networking.RPC;
 using VentLib.Utilities;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
-using Lotus.API;
 using VentLib.Networking;
 using Lotus.Managers;
 using System.Text.RegularExpressions;
@@ -38,9 +37,7 @@ using Lotus.API.Reactive.HookEvents;
 using Lotus.Managers.History.Events;
 using Lotus.Roles.Managers.Interfaces;
 using Lotus.Utilities;
-using Lotus.Roles.RoleGroups.Crew;
 using VentLib;
-using VentLib.Networking.RPC.Interfaces;
 using VentLib.Utilities.Optionals;
 
 namespace Lotus.Roles;

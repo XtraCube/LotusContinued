@@ -1,6 +1,4 @@
-﻿using Lotus.Factions.Interfaces;
-
-namespace Lotus.Factions.Neutrals;
+﻿namespace Lotus.Factions.Neutrals;
 
 /// <summary>
 /// Marks a class as a neutral faction

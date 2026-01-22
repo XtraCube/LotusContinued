@@ -3,7 +3,6 @@ using AmongUs.GameOptions;
 using Lotus.API.Stats;
 using Lotus.Factions;
 using Lotus.Roles.RoleGroups.Stock;
-using UnityEngine;
 
 namespace Lotus.Roles.RoleGroups.Vanilla;
 

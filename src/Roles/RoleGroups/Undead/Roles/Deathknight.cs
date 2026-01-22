@@ -17,7 +17,6 @@ using Lotus.Options;
 using Lotus.Roles.GUI;
 using Lotus.Roles.GUI.Interfaces;
 using UnityEngine;
-using VentLib.Logging;
 using VentLib.Options.UI;
 using VentLib.Localization.Attributes;
 

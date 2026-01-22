@@ -5,7 +5,6 @@ using AmongUs.GameOptions;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.Chat.Patches;
-using Lotus.Extensions;
 using Lotus.Managers;
 using Lotus.Network;
 using Lotus.Utilities;

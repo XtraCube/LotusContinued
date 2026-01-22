@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
-using Lotus.API;
 using Lotus.API.Odyssey;
 using Lotus.Factions.Crew;
 using Lotus.Factions.Impostors;
@@ -21,7 +20,6 @@ using VentLib.Utilities.Optionals;
 using static Lotus.Roles.RoleGroups.Crew.Snitch.SnitchTranslations.SnitchOptionTranslations;
 using static Lotus.Utilities.TranslationUtil;
 using Lotus.API.Player;
-using Lotus.Factions;
 
 namespace Lotus.Roles.RoleGroups.Crew;
 

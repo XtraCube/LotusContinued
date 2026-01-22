@@ -1,7 +1,4 @@
 using HarmonyLib;
-using Il2CppSystem;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
-using System.Collections.Generic;
 
 namespace Lotus.Patches.Hud;
 

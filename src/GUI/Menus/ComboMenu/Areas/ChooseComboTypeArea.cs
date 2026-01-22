@@ -10,7 +10,6 @@ using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Utilities.Attributes;
 using VentLib.Utilities.Extensions;
-using Object = UnityEngine.Object;
 
 namespace Lotus.GUI.Menus.ComboMenu.Areas;
 

@@ -1,5 +1,4 @@
 using HarmonyLib;
-using Lotus.Logging;
 using Lotus.Utilities;
 
 namespace Lotus.GUI.Patches;

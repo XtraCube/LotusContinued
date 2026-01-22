@@ -8,8 +8,6 @@ using Lotus.Extensions;
 using Lotus.Factions;
 using Lotus.Factions.Crew;
 using Lotus.GUI.Name.Holders;
-using Lotus.Logging;
-using Lotus.Managers;
 using Lotus.Options;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Interfaces;

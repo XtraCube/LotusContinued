@@ -12,17 +12,12 @@ using Lotus.Roles.Internals;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
 using Lotus.Victory;
-using Lotus.Roles.Managers.Interfaces;
 using VentLib.Options.UI.Tabs;
 using VentLib.Utilities;
 using VentLib.Networking.RPC;
 using Lotus.API.Player;
 using VentLib.Utilities.Extensions;
 using Lotus.Extensions;
-using AmongUs.GameOptions;
-using Lotus.Factions;
-using Lotus.Factions.Impostors;
-using Hazel;
 
 namespace Lotus.GameModes;
 

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using HarmonyLib;
 using Lotus.API.Odyssey;
 using Lotus.API.Reactive;
@@ -8,10 +7,8 @@ using Lotus.Roles.Internals;
 using Lotus.Extensions;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
-using Lotus.RPC;
 using VentLib.Utilities;
 using Priority = HarmonyLib.Priority;
-using Lotus.Roles;
 using Lotus.API.Player;
 using Lotus.RPC.CustomObjects;
 using Lotus.RPC.CustomObjects.Interfaces;

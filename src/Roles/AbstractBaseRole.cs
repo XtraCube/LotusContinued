@@ -41,7 +41,6 @@ using Lotus.Roles.RoleGroups.NeutralKilling;
 using Lotus.Patches.Intro;
 using Object = UnityEngine.Object;
 using Lotus.Roles.Outfit;
-using Lotus.Options.Patches;
 using Lotus.Roles.GUI;
 using VentLib.Options.Interfaces;
 

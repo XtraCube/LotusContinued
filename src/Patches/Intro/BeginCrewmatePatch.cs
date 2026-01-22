@@ -1,20 +1,15 @@
 using System.Linq;
-using System.Reflection;
 using AmongUs.GameOptions;
 using HarmonyLib;
 using Lotus.API;
-using Lotus.API.Odyssey;
 using Lotus.Extensions;
-using Lotus.Factions.Crew;
 using Lotus.Factions.Impostors;
 using Lotus.GameModes.Standard;
 using Lotus.Logging;
 using Lotus.Roles;
-using Lotus.Roles.Builtins;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Managers.Interfaces;
 using UnityEngine;
-using VentLib.Localization;
 using VentLib.Utilities;
 
 namespace Lotus.Patches.Intro;

@@ -4,7 +4,6 @@ using System.Linq;
 using HarmonyLib;
 using Lotus.API.Odyssey;
 using Lotus.GUI.Name.Interfaces;
-using UnityEngine;
 using VentLib.Utilities.Collections;
 using VentLib.Utilities.Extensions;
 

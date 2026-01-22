@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Lotus.API.Vanilla.Sabotages;
-using Lotus.Extensions;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;

@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using Lotus;
 using Lotus.Extensions;
 using Lotus.GUI;
-using Lotus.Options;
 using Lotus.Patches.Network;
 using Lotus.Roles.Builtins;
 using UnityEngine;

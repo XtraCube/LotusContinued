@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using HarmonyLib;
-using Lotus.Logging;
 using Lotus.Roles.Attributes;
 using Lotus.Roles.GUI.Interfaces;
 using Lotus.Roles.Interfaces;

@@ -1,12 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using HarmonyLib;
-using LibCpp2IL;
 using Lotus.API.Odyssey;
 using Lotus.Logging;
 using Lotus.Options;
-using UnityEngine;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 

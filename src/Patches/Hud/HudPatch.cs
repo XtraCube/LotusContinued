@@ -1,7 +1,6 @@
 using HarmonyLib;
 using Lotus.API.Odyssey;
 using Lotus.Extensions;
-using Lotus.Options;
 using UnityEngine;
 using VentLib.Utilities.Extensions;
 

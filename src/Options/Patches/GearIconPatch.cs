@@ -8,6 +8,7 @@ using System.Reflection;
 using VentLib.Utilities.Attributes;
 using VentLib.Utilities.Extensions;
 using System.Linq;
+using VentLib.Options.Enum;
 
 namespace Lotus.Options.Patches;
 [LoadStatic]
@@ -42,7 +43,7 @@ public class GearIconPatch
             var optionList = role.RoleOptions.Tab.PreRender();
             optionList = optionList.Take(optionList.IndexOf(role.RoleOptions)).ToList();
 
-            int roleOptionCount = optionList.Where(o => o.OptionType == VentLib.Options.Enum.OptionType.Role).Count();
+            int roleOptionCount = optionList.Count(o => o.OptionType == OptionType.Role);
             int totalCount = optionList.Count;
 
             float newHeight = (2.7f * roleOptionCount) + (0.45f * (totalCount - roleOptionCount)) - .1f; // math isn't perfect. it does get desynced after a bunch of options

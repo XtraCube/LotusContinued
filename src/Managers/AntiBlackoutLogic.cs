@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lotus.API.Odyssey;
-using Lotus.API.Player;
 using Lotus.Extensions;
 using Lotus.Utilities;
 using VentLib.Networking.RPC;

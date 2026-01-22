@@ -3,9 +3,7 @@ using System.Linq;
 using Lotus.API.Player;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
-using Lotus.Managers;
 using Lotus.Extensions;
-using Lotus.Factions.Impostors;
 using Lotus.Roles;
 using VentLib.Localization.Attributes;
 using VentLib.Utilities;
@@ -13,7 +11,6 @@ using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using static MeetingHud;
 using Lotus.Managers.Blackscreen.Interfaces;
-using Lotus.Roles.Internals.Enums;
 
 namespace Lotus.API.Vanilla.Meetings;
 

@@ -4,7 +4,6 @@ using System.Linq;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.Managers.History.Events;
-using Lotus.Roles.Interfaces;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;

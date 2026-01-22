@@ -9,7 +9,6 @@ using Lotus.Chat;
 using Lotus.Chat.Commands;
 using Lotus.Extensions;
 using Lotus.Factions;
-using Lotus.Factions.Interfaces;
 using Lotus.Factions.Neutrals;
 using Lotus.GUI;
 using Lotus.GUI.Name;

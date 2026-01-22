@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using Lotus.Extensions;
-using Lotus.GUI;
-using Lotus.Roles;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
@@ -9,7 +7,6 @@ using VentLib.Options.IO;
 using System;
 using Lotus.Managers.Blackscreen;
 using System.Linq;
-using Lotus.API.Odyssey;
 using VentLib.Utilities.Extensions;
 using static Lotus.Options.General.MayhemOptions;
 

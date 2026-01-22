@@ -5,7 +5,6 @@ using UnityEngine;
 using VentLib.Utilities;
 using VentLib.Utilities.Attributes;
 using Lotus.GUI.Menus.OptionsMenu.Components;
-using Lotus.GUI.Menus.OptionsMenu.Patches;
 using Lotus.Logging;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;

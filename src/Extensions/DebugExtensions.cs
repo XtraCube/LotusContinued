@@ -7,9 +7,6 @@ using UnityEngine;
 using VentLib.Utilities.Extensions;
 using Component = UnityEngine.Component;
 using Object = UnityEngine.Object;
-using static Lotus.Managers.Hotkeys.HotkeyManager;
-using Lotus.API.Odyssey;
-using Lotus.API.Player;
 
 namespace Lotus.Extensions;
 

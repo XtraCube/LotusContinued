@@ -9,7 +9,6 @@ using VentLib.Utilities;
 using VentLib.Utilities.Debug.Profiling;
 using VentLib.Utilities.Extensions;
 using Lotus.RPC.CustomObjects;
-using System.Linq;
 
 namespace Lotus.Patches.Actions;
 

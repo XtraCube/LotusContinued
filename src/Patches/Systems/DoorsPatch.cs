@@ -5,7 +5,6 @@ using Lotus.API.Player;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using Lotus.API.Vanilla.Sabotages;
-using Lotus.Chat;
 using Lotus.Options;
 using Lotus.Roles;
 using Lotus.Roles.Interfaces;

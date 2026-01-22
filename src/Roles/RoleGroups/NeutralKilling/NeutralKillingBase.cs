@@ -1,5 +1,4 @@
 using Lotus.Factions;
-using Lotus.Roles.Interfaces;
 using Lotus.Roles.Internals.Enums;
 using UnityEngine;
 

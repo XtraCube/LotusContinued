@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using Lotus.API.Reactive;
 using Lotus.GUI;
-using Lotus.Logging;
-using VentLib.Utilities;
 using VentLib.Utilities.Attributes;
 
 namespace Lotus.Managers;

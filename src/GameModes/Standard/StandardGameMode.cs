@@ -17,7 +17,6 @@ using Lotus.Roles.RoleGroups.Undead;
 using Lotus.Victory;
 using Lotus.Victory.Conditions;
 using VentLib.Options.UI.Tabs;
-using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 
 namespace Lotus.GameModes.Standard;

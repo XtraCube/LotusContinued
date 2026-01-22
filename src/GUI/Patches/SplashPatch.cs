@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using HarmonyLib;
-using Lotus.Utilities;
 using Lotus.Extensions;
 using Lotus.GUI.Menus;
 using Lotus.Logging;
@@ -13,7 +12,7 @@ using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Harmony.Attributes;
 using VentLib.Utilities.Optionals;
 using Object = UnityEngine.Object;
-using System.Collections;
+
 namespace Lotus.GUI.Patches;
 
 [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.Start))]

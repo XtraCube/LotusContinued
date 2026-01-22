@@ -1,8 +1,5 @@
 using HarmonyLib;
-using Hazel;
-using Il2CppSystem.Collections.Generic;
 using InnerNet;
-using Lotus.Logging;
 using Lotus.Managers;
 // ReSharper disable FieldCanBeMadeReadOnly.Local
 // ReSharper disable InconsistentNaming

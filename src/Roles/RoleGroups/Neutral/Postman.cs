@@ -11,13 +11,9 @@ using Lotus.Roles.Interactions;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Vanilla;
-using Lotus.Utilities;
 using Lotus.Victory.Conditions;
-using Lotus.API;
 using Lotus.Chat;
 using Lotus.Extensions;
-using Lotus.Roles.Interfaces;
-using Lotus.Roles.Internals;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
@@ -27,7 +23,6 @@ using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Optionals;
 using Object = UnityEngine.Object;
 using Lotus.API.Player;
-using Lotus.Logging;
 
 namespace Lotus.Roles.RoleGroups.Neutral;
 

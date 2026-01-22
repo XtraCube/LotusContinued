@@ -6,7 +6,6 @@ using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.RoleGroups.Crew;
 using Lotus.Roles.RoleGroups.Impostors;
 using Lotus.Roles.RoleGroups.Neutral;
-using Lotus.Roles.Subroles;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using VentLib.Utilities.Optionals;

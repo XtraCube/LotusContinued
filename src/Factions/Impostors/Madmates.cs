@@ -1,5 +1,4 @@
 using Lotus.Factions.Interfaces;
-using VentLib.Localization.Attributes;
 
 namespace Lotus.Factions.Impostors;
 

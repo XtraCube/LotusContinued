@@ -12,7 +12,6 @@ using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.RoleGroups.Undead.Events;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Extensions;
-using Lotus.Roles.Internals;
 using UnityEngine;
 using Lotus.API.Player;
 

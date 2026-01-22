@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Lotus.Extensions;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;

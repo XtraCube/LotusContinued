@@ -10,7 +10,6 @@ using Lotus.Roles.RoleGroups.Crew.Ingredients;
 using Lotus.Roles.RoleGroups.Crew.Potions;
 using Lotus.Extensions;
 using UnityEngine;
-using VentLib.Logging;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 

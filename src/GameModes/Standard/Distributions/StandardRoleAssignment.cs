@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Lotus.Roles.Distribution;
 using JBAnnotations::JetBrains.Annotations;
 using Lotus.Extensions;
-using Lotus.GameModes.Standard.Distributions;
 using Lotus.Options;
 using Lotus.Roles;
 using System.Linq;
@@ -18,7 +17,6 @@ using Lotus.Factions.Impostors;
 using Lotus.Managers;
 using Lotus.Roles.Builtins;
 using Lotus.Roles.Subroles;
-using Lotus.Patches;
 
 namespace Lotus.GameModes.Standard.Distributions;
 

@@ -8,7 +8,6 @@ using Lotus.API.Stats;
 using Lotus.Extensions;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Operations;
-using UnityEngine;
 using VentLib.Networking.RPC;
 using VentLib.Utilities;
 using Lotus.Patches.Client;

@@ -2,15 +2,9 @@ using HarmonyLib;
 using Lotus.Factions.Crew;
 using Lotus.Extensions;
 using Lotus.Roles;
-using Lotus.Roles.Builtins;
 using Lotus.Logging;
-using Lotus.API.Odyssey;
 using Lotus.Roles.Managers.Interfaces;
-using Lotus.API.Player;
-using System.Linq;
-using Lotus.Factions;
 using UnityEngine;
-using VentLib.Utilities.Extensions;
 
 namespace Lotus.Patches.Intro;
 

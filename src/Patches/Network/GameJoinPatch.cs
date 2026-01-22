@@ -1,4 +1,3 @@
-using System.Linq;
 using AmongUs.Data;
 using HarmonyLib;
 using Lotus.Addons;
@@ -8,7 +7,6 @@ using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using Lotus.Managers;
 using Lotus.Options;
-using Lotus.Options.General;
 using VentLib.Utilities;
 
 namespace Lotus.Patches.Network;

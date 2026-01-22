@@ -1,8 +1,6 @@
 using Lotus.Factions;
 using Lotus.Factions.Crew;
-using Lotus.Logging;
 using Lotus.Roles.Builtins;
-using Lotus.Roles.RoleGroups.Vanilla;
 using UnityEngine;
 
 namespace Lotus.Roles.RoleGroups.Crew;

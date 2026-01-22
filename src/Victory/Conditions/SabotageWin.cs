@@ -7,7 +7,6 @@ using Lotus.Factions;
 using Lotus.Factions.Impostors;
 using Lotus.Patches.Systems;
 using Lotus.Extensions;
-using Lotus.Roles.Interfaces;
 using VentLib.Localization.Attributes;
 using VentLib.Utilities.Extensions;
 

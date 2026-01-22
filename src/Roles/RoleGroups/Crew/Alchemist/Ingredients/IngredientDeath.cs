@@ -1,7 +1,6 @@
 using System.Linq;
 using Lotus.API.Odyssey;
 using Lotus.Factions;
-using Lotus.API;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 

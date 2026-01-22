@@ -2,7 +2,6 @@ using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.Chat;
 using Lotus.Extensions;
-using Lotus.Managers.History.Events;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Internals.Enums;
 using UnityEngine;

@@ -1,5 +1,4 @@
 using UnityEngine;
-using VentLib.Utilities.Attributes;
 
 namespace Lotus.GUI.Menus.OptionsMenu;
 

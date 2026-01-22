@@ -3,7 +3,6 @@ using Lotus.Roles.Factions;
 using Lotus.Roles.Internals.Attributes;
 using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Overrides;
-using UnityEngine;
 
 namespace Lotus.Roles.RoleGroups.NeutralKilling;
 

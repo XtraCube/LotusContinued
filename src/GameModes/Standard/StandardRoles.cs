@@ -14,7 +14,6 @@ using Lotus.Roles.RoleGroups.Undead.Roles;
 using Lotus.Roles.RoleGroups.Vanilla;
 using Lotus.Roles.Subroles;
 using Lotus.Roles.Subroles.Romantics;
-using VentLib.Utilities.Extensions;
 using Medium = Lotus.Roles.RoleGroups.Crew.Medium;
 using Pirate = Lotus.Roles.RoleGroups.Neutral.Pirate;
 using Lotus.Logging;

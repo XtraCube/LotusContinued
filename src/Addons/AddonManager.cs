@@ -4,19 +4,14 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using BepInEx;
 using HarmonyLib;
 using Lotus.RPC;
-using Lotus.Extensions;
-using Lotus.Roles;
 using VentLib;
 using VentLib.Networking.RPC.Attributes;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
 using Lotus.API.Player;
 using VentLib.Networking.RPC;
-using Rewired;
-using UnityEngine;
 
 namespace Lotus.Addons;
 

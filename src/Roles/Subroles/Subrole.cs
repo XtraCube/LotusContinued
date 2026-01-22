@@ -4,7 +4,6 @@ using System.Linq;
 using Lotus.Factions;
 using Lotus.Factions.Interfaces;
 using Lotus.Extensions;
-using Lotus.Roles.Internals.Enums;
 using Lotus.Roles.Interfaces;
 using VentLib.Options.UI;
 using VentLib.Utilities;

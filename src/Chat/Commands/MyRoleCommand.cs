@@ -1,4 +1,3 @@
-using System.Linq;
 using Lotus.Roles;
 using Lotus.Extensions;
 using Lotus.Managers;

@@ -2,7 +2,6 @@
 using Lotus.Extensions;
 using Lotus.GUI.Menus.ComboMenu.Objects;
 using Lotus.GUI.Menus.OptionsMenu;
-using Lotus.Logging;
 using Lotus.Managers;
 using Lotus.Utilities;
 using TMPro;
@@ -10,8 +9,6 @@ using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Utilities.Attributes;
 using VentLib.Utilities.Extensions;
-using VentLib.Utilities.Optionals;
-using xCloud;
 
 namespace Lotus.GUI.Menus.ComboMenu.Areas;
 

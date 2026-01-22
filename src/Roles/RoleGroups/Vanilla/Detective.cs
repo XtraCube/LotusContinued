@@ -1,6 +1,5 @@
 using AmongUs.GameOptions;
 using Lotus.Extensions;
-using Lotus.Options;
 using Lotus.Roles.Overrides;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;

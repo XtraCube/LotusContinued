@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using Lotus.Utilities;
 using UnityEngine;
 using VentLib.Utilities.Extensions;
 using VentLib.Utilities.Harmony.Attributes;

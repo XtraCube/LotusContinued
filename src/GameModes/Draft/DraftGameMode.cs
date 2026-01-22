@@ -6,19 +6,13 @@ using Lotus.API.Player;
 using Lotus.API.Reactive;
 using Lotus.API.Reactive.HookEvents;
 using Lotus.API.Vanilla.Meetings;
-using Lotus.Chat.Commands;
 using Lotus.Extensions;
-using Lotus.Factions;
-using Lotus.Factions.Neutrals;
 using Lotus.GameModes.Draft.Distributions;
 using Lotus.GameModes.Standard;
 using Lotus.GameModes.Standard.Conditions;
-using Lotus.GameModes.Standard.Distributions;
 using Lotus.Options;
 using Lotus.Roles;
 using Lotus.Roles.Internals.Enums;
-using Lotus.Roles.Overrides;
-using Lotus.Roles.RoleGroups.Crew;
 using Lotus.Roles.RoleGroups.Draft;
 using Lotus.Roles.RoleGroups.Undead;
 using Lotus.Victory;
@@ -26,7 +20,6 @@ using Lotus.Victory.Conditions;
 using VentLib.Options.UI;
 using VentLib.Options.UI.Tabs;
 using VentLib.Utilities;
-using VentLib.Utilities.Extensions;
 
 namespace Lotus.GameModes.Draft;
 
