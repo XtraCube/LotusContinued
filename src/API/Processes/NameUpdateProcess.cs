@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Lotus.API.Odyssey;
 using Lotus.API.Player;
 using Lotus.API.Reactive;
@@ -67,19 +66,20 @@ public class NameUpdateProcess
         }
 
         INameModel nameModel = player.NameModel();
-        Il2CppArrayBase<PlayerControl> allPlayers = PlayerControl.AllPlayerControls.ToArray();
-        if (allPlayers.Length == 0) return;
+        var allPlayers = PlayerControl.AllPlayerControls;
+        if (allPlayers.Count == 0) return;
 
         Profiler.Sample sample = Profilers.Global.Sampler.Sampled();
         bool updated = false;
-        allPlayers.ForEach(p =>
+        foreach (PlayerControl p in allPlayers)
         {
             nameModel.RenderFor(p, force: _forceRenderCounter == 100);
             updated |= (nameModel.Updated() && !player.IsAlive());
-        });
+        }
+
         sample.Stop();
 
-        Async.Schedule(NameUpdateLoop, 0.1f / allPlayers.Length);
+        Async.Schedule(NameUpdateLoop, 0.1f / allPlayers.Count);
         if (player.IsAlive()) return;
         if (_forceFixCount-- <= 0 || ForceFixedPlayers.Contains(player.PlayerId))
             if (!updated) return;

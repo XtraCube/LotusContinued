@@ -131,7 +131,7 @@ public class ChatHandler
         string playerName = sender.Data.PlayerName;
         sender.Data.PlayerName = title;
         OnChatPatch.UtilsSentList.Add(sender.PlayerId);
-        DestroyableSingleton<HudManager>.Instance.Chat.AddChat(sender, message);
+        HudManager.Instance.Chat.AddChat(sender, message);
         sender.Data.PlayerName = playerName;
     }
 

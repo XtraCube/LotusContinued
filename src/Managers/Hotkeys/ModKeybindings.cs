@@ -180,9 +180,9 @@ public class ModKeybindings
 
     private static void ToggleHistoryButton()
     {
-        if (!DestroyableSingleton<HudManager>.InstanceExists) return;
-        if (DestroyableSingleton<HudManager>.Instance.Chat.IsOpenOrOpening) return;
-        HM2 historyMenu = DestroyableSingleton<HudManager>.Instance.GetComponent<HM2>();
+        if (!HudManager.InstanceExists) return;
+        if (HudManager.Instance.Chat.IsOpenOrOpening) return;
+        HM2 historyMenu = HudManager.Instance.GetComponent<HM2>();
         if (historyMenu == null) return;
         ComboMenu comboMenu = Object.FindObjectOfType<ComboMenu>();
         if (comboMenu != null && comboMenu.Opened()) return;
@@ -191,7 +191,7 @@ public class ModKeybindings
 
     private static void ToggleChat()
     {
-        if (!DestroyableSingleton<HudManager>.InstanceExists) return;
-        DestroyableSingleton<HudManager>.Instance.Chat.gameObject.SetActive(!DestroyableSingleton<HudManager>.Instance.Chat.gameObject.activeSelf);
+        if (!HudManager.InstanceExists) return;
+        HudManager.Instance.Chat.gameObject.SetActive(!HudManager.Instance.Chat.gameObject.activeSelf);
     }
 }

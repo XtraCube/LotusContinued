@@ -55,7 +55,7 @@ public sealed class GameMaster : CustomRole, IPhantomRole
 
     private void Reset()
     {
-        HauntMenuMinigame minigame = DestroyableSingleton<HudManager>.Instance.GetComponentInChildren<HauntMenuMinigame>();
+        HauntMenuMinigame minigame = HudManager.Instance.GetComponentInChildren<HauntMenuMinigame>();
         if (minigame != null) return;
         if (MyPlayer.Data.Role.IsDead) MyPlayer.Data.Role.UseAbility();
         hauntCooldown.Finish();
@@ -68,7 +68,7 @@ public sealed class GameMaster : CustomRole, IPhantomRole
         Async.Schedule(() =>
         {
             if (MeetingHud.Instance == null) return;
-            ChatController chat = DestroyableSingleton<HudManager>.Instance.Chat;
+            ChatController chat = HudManager.Instance.Chat;
             if (!chat.IsOpenOrOpening) chat.Toggle();
         }, 3f);
     }
@@ -78,13 +78,13 @@ public sealed class GameMaster : CustomRole, IPhantomRole
     {
         if (!GeneralOptions.AdminOptions.SpectatorMode || hauntCooldown.NotReady()) return;
         hauntCooldown.Start(GeneralOptions.AdminOptions.AutoHauntCooldown);
-        HauntMenuMinigame minigame = DestroyableSingleton<HudManager>.Instance.GetComponentInChildren<HauntMenuMinigame>();
+        HauntMenuMinigame minigame = HudManager.Instance.GetComponentInChildren<HauntMenuMinigame>();
         log.Debug($"Trying to set player for gm. {MyPlayer.Data.Role.IsDead}");
         if (minigame == null)
         {
             // try to generate it
             if (MyPlayer.Data.Role.IsDead) MyPlayer.Data.Role.UseAbility();
-            minigame = DestroyableSingleton<HudManager>.Instance.GetComponentInChildren<HauntMenuMinigame>();
+            minigame = HudManager.Instance.GetComponentInChildren<HauntMenuMinigame>();
             if (minigame == null)
             {
                 log.Debug("Could not find HauntMenuMinigame!");

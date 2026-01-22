@@ -15,5 +15,5 @@ public class Announcement
     public string FormattedToLanguage() => (Date ?? DateOnly.MinValue)
         .ToDateTime(new TimeOnly(12, 0))
         .ToLocalTime()
-        .ToString(DestroyableSingleton<TranslationController>.Instance.dateFormats[DataManager.Settings.Language.CurrentLanguage]);
+        .ToString(TranslationController.Instance.dateFormats[DataManager.Settings.Language.CurrentLanguage]);
 }

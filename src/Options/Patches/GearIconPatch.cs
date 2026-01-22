@@ -47,7 +47,8 @@ public class GearIconPatch
 
             float newHeight = (2.7f * roleOptionCount) + (0.45f * (totalCount - roleOptionCount)) - .1f; // math isn't perfect. it does get desynced after a bunch of options
 
-            var scrollBar = DestroyableSingleton<RolesSettingsMenu>.Instance.scrollBar;
+            var rolesSettingsMenu = Object.FindObjectOfType<RolesSettingsMenu>();
+            var scrollBar = rolesSettingsMenu.scrollBar;
             Vector3 vector = new(scrollBar.Inner.transform.localPosition.x, newHeight, scrollBar.Inner.transform.localPosition.z);
             scrollBar.Inner.transform.localPosition = vector;
             scrollBar.UpdateScrollBars();

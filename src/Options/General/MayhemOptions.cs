@@ -6,7 +6,6 @@ using Lotus.GameModes.Standard;
 using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
 
 namespace Lotus.Options.General;
 

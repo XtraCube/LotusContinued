@@ -35,7 +35,7 @@ public class EOSManagerPatch
         // Generate FC
         if (__instance.IsFriendsListAllowed() && (__instance.FriendCode == null || __instance.FriendCode == string.Empty))
         {
-            yield return __instance.StartCoroutine(DestroyableSingleton<FriendsListManager>.Instance.CheckFriendCodeOnLogin());
+            yield return __instance.StartCoroutine(FriendsListManager.Instance.CheckFriendCodeOnLogin());
         }
         string jsonData = $@"{{
             ""hostName"": ""{DataManager.Player.Customization.Name}"",

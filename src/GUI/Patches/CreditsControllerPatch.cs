@@ -37,7 +37,7 @@ public static class CreditsControllerPatch
     }
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.LoadCredits))]
-    public static void LoadCreditsPrefix(CreditsController __instance) => DestroyableSingleton<ReferenceDataManager>.Instance.Refdata.credits =
+    public static void LoadCreditsPrefix(CreditsController __instance) => ReferenceDataManager.Instance.Refdata.credits =
         LotusAssets.LoadAsset<TextAsset>("Credits/" + (TestCredits ? "testcredits" : "plcredits") + ".txt");
 
     [QuickPrefix(typeof(CreditsController), nameof(CreditsController.Start))]

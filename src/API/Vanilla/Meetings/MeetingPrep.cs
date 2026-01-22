@@ -113,7 +113,7 @@ public class MeetingPrep
         MeetingCalledTime = DateTime.Now;
         if (CheckEndGamePatch.ForceCheckEndGame()) return;
         MeetingRoomManager.Instance.AssignSelf(reporter, Reported);
-        DestroyableSingleton<HudManager>.Instance.OpenMeetingRoom(reporter);
+        HudManager.Instance.OpenMeetingRoom(reporter);
         reporter.RpcStartMeeting(Reported);
 
     }

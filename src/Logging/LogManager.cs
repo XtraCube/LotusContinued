@@ -49,10 +49,10 @@ public class LogManager
     public static void SendInGame(string message, params object[] args)
     {
         log.Debug($"Sending In Game: {message}", args);
-        if (DestroyableSingleton<HudManager>.InstanceExists)
+        if (HudManager.InstanceExists)
         {
-            DestroyableSingleton<HudManager>.Instance.Chat.AddChat(PlayerControl.LocalPlayer, message, false);
-            NotificationPopper notifier = DestroyableSingleton<HudManager>.Instance.Notifier;
+            HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, message, false);
+            NotificationPopper notifier = HudManager.Instance.Notifier;
 
             LobbyNotificationMessage newMessage = UnityEngine.Object.Instantiate<LobbyNotificationMessage>(notifier.notificationMessageOrigin, Vector3.zero, Quaternion.identity, notifier.transform);
             newMessage.transform.localPosition = new Vector3(0f, 0f, -2f);

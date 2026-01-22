@@ -32,8 +32,8 @@ public static class GeneralModRpc
     [ModRPC((uint)ModCalls.ShowChat, RpcActors.Host, RpcActors.NonHosts)]
     public static void ShowChat()
     {
-        DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
-        DestroyableSingleton<HudManager>.Instance.Chat.HideBanButton();
+        HudManager.Instance.Chat.SetVisible(true);
+        HudManager.Instance.Chat.HideBanButton();
     }
 
     [ModRPC((uint)ModCalls.SetGameState, RpcActors.Host, RpcActors.NonHosts)]

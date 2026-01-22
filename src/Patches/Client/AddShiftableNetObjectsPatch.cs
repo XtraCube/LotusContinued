@@ -31,7 +31,7 @@ class AddShiftableNetObjectsPatch
             }
             __instance.logger.Info("Opening minigame " + __instance.GetType().Name, null);
             __instance.StartCoroutine(__instance.CoAnimateOpen());
-            DestroyableSingleton<DebugAnalytics>.Instance.Analytics.MinigameOpened(PlayerControl.LocalPlayer.Data, __instance.TaskType);
+            DebugAnalytics.Instance.Analytics.MinigameOpened(PlayerControl.LocalPlayer.Data, __instance.TaskType);
         }
         List<byte> bodies = [];
         Object.FindObjectsOfType<DeadBody>().ForEach(body => bodies.Add(body.ParentId));

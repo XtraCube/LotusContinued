@@ -53,8 +53,8 @@ public static class ReverseEngineeredRPC
     {
         if (player.AmOwner)
         {
-            DestroyableSingleton<HudManager>.Instance.Chat.SetVisible(true);
-            DestroyableSingleton<HudManager>.Instance.Chat.HideBanButton();
+            HudManager.Instance.Chat.SetVisible(true);
+            HudManager.Instance.Chat.HideBanButton();
             return;
         }
         if (player.IsModded())
@@ -68,7 +68,7 @@ public static class ReverseEngineeredRPC
         messageWriter.Write(AmongUsClient.Instance.GameId);
         messageWriter.WritePacked(player.OwnerId);
         messageWriter.StartMessage(4);
-        messageWriter.WritePacked(DestroyableSingleton<HudManager>.Instance.MeetingPrefab.SpawnId);
+        messageWriter.WritePacked(HudManager.Instance.MeetingPrefab.SpawnId);
         messageWriter.WritePacked(-2);
         messageWriter.Write(0);
         messageWriter.WritePacked(1);

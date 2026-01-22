@@ -107,9 +107,8 @@ public static class PhantomActionsPatch
             __instance.MakePlayerVisible(true, true);
             return false;
         }
-        DestroyableSingleton<HudManager>.Instance.AbilityButton.SetSecondImage(__instance.Ability);
-        DestroyableSingleton<HudManager>.Instance.AbilityButton.OverrideText(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.PhantomAbilityUndo,
-            new Il2CppReferenceArray<Il2CppSystem.Object>(0)));
+        HudManager.Instance.AbilityButton.SetSecondImage(__instance.Ability);
+        HudManager.Instance.AbilityButton.OverrideText(TranslationController.Instance.GetString(StringNames.PhantomAbilityUndo));
         __instance.Player.CmdCheckVanish(AUSettings.PhantomDuration());
         return false;
     }
@@ -227,7 +226,7 @@ public static class PhantomActionsPatch
         {
             if (phantom.AmOwner)
             {
-                DestroyableSingleton<HudManager>.Instance.AbilityButton.SetFromSettings(phantom.Data.Role.Ability);
+                HudManager.Instance.AbilityButton.SetFromSettings(phantom.Data.Role.Ability);
                 phantom.Data.Role.SetCooldown();
                 phantom.PrimaryRole().UIManager.ForceUpdate();
                 return false;

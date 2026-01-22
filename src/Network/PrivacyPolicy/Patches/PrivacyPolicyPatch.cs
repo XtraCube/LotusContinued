@@ -47,7 +47,7 @@ public class PrivacyPolicyPatch
     [QuickPrefix(typeof(EOSManager), nameof(EOSManager.RunLogin))]
     public static void PreLogin()
     {
-        InfoTextBox infoTextBox = DestroyableSingleton<AccountManager>.Instance.transform.Find("InfoTextBox").GetComponent<InfoTextBox>();
+        InfoTextBox infoTextBox = AccountManager.Instance.transform.Find("InfoTextBox").GetComponent<InfoTextBox>();
         customScreen = Object.Instantiate(infoTextBox);
         customScreen.transform.parent = infoTextBox.transform.parent;
         customScreen.gameObject.SetActive(false);
@@ -104,8 +104,8 @@ public class PrivacyPolicyPatch
         if (__instance.hasRunLoginFlow)
         {
             yield return CustomPrivacyPolicy();
-            DestroyableSingleton<AccountManager>.Instance.privacyPolicyBg.gameObject.SetActive(false);
-            DestroyableSingleton<AccountManager>.Instance.waitingText.gameObject.SetActive(false);
+            AccountManager.Instance.privacyPolicyBg.gameObject.SetActive(false);
+            AccountManager.Instance.waitingText.gameObject.SetActive(false);
             if (DataManager.Player.Account.LoginStatus != EOSManager.AccountLoginStatus.Offline)
             {
                 __instance.IsAllowedOnline(true);
@@ -121,15 +121,15 @@ public class PrivacyPolicyPatch
             customScreen.bodyText.text = Localizer
                 .Translate("PingDisplay.AddonsFailed", "{0} Addon(s) Failed to Load: {1}")
                 .Formatted(AddonManager.FailedAddons.Count, AddonManager.FailedAddons.StrJoin(string.Empty).Trim());
-            customScreen.button1Text.text = DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.Okay, new Il2CppReferenceArray<Il2CppSystem.Object>(0));
+            customScreen.button1Text.text = TranslationController.Instance.GetString(StringNames.Okay);
             customScreen.gameObject.SetActive(true);
             customScreen.Destroy();
             yield break;
         }
         __instance.hasRunLoginFlow = true;
         __instance.loginFlowFinished = false;
-        yield return DestroyableSingleton<AccountManager>.Instance.PrivacyPolicy.Show();
-        DestroyableSingleton<AccountManager>.Instance.privacyPolicyBg.gameObject.SetActive(false);
+        yield return AccountManager.Instance.PrivacyPolicy.Show();
+        AccountManager.Instance.privacyPolicyBg.gameObject.SetActive(false);
         yield return CustomPrivacyPolicy();
         if (__instance.platformInitialized)
         {
@@ -137,8 +137,8 @@ public class PrivacyPolicyPatch
         }
         else
         {
-            DestroyableSingleton<AccountManager>.Instance.SetDLLErrorMode();
-            DestroyableSingleton<AccountManager>.Instance.SignInFail(EOSManager.EOS_ERRORS.InterfaceInitFail, new Action(__instance.ContinueInOfflineMode));
+            AccountManager.Instance.SetDLLErrorMode();
+            AccountManager.Instance.SignInFail(EOSManager.EOS_ERRORS.InterfaceInitFail, new Action(__instance.ContinueInOfflineMode));
         }
         while (!__instance.HasFinishedLoginFlow())
         {
@@ -157,7 +157,7 @@ public class PrivacyPolicyPatch
         customScreen.bodyText.text = Localizer
             .Translate("PingDisplay.AddonsFailed", "{0} Addon(s) Failed to Load: {1}")
             .Formatted(AddonManager.FailedAddons.Count, AddonManager.FailedAddons.StrJoin(string.Empty).Trim());
-        customScreen.button1Text.text = DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.Okay, new Il2CppReferenceArray<Il2CppSystem.Object>(0));
+        customScreen.button1Text.text = TranslationController.Instance.GetString(StringNames.Okay);
         customScreen.gameObject.SetActive(true);
         customScreen.Destroy();
         yield break;
@@ -262,8 +262,10 @@ public class PrivacyPolicyPatch
             _privacyInfo = new() { LastAcceptedPrivacyPolicyVersion = LatestPrivacyPolicy.ToUnixTimeSeconds() };
             _privacyInfo.ToRealInfo();
             // create options menu behaviour
-            DestroyableSingleton<MainMenuManager>.Instance.settingsButton.OnClick.Invoke();
-            while (DestroyableSingleton<OptionsMenuBehaviour>.Instance.gameObject.activeSelf)
+            var mm = Object.FindObjectOfType<MainMenuManager>();
+            mm.settingsButton.OnClick.Invoke();
+            var optionsMenu = Object.FindObjectOfType<OptionsMenuBehaviour>();
+            while (optionsMenu.gameObject.activeSelf)
             {
                 yield return null;
             }
@@ -271,7 +273,7 @@ public class PrivacyPolicyPatch
         }
 
         customScreen.SetOneButton();
-        customScreen.button1Text.text = DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.Okay, new Il2CppReferenceArray<Il2CppSystem.Object>(0));
+        customScreen.button1Text.text = TranslationController.Instance.GetString(StringNames.Okay);
         customScreen.titleTexxt.text = PrivacyPolicyTranslations.ManageData;
         customScreen.SetText(choice switch
         {

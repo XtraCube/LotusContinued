@@ -47,13 +47,13 @@ class PingTrackerPatch
     // THANKS TOHE. YOU GUYS ARE REALLY HELPFUL
     private static Vector3 GetPingPosition()
     {
-        var settingButtonTransformPosition = DestroyableSingleton<HudManager>.Instance.SettingsButton.transform.localPosition;
+        var settingButtonTransformPosition = HudManager.Instance.SettingsButton.transform.localPosition;
         var offset_x = settingButtonTransformPosition.x - 1.58f;
         var offset_y = settingButtonTransformPosition.y + 3.2f;
         Vector3 position;
         if (AmongUsClient.Instance.IsGameStarted)
         {
-            if (DestroyableSingleton<HudManager>.Instance && !HudManager.Instance.Chat.isActiveAndEnabled)
+            if (HudManager.Instance && !HudManager.Instance.Chat.isActiveAndEnabled)
             {
                 offset_x += 0.7f; // Additional offsets for chat button if present
             }

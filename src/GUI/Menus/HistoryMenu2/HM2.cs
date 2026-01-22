@@ -130,7 +130,7 @@ public class HM2 : MonoBehaviour
     public static void CreateButton(LobbyBehaviour __instance)
     {
         if (Game.State is GameState.Roaming or GameState.InMeeting) return; // fixes this patch running when a CNO spawns.
-        HudManager Instance = DestroyableSingleton<HudManager>.Instance;
+        HudManager Instance = HudManager.Instance;
         HM2 historyMenu = Instance.gameObject.AddComponent<HM2>();
         historyMenu.PassHudManager(Instance);
     }

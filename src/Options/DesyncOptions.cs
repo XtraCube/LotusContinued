@@ -78,7 +78,7 @@ public static class DesyncOptions
         writer.EndMessage();
 
         // Array & Send
-        var byteArray = new Il2CppStructArray<byte>(writer.Length - 1);
+        var byteArray = new Il2CppStructArray<byte>((long)writer.Length - 1);
         // MessageWriter.ToByteArray
         Buffer.BlockCopy(writer.Buffer.CastFast<Array>(), 1, byteArray.CastFast<Array>(), 0, writer.Length - 1);
 

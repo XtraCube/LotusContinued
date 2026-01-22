@@ -31,11 +31,11 @@ public class ComboMenu : MonoBehaviour
     {
         this.comboButton = (ComboButton)behaviourButton;
         menuObject = menuAnchorObject.CreateChild("Menu", new Vector3(0f, 0f, -25f));
-        Transform background = Instantiate(DestroyableSingleton<AccountManager>.Instance.transform.Find("InfoTextBox/Fill"), menuObject.transform);
+        Transform background = Instantiate(AccountManager.Instance.transform.Find("InfoTextBox/Fill"), menuObject.transform);
         background.GetComponent<BoxCollider2D>().isTrigger = true;
         background.transform.localPosition = Vector3.zero;
         background.name = "ClickBlocker";
-        ShapeshifterRole shapeshifterRole = DestroyableSingleton<RoleManager>.Instance.GetRole(RoleTypes.Shapeshifter)
+        ShapeshifterRole shapeshifterRole = RoleManager.Instance.GetRole(RoleTypes.Shapeshifter)
             .Cast<ShapeshifterRole>();
         ShapeshifterMinigame minigameBackground = Instantiate(shapeshifterRole.ShapeshifterMenu, menuObject.transform);
         minigameBackground.transform.localPosition = new Vector3(1.25f, 0f, -1f);

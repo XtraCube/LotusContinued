@@ -436,7 +436,7 @@ public abstract class AbstractBaseRole
             return roleOption =>
             {
                 roleOption.RoleImage.enabled = false;
-                PoolablePlayer fakePlayer = Object.Instantiate<PoolablePlayer>(DestroyableSingleton<HudManager>.Instance.IntroPrefab.PlayerPrefab, roleOption.RoleImage.transform);
+                PoolablePlayer fakePlayer = Object.Instantiate<PoolablePlayer>(HudManager.Instance.IntroPrefab.PlayerPrefab, roleOption.RoleImage.transform);
                 fakePlayer.name = "RoleOutfit";
                 fakePlayer.transform.localPosition = new Vector3(0, -.2f, 0);
                 fakePlayer.transform.localScale = Vector3.one;
@@ -492,7 +492,7 @@ public abstract class AbstractBaseRole
         return roleOption =>
         {
             roleOption.RoleImage.enabled = false;
-            PoolablePlayer fakePlayer = Object.Instantiate<PoolablePlayer>(DestroyableSingleton<HudManager>.Instance.IntroPrefab.PlayerPrefab, roleOption.RoleImage.transform);
+            PoolablePlayer fakePlayer = Object.Instantiate<PoolablePlayer>(HudManager.Instance.IntroPrefab.PlayerPrefab, roleOption.RoleImage.transform);
             fakePlayer.name = "RoleOutfit";
             fakePlayer.transform.localPosition = new Vector3(0, -.2f, 0);
             fakePlayer.transform.localScale = Vector3.one;
